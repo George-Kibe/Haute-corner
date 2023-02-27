@@ -4,20 +4,21 @@ import products from '../assets/data/products';
 
 const ProductsScreen = () => {
   return (
-    <FlatList
-      data={products}
-      renderItem={({item}) => (
-        <View style={styles.itemContainer}>
-          <Image source={{uri: item.image}} style={styles.image} />
-        </View>
-      )}
-      numColumns={2}
-    />
+    <View style={styles.container}>
+      <FlatList
+        data={products}
+        renderItem={({item}) => (
+          <View style={styles.itemContainer}>
+            <Image source={{uri: item.image}} style={styles.image} />
+          </View>
+        )}
+        numColumns={2}
+      />
+    </View>
   );
 };
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
