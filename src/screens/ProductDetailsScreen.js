@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import React from 'react';
 import products from '../assets/data/products';
-//continue from 1:02:42
+import {useSelector} from 'react-redux';
+
 const ProductDetailsScreen = () => {
-  const product = products[0];
+  const product = useSelector(state => state.products.selectedProduct);
   const {width} = useWindowDimensions();
   return (
     <View>

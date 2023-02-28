@@ -1,9 +1,15 @@
 import {View, Image, FlatList, StyleSheet, Pressable} from 'react-native';
 import React from 'react';
-import products from '../assets/data/products';
+//import products from '../assets/data/products';
+import {useSelector, useDispatch} from 'react-redux';
+import {productsSlice} from '../store/productsSlice';
 
 const ProductsScreen = ({navigation}) => {
-  const goToProductDetails = () => {
+  const dispatch = useDispatch();
+  const products = useSelector(state => state.products.products);
+  const goToProductDetails = id => {
+    //update selected Product
+    dispatch(productsSlice.actions.setSelectedProduct(id));
     navigation.navigate('Product-Details');
   };
 
@@ -12,7 +18,12 @@ const ProductsScreen = ({navigation}) => {
       <FlatList
         data={products}
         renderItem={({item}) => (
-          <Pressable onPress={goToProductDetails} style={styles.itemContainer}>
+          <Pressable
+            onPress={() => {
+              dispatch(productsSlice.actions.setSelectedProduct(item.id));
+              navigation.navigate('Product-Details');
+            }}
+            style={styles.itemContainer}>
             <Image source={{uri: item.image}} style={styles.image} />
           </Pressable>
         )}
