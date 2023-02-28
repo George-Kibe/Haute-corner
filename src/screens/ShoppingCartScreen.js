@@ -1,8 +1,24 @@
-/* eslint-disable react/no-unstable-nested-components */
 import {FlatList, StyleSheet, Text, View, Pressable} from 'react-native';
 import React from 'react';
 import cart from '../assets/data/cart';
 import CartListItem from '../components/CartListItem';
+
+const ShoppingCartTotals = () => (
+  <View style={styles.totalsContainer}>
+    <View style={styles.row}>
+      <Text style={styles.text}>Subtotal:</Text>
+      <Text style={styles.text}>Kshs. 45,640</Text>
+    </View>
+    <View style={styles.row}>
+      <Text style={styles.text}>Delivery:</Text>
+      <Text style={styles.text}>Kshs. 40</Text>
+    </View>
+    <View style={styles.row}>
+      <Text style={styles.textBold}>Total:</Text>
+      <Text style={styles.textBold}>Kshs. 45,680</Text>
+    </View>
+  </View>
+);
 
 const ShoppingCartScreen = () => {
   return (
@@ -10,22 +26,7 @@ const ShoppingCartScreen = () => {
       <FlatList
         data={cart}
         renderItem={({item}) => <CartListItem cartItem={item} />}
-        ListFooterComponent={() => (
-          <View style={styles.totalsContainer}>
-            <View style={styles.row}>
-              <Text style={styles.text}>Subtotal:</Text>
-              <Text style={styles.text}>Kshs. 45,640</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.text}>Delivery:</Text>
-              <Text style={styles.text}>Kshs. 40</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.textBold}>Total:</Text>
-              <Text style={styles.textBold}>Kshs. 45,680</Text>
-            </View>
-          </View>
-        )}
+        ListFooterComponent={ShoppingCartTotals}
       />
 
       <Pressable style={styles.button}>
@@ -60,6 +61,7 @@ const styles = StyleSheet.create({
   textBold: {
     fontSize: 16,
     fontWeight: '500',
+    color: '#000',
   },
   button: {
     position: 'absolute',

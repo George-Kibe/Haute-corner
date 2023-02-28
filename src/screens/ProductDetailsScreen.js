@@ -48,16 +48,19 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '500',
     marginVertical: 10,
+    color: '#000',
   },
   price: {
     fontWeight: '500',
     fontSize: 16,
+    color: '#000',
   },
   description: {
     marginVertical: 10,
     fontSize: 18,
     lineHeight: 28,
     fontWeight: '300',
+    color: 'gray',
   },
   button: {
     position: 'absolute',

@@ -1,11 +1,11 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
-import ShoppingCartScreen from './src/screens/ShoppingCartScreen';
+import MainNavigator from './src/navigation';
 
 const App = () => {
   return (
     <View style={styles.container}>
-      <ShoppingCartScreen />
+      <MainNavigator />
     </View>
   );
 };
