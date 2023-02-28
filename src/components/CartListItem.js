@@ -1,11 +1,30 @@
+import React from 'react';
 import {View, Text, StyleSheet, Image} from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import React from 'react';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useDispatch} from 'react-redux';
+import {cartSlice} from '../store/cartSlice';
 
 const CartListItem = ({cartItem}) => {
-  const increaseQuantity = () => {};
+  const dispatch = useDispatch();
 
-  const decreaseQuantity = () => {};
+  const increaseQuantity = () => {
+    dispatch(
+      cartSlice.actions.changeQuantity({
+        productId: cartItem.product.id,
+        amount: 1,
+      }),
+    );
+  };
+
+  const decreaseQuantity = () => {
+    dispatch(
+      cartSlice.actions.changeQuantity({
+        productId: cartItem.product.id,
+        amount: -1,
+      }),
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -15,20 +34,32 @@ const CartListItem = ({cartItem}) => {
         <Text style={styles.size}>Size {cartItem.size}</Text>
 
         <View style={styles.footer}>
-          <Feather
-            onPress={increaseQuantity}
-            name="minus-circle"
-            size={25}
-            color="gray"
-          />
+          {cartItem.quantity <= 1 ? (
+            <MaterialCommunityIcons
+              onPress={decreaseQuantity}
+              name="delete-circle"
+              size={25}
+              color="red"
+            />
+          ) : (
+            <Feather
+              onPress={decreaseQuantity}
+              name="minus-circle"
+              size={25}
+              color="gray"
+            />
+          )}
+
           <Text style={styles.quantity}>{cartItem.quantity}</Text>
           <Feather
-            onPress={decreaseQuantity}
+            onPress={increaseQuantity}
             name="plus-circle"
             size={25}
             color="gray"
           />
-          <Text style={styles.itemTotal}>Kshs. 320.0</Text>
+          <Text style={styles.itemTotal}>
+            Kshs. {cartItem.product.price * cartItem.quantity}
+          </Text>
         </View>
       </View>
     </View>

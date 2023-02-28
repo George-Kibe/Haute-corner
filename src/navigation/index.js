@@ -9,10 +9,13 @@ import ProductsScreen from '../screens/ProductsScreen';
 import ProductDetailsScreen from '../screens/ProductDetailsScreen';
 import ShoppingCartScreen from '../screens/ShoppingCartScreen';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import {useSelector} from 'react-redux';
+import {selectedNumberOfItems} from '../store/cartSlice';
 
 const Stack = createNativeStackNavigator();
 
 const MainNavigator = () => {
+  const numberOfItems = useSelector(selectedNumberOfItems);
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -27,7 +30,7 @@ const MainNavigator = () => {
                 style={{flexDirection: 'row', padding: 10}}>
                 <FontAwesome5 name="shopping-cart" size={18} color="orange" />
                 <Text style={{marginLeft: 5, fontWeight: '500', color: '#000'}}>
-                  1
+                  {numberOfItems}
                 </Text>
               </Pressable>
             ),
