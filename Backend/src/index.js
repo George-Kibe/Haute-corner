@@ -1,16 +1,18 @@
 const express = require("express");
 const productRoutes = require('./routers/productRoutes');
-
-//continue from 49:00
+const orderRoutes = require('./routers/orderRoutes');
+const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = 5000;
 
-app.use("/products", productRoutes)
+app.use(bodyParser.json());
+app.use("/products", productRoutes);
+app.use("/orders", orderRoutes);
 
 app.get("/", (req, res) => {
-    res.send("<h2>Welcome to Nodejs Server</h2>")
+    res.send("<h2>Welcome to Nodejs Server</h2>");
 })
 app.listen(PORT, () => {
-    console.log(`API is listening on port: ${PORT}`)
+    console.log(`API is listening on port: ${PORT}`);
 })
