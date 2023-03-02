@@ -1,8 +1,10 @@
 const {MongoClient} = require("mongodb");
+const dotenv = require("dotenv");
+dotenv.config();
 
-const uri = 'mongodb+srv://georgekibew:0SEQcsIDnlVkW1ah@cluster1.3ny8hj0.mongodb.net/?retryWrites=true&w=majority'
+const uri = process.env.MONGO_URL
 
-const client = new MongoClient(url);
+const client = new MongoClient(uri);
 
 const database = client.db("AppDatabase");
 const products = database.collection("products");
