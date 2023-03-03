@@ -7,18 +7,33 @@ import {
   useWindowDimensions,
   ScrollView,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {cartSlice} from '../store/cartSlice';
+import { useGetProductQuery } from '../store/apiSlice';
 
-const ProductDetailsScreen = () => {
-  const product = useSelector(state => state.products.selectedProduct);
+const ProductDetailsScreen = ({navigation, route}) => {
+  const {id} = route.params;
+  const {data, isLoading, error} = useGetProductQuery(id);
+  //console.log(data, isLoading,error)
+  
+  //const product = useSelector(state => state.products.selectedProduct);
   const dispatch = useDispatch();
   const {width} = useWindowDimensions();
   const addToCart = () => {
     dispatch(cartSlice.actions.addCartItem({product}));
   };
+  
+  if (isLoading){
+    return <ActivityIndicator />
+  }
+  if(error){
+    return <Text style={{color: "#000"}}>Error Fetching the Product. {error.error}</Text>
+  }
+  const product = data?.data;
+  
 
   return (
     <View>

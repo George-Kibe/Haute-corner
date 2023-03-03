@@ -8,7 +8,7 @@ const ProductsScreen = ({navigation}) => {
   const dispatch = useDispatch();
   //const products = useSelector(state => state.products.products);
   const {data, isLoading, error} = useGetProductsQuery();
-  console.log(data, isLoading,error)
+  //console.log(data, isLoading,error)
   const products = data?.data;
 
   if(isLoading){
@@ -29,8 +29,8 @@ const ProductsScreen = ({navigation}) => {
         renderItem={({item}) => (
           <Pressable
             onPress={() => {
-              dispatch(productsSlice.actions.setSelectedProduct(item.id));
-              navigation.navigate('Product-Details');
+              //dispatch(productsSlice.actions.setSelectedProduct(item.id));
+              navigation.navigate('Product-Details', {"id": item._id});
             }}
             style={styles.itemContainer}>
             <Image source={{uri: item.image}} style={styles.image} />
