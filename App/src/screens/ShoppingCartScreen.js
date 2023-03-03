@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderColor: 'gainsboro',
     borderTopWidth: 1,
-    marginBottom:100,
+    marginBottom:70,
   },
   row: {
     flexDirection: 'row',
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     alignSelf: 'center',
     width: '90%',
-    padding: 20,
+    padding: 10,
     borderRadius: 50,
     alignItems: 'center',
   },

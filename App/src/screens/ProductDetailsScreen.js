@@ -10,10 +10,11 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {cartSlice} from '../store/cartSlice';
 import { useGetProductQuery } from '../store/apiSlice';
+import { Picker } from '@react-native-picker/picker'
 import Ionicons from "react-native-vector-icons/Ionicons"
 
 const ProductDetailsScreen = ({navigation, route}) => {
@@ -21,6 +22,8 @@ const ProductDetailsScreen = ({navigation, route}) => {
   const {data, isLoading, error} = useGetProductQuery(id);
   //console.log(data, isLoading,error)
   const product = data?.data;  
+  const [selectedOption, setSelectedOption] = useState(product?.sizes[0])
+  console.log(selectedOption)
   //const product = useSelector(state => state.products.selectedProduct);
   const dispatch = useDispatch();
   const {width} = useWindowDimensions();
@@ -35,8 +38,8 @@ const ProductDetailsScreen = ({navigation, route}) => {
   if(error){
     return <Text style={{color: "#000"}}>Error Fetching the Product. {error.error}</Text>
   }
+  console.log(product)
   
-
   return (
     <View>
       <ScrollView>
@@ -49,7 +52,20 @@ const ProductDetailsScreen = ({navigation, route}) => {
           showsHorizontalScrollIndicator={false}
           pagingEnabled
         />
-        <View style={{padding: 20, backgroundColor: '#fff'}}>
+        <View style={styles.pickerContainer}>
+          <Text style={styles.option}>Size/Option:</Text>
+
+          <Picker style={{backgroundColor: "#fff", color: "#000", flex:1}}
+            selectedValue={selectedOption}
+            onValueChange={(itemValue) => setSelectedOption(itemValue)}
+          >
+            {
+              product.sizes?.map((option) => (<Picker.Item label={option.toString()} value={option} key={option}/>))
+            }
+          </Picker>
+        </View>
+        
+        <View style={{paddingHorizontal: 20, backgroundColor: '#fff', marginBottom: 50}}>
           <Text style={styles.title}>{product.name}</Text>
           <Text style={styles.price}>Kshs. {product.price}</Text>
           <Text style={styles.description}>{product.description}</Text>
@@ -71,10 +87,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: '500',
-    marginVertical: 10,
+    marginVertical: 5,
     color: '#000',
   },
+  pickerContainer: {
+    alignItems:"center",
+    display: "flex",
+    flexDirection: "row",
+    paddingHorizontal: 20
+  },
   price: {
+    fontWeight: '500',
+    fontSize: 16,
+    color: '#000',
+  },
+  option: {
     fontWeight: '500',
     fontSize: 16,
     color: '#000',
@@ -92,7 +119,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     alignSelf: 'center',
     width: '80%',
-    padding: 20,
+    padding: 10,
     borderRadius: 50,
     paddingHorizontal:50,
     alignItems: 'center',
