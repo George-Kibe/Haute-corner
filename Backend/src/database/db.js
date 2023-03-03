@@ -4,13 +4,23 @@ dotenv.config();
 
 const uri = process.env.MONGO_URL
 
-const client = new MongoClient(uri);
+let client;
 
-const database = client.db("AppDatabase");
-const products = database.collection("products");
-const orders = database.collection("orders")
+const getDB = () => {
+    if (!client) {
+        client = new MongoClient(uri);
+    }
+    const database = client.db("AppDatabase");
+    const products = database.collection("products");
+    const orders = database.collection("orders")
 
-module.exports = {
-    products,
-    orders
+    return {
+        products,
+        orders,
+    }
+
 }
+
+
+
+module.exports = getDB;

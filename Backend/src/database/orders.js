@@ -1,13 +1,13 @@
 const { ObjectId } = require('mongodb');
-const db = require('./db');
+const getDB = require('./db');
 
 const getOrder = async(ref) => {
-    const order = await db.orders.findOne({ref});
+    const order = await getDB().orders.findOne({ref});
     return order;
 }
 
 const createOrder = async(order) => {
-    const result = await db.orders.insertOne(order);
+    const result = await getDB().orders.insertOne(order);
     return { ...order, _id:result.insertedId};
 }
 

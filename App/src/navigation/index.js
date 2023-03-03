@@ -16,6 +16,17 @@ const Stack = createNativeStackNavigator();
 
 const MainNavigator = () => {
   const numberOfItems = useSelector(selectedNumberOfItems);
+
+  const HRight = ({navigation}) => (
+    <Pressable
+      onPress={() => navigation.navigate('Shopping-Cart')}
+      style={{flexDirection: 'row', padding: 10}}>
+      <FontAwesome5 name="shopping-cart" size={18} color="orange" />
+      <Text style={{marginLeft: 5, fontWeight: '500', color: '#000'}}>
+        {numberOfItems}
+      </Text>
+    </Pressable>
+  )
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -24,22 +35,16 @@ const MainNavigator = () => {
           name="Products"
           component={ProductsScreen}
           options={({navigation}) => ({
-            headerRight: () => (
-              <Pressable
-                onPress={() => navigation.navigate('Shopping-Cart')}
-                style={{flexDirection: 'row', padding: 10}}>
-                <FontAwesome5 name="shopping-cart" size={18} color="orange" />
-                <Text style={{marginLeft: 5, fontWeight: '500', color: '#000'}}>
-                  {numberOfItems}
-                </Text>
-              </Pressable>
-            ),
+            headerRight: () => <HRight navigation={navigation} />,
           })}
         />
         <Stack.Screen
           name="Product-Details"
           component={ProductDetailsScreen}
-          options={{presentation: 'modal'}}
+          options={({navigation}) => ({
+            headerRight: () => <HRight navigation={navigation} />,
+            presentation: "modal",
+          })}
         />
         <Stack.Screen name="Shopping-Cart" component={ShoppingCartScreen} />
       </Stack.Navigator>

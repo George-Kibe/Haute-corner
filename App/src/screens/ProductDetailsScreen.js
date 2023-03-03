@@ -8,22 +8,25 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import React, {useEffect} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {cartSlice} from '../store/cartSlice';
 import { useGetProductQuery } from '../store/apiSlice';
+import Ionicons from "react-native-vector-icons/Ionicons"
 
 const ProductDetailsScreen = ({navigation, route}) => {
   const {id} = route.params;
   const {data, isLoading, error} = useGetProductQuery(id);
   //console.log(data, isLoading,error)
-  
+  const product = data?.data;  
   //const product = useSelector(state => state.products.selectedProduct);
   const dispatch = useDispatch();
   const {width} = useWindowDimensions();
   const addToCart = () => {
     dispatch(cartSlice.actions.addCartItem({product}));
+    Alert.alert("Product Added to Cart!")
   };
   
   if (isLoading){
@@ -32,7 +35,6 @@ const ProductDetailsScreen = ({navigation, route}) => {
   if(error){
     return <Text style={{color: "#000"}}>Error Fetching the Product. {error.error}</Text>
   }
-  const product = data?.data;
   
 
   return (
@@ -55,6 +57,7 @@ const ProductDetailsScreen = ({navigation, route}) => {
       </ScrollView>
 
       <Pressable style={styles.button} onPress={addToCart}>
+        <Ionicons name="cart" size={20} color={"#fff"} />
         <Text style={styles.buttonText}>Add to cart</Text>
       </Pressable>
     </View>
@@ -88,13 +91,16 @@ const styles = StyleSheet.create({
     bottom: 20,
     backgroundColor: '#000',
     alignSelf: 'center',
-    width: '90%',
+    width: '80%',
     padding: 20,
     borderRadius: 50,
+    paddingHorizontal:50,
     alignItems: 'center',
+    flexDirection: "row",
   },
   buttonText: {
     fontWeight: '500',
+    marginLeft:30,
     fontSize: 20,
     color: '#fff',
   },
