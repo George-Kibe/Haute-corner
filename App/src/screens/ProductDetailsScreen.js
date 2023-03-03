@@ -16,6 +16,8 @@ import {cartSlice} from '../store/cartSlice';
 import { useGetProductQuery } from '../store/apiSlice';
 import { Picker } from '@react-native-picker/picker'
 import Ionicons from "react-native-vector-icons/Ionicons"
+import { ToastAndroid } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const ProductDetailsScreen = ({navigation, route}) => {
   const {id} = route.params;
@@ -29,7 +31,18 @@ const ProductDetailsScreen = ({navigation, route}) => {
   const {width} = useWindowDimensions();
   const addToCart = () => {
     dispatch(cartSlice.actions.addCartItem({product}));
-    Alert.alert("Product Added to Cart!")
+    ToastAndroid.showWithGravity(
+      "Added to Cart",
+        ToastAndroid.LONG,
+        ToastAndroid.CENTER
+    );
+    
+    Toast.show({
+      type: 'error',
+      text1: 'Product Added to Cart',
+      text2: 'You can now go to Checkout 😃'
+    });
+    
   };
   
   if (isLoading){
