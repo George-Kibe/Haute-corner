@@ -13,7 +13,7 @@ const TrackOrderScreen = () => {
         style={styles.input}
         value={ref}
         onChangeText={setRef}
-        placeholder="Enter Your Order Reference"
+        placeholder="Order Reference"
         maxLength={6}
       />
       { isLoading && <ActivityIndicator />}

@@ -18,6 +18,7 @@ import { Picker } from '@react-native-picker/picker'
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { ToastAndroid } from 'react-native';
 import Toast from 'react-native-toast-message';
+import IonIcons from "react-native-vector-icons/Ionicons";
 
 const ProductDetailsScreen = ({navigation, route}) => {
   const {id} = route.params;
@@ -25,7 +26,8 @@ const ProductDetailsScreen = ({navigation, route}) => {
   //console.log(data, isLoading,error)
   const product = data?.data;  
   const [selectedOption, setSelectedOption] = useState(product?.sizes[0])
-  console.log(selectedOption)
+  const [liked, setLiked] = useState(false)
+  //console.log(selectedOption)
   //const product = useSelector(state => state.products.selectedProduct);
   const dispatch = useDispatch();
   const {width} = useWindowDimensions();
@@ -38,12 +40,30 @@ const ProductDetailsScreen = ({navigation, route}) => {
     );
     
     Toast.show({
-      type: 'error',
+      type: 'success',
       text1: 'Product Added to Cart',
       text2: 'You can now go to Checkout 😃'
     });
     
   };
+
+  const addToLikedItems = () => {
+    //dispatch to state
+    setLiked(!liked);
+    if(liked){
+      Toast.show({
+        type: 'error',
+        text1: 'Product removed from Likes',
+        text2: 'This product is no longer one of your likes 😃'
+      }); 
+    }else{
+      Toast.show({
+        type: 'success',
+        text1: 'Product Added to Likes',
+        text2: 'You can now view this item in your liked Items😃'
+      }); 
+    }   
+  }
   
   if (isLoading){
     return <ActivityIndicator />
@@ -59,10 +79,16 @@ const ProductDetailsScreen = ({navigation, route}) => {
         <FlatList
           data={product.images}
           renderItem={({item}) => (
-            <Image source={{uri: item}} style={[styles.image, {width}]} />
+            <View style={{position: "relative"}}>
+              <Image source={{uri: item}} style={[styles.image, {width}]} />
+              <IonIcons onPress={addToLikedItems} style={styles.likeIcon} name="star" size={25} color={liked? "red":"gray"} />
+              {
+                product?.images?.length > 1 && <Text style={styles.imageText}>Slide to view more Images</Text>
+              }
+            </View>
           )}
           horizontal
-          showsHorizontalScrollIndicator={false}
+          showsHorizontalScrollIndicator={true}
           pagingEnabled
         />
         <View style={styles.pickerContainer}>
@@ -96,6 +122,19 @@ const ProductDetailsScreen = ({navigation, route}) => {
 const styles = StyleSheet.create({
   image: {
     aspectRatio: 1,
+  },
+  likeIcon: {
+    position: 'absolute',
+    zIndex: 1,
+    right: 20,
+    top: 20
+  },
+  imageText: {
+    color: "#b0adac",
+    position: 'absolute',
+    alignSelf: "center",
+    fontSize: 18,
+    bottom: 10,
   },
   title: {
     fontSize: 34,
