@@ -5,6 +5,12 @@
 #private information
 credentials.txt
 .env
+.elasticbeanstalk
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
 # Xcode
 #
 build/
