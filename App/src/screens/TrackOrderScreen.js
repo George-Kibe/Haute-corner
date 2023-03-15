@@ -46,12 +46,12 @@ const styles = StyleSheet.create({
     color: "#000"
   },
   input: {
+    borderColor: "#000",
     color: "#000",
-    borderColor: "#e7e7e7",
-    marginVertical:10,
     borderWidth: 1,
-    alignItems: "center",
+    padding:10,
+    backgroundColor: "#e5e7eb",
+    height: 40,
     borderRadius: 10,
-    padding: 10,
   }
 })
