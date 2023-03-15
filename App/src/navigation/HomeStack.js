@@ -2,7 +2,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 //screens imports
 import ProductsScreen from '../screens/ProductsScreen';
@@ -18,7 +17,7 @@ import {selectedNumberOfItems} from '../store/cartSlice';
 
 const Stack = createNativeStackNavigator();
 
-const MainNavigator = () => {
+const HomeStack = () => {
   const numberOfItems = useSelector(selectedNumberOfItems);
   const TrackOrder = ({navigation}) => (
     <Pressable
@@ -62,7 +61,7 @@ const MainNavigator = () => {
     
   )
   return (
-    <NavigationContainer>
+    <>
       <Stack.Navigator
         screenOptions={{contentStyle: {backgroundColor: 'white'}}}>
         <Stack.Screen
@@ -89,8 +88,8 @@ const MainNavigator = () => {
         />
         <Stack.Screen name="Track-Order" component={TrackOrderScreen} />
       </Stack.Navigator>
-    </NavigationContainer>
+    </>
   );
 };
 
-export default MainNavigator;
+export default HomeStack;
