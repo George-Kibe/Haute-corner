@@ -1,68 +1,42 @@
 import React, { useState } from 'react';
-import { View, Button, Image, StyleSheet, Text, TouchableOpacity } from 'react-native';
-// import { launchCamera } from 'react-native-image-picker';
-import DocumentPicker from "react-native-document-picker";
-
-import { encode } from 'base-64';
+import { View, Image, StyleSheet, Text, TouchableOpacity, PermissionsAndroid } from 'react-native';
+import { launchCamera } from 'react-native-image-picker';
 
 const ProfileScreen = () => {
- const [imagesList, setImagesList] = useState([]);
-  const docPicker = async() => {
-   // Pick a multiple file
-   try {
-     const res = await DocumentPicker.pickMultiple({
-        type: [DocumentPicker.types.allFiles],
-     });
-     console.log("Response", res)
-     console.log(
-       JSON.stringify(res),
-       res.uri,
-       res.type, // mime type
-       res.name,
-       res.size
-     );
-     //this.uploadAPICall(res);//here you can call your API and send the data to that API
-   } catch (err) {
-     if (DocumentPicker.isCancel(err)) {
-       console.log("error -----", err);
-     } else {
-       throw err;
-     }
-   }
- }
+  const [cameraPhoto, setCameraPhoto] = useState()
 
-  console.log(imagesList)
+  const options = {
+    saveToPhotos: true,
+    mediaType: "photo",
+  }
+  const openCamera = async() => {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      const result = await launchCamera(options);
+      console.log("Camera Result:",result)
+      setCameraPhoto(result.assets[0].uri)
+    }
+  }
+  const openGallery = () => {
+
+  }
+
   return (
-    <View>
-      <Button title="Capture Image" />
-      <Text>Images</Text>
-      {imagesList.length > 0 && imagesList.map((image, index) => (
-        <Image key={index} source={{ uri: image }} style={{ width: 200, height: 200 }} />
-      ))}
-       <View
-        style={{
-            width: "30%",
-            justifyContent: "center",
-          }}
-        >
-          <TouchableOpacity
-            onPress={() =>docPicker()}
-            style={styles.uploadView}
-          >
-            {/* <Image
-              source={images.upload}
-              style={styles.documentStatusImg}
-            /> */}
-          <Text style={styles.uploadTxt}> {'upload  doc'}</Text>
-          </TouchableOpacity>
-        </View>
-      <Text>Extra Image</Text>
-      {/* <Image source={img} style={{ width: 200, height: 200 }} /> */}
+    <View style={styles.mainContainer}>
+      <TouchableOpacity onPress={openCamera} style={styles.button}>
+        <Text styles={styles.buttonText}>Open Camera</Text>
+      </TouchableOpacity>
+      {
+        cameraPhoto && <Image style={styles.image} source={{uri:cameraPhoto}} />
+      }
+      <TouchableOpacity onPress={openGallery} style={styles.button}>
+        <Text styles={styles.buttonText}>Open Gallery</Text>
+      </TouchableOpacity>
     </View>
-    
-  );
-};
-
+  )
+}
 export default ProfileScreen;
 
 const styles = StyleSheet.create({
@@ -71,7 +45,19 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center"
     },
-    text: {
-        color: "#000"
+    button: {
+        backgroundColor: "#e7e7e7",
+        borderWidth: 1,
+        borderColor: "#6b6b6b",
+        marginVertical:5,
+        padding: 10,
+        borderRadius:10,
     },
+    buttonText: {
+      color: "#000"
+    },
+    image: {
+      width: 50,
+      height: 50,
+    }
 })
