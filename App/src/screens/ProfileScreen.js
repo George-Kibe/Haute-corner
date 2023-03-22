@@ -1,28 +1,47 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, Text, TouchableOpacity, PermissionsAndroid } from 'react-native';
-import { launchCamera } from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+// import {ImagetoBase64} from "../utils/ImageToBase64"
 
 const ProfileScreen = () => {
-  const [cameraPhoto, setCameraPhoto] = useState()
+  const [cameraPhoto, setCameraPhoto] = useState();
+  const [galleryPhotos, setGalleryPhotos] = useState([]);
 
   const options = {
     saveToPhotos: true,
+    includeBase64: true,
     mediaType: "photo",
+    selectionLimit: 10,
   }
   const openCamera = async() => {
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.CAMERA,
     );
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      const result = await launchCamera(options);
-      console.log("Camera Result:",result)
-      setCameraPhoto(result.assets[0].uri)
+      try {
+        const result = await launchCamera(options);
+        console.log("Camera Result:",result)
+        setCameraPhoto(result.assets[0].uri)        
+      } catch (error) {
+        console.warn(error.message)
+      }      
     }
   }
-  const openGallery = () => {
-
+  const openGallery = async() => {
+    try {
+      const result = await launchImageLibrary(options);
+      //console.log(result.assets)
+      const {assets} = result;
+      const base64Images = assets.map(asset => asset["base64"]);
+      console.log(base64Images)
+      setGalleryPhotos(prev => {
+        return prev? [...prev, ...base64Images] : [...base64Images]
+      });
+    } catch (error) {
+      console.warn(error.message)
+    }
   }
-
+  console.log(galleryPhotos)
   return (
     <View style={styles.mainContainer}>
       <TouchableOpacity onPress={openCamera} style={styles.button}>
@@ -34,6 +53,9 @@ const ProfileScreen = () => {
       <TouchableOpacity onPress={openGallery} style={styles.button}>
         <Text styles={styles.buttonText}>Open Gallery</Text>
       </TouchableOpacity>
+      {
+        galleryPhotos && <Image style={styles.image} source={{uri: `data:image/gif;base64,${galleryPhotos[0]}`}}  />
+      }
     </View>
   )
 }
