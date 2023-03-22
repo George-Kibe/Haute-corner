@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, Text, TouchableOpacity, PermissionsAndroid } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-// import {ImagetoBase64} from "../utils/ImageToBase64"
+import uploadImageToS3 from '../utils/UploadToS3';
 
 const ProfileScreen = () => {
   const [cameraPhoto, setCameraPhoto] = useState();
   const [galleryPhotos, setGalleryPhotos] = useState([]);
-
   const options = {
     saveToPhotos: true,
     includeBase64: true,
@@ -20,8 +19,13 @@ const ProfileScreen = () => {
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       try {
         const result = await launchCamera(options);
-        console.log("Camera Result:",result)
-        setCameraPhoto(result.assets[0].uri)        
+        console.log(result)
+        const uri = result.assets[0].uri;
+        const response = await uploadImageToS3(uri)
+        
+        setGalleryPhotos(prev => {
+          return prev? [...prev, ...base64Images] : [...base64Images]
+        });       
       } catch (error) {
         console.warn(error.message)
       }      
@@ -30,18 +34,27 @@ const ProfileScreen = () => {
   const openGallery = async() => {
     try {
       const result = await launchImageLibrary(options);
-      //console.log(result.assets)
       const {assets} = result;
-      const base64Images = assets.map(asset => asset["base64"]);
-      console.log(base64Images)
+      const uploadedFiles = [];
+      console.log(assets)
+      for (let i = 0; i < assets.length; i++) {
+        //console.log(req.files[i])
+        const {uri:url, fileName, type: mimetype} = assets[i]
+        const parts = fileName.split(".");
+        const ext = parts[parts.length-1];
+        const uploadUrl = await uploadImageToS3(url, mimetype, ext);
+        uploadedFiles.push(uploadUrl)
+      }
+      console.log("Uploaded Files: ",uploadedFiles)
       setGalleryPhotos(prev => {
-        return prev? [...prev, ...base64Images] : [...base64Images]
-      });
+        return prev? [...prev, ...uploadedFiles] : [...uploadedFiles]
+      }); 
+      
     } catch (error) {
       console.warn(error.message)
     }
   }
-  console.log(galleryPhotos)
+  // console.log(galleryPhotos)
   return (
     <View style={styles.mainContainer}>
       <TouchableOpacity onPress={openCamera} style={styles.button}>
@@ -54,7 +67,7 @@ const ProfileScreen = () => {
         <Text styles={styles.buttonText}>Open Gallery</Text>
       </TouchableOpacity>
       {
-        galleryPhotos && <Image style={styles.image} source={{uri: `data:image/gif;base64,${galleryPhotos[0]}`}}  />
+        galleryPhotos && <Image style={styles.image} source={{uri: galleryPhotos[0]}}  />
       }
     </View>
   )

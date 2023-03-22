@@ -1,7 +1,8 @@
 # OSX
 #
 .DS_Store
-
+//aws credentials
+UploadToS3.js
 #private information
 credentials.txt
 .env
