@@ -4,7 +4,10 @@ import { Picker } from '@react-native-picker/picker';
 import Ionicons from "react-native-vector-icons/Ionicons"
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import uploadImageToS3 from "../utils/UploadToS3"
 import Toast from 'react-native-toast-message';
+import axios from "axios"
+axios.defaults.baseURL = "https://us-central1-airbnb-clone-55b31.cloudfunctions.net/app/";
 
 const AddProductScreen = () => {
   const [title, setTitle] = useState();
@@ -16,7 +19,6 @@ const AddProductScreen = () => {
 
   const imageOptions = {
     saveToPhotos: true,
-    includeBase64: true,
     mediaType: "photo",
     selectionLimit: 10,
   }
@@ -29,13 +31,21 @@ const AddProductScreen = () => {
   const openGallery = async() => {
     try {
       const result = await launchImageLibrary(imageOptions);
-      //console.log(result.assets)
       const {assets} = result;
-      const base64Images = assets.map(asset => asset["base64"]);
-      console.log(base64Images)
+      const uploadedFiles = [];
+      console.log(assets)
+      for (let i = 0; i < assets.length; i++) {
+        //console.log(req.files[i])
+        const {uri:url, fileName, type: mimetype} = assets[i]
+        const parts = fileName.split(".");
+        const ext = parts[parts.length-1];
+        const uploadUrl = await uploadImageToS3(url, mimetype, ext);
+        uploadedFiles.push(uploadUrl)
+      }
+      console.log("Uploaded Files: ",uploadedFiles)
       setImages(prev => {
-        return prev? [...prev, ...base64Images] : [...base64Images]
-      });
+        return prev? [...prev, ...uploadedFiles] : [...uploadedFiles]
+      }); 
     } catch (error) {
       console.warn(error.message)
     }
@@ -44,7 +54,7 @@ const AddProductScreen = () => {
 
   }
   const deleteImage = (image) => {
-    setImages(images.filter(image => image != image))
+    setImages(images.filter(img => img != image))
     Toast.show({
       type: 'success',
       text1: 'Image Removed',
@@ -63,8 +73,28 @@ const AddProductScreen = () => {
       return;
     }
     const data = {title, description, category, options, image:images[0], images, price}
-    console.log(data);
+    // console.log(data);
     //call saving to database API
+    try {
+      const response =await axios.post("products/new", data)
+      console.log(response.data)
+      console.log(response.status)
+      if(response.status === 201){
+        setTitle(""); setDescription(""); setImages([]); setOptions([]); setCategory(""); setPrice("")
+        Toast.show({
+          type: 'success',
+          text1: 'Product successfully Added',
+          text2: 'You can nowview it under the products screen😃'
+        }); 
+      }
+    } catch (error) {
+      console.log(error)
+      Toast.show({
+        type: 'error',
+        text1: `Sorry, some error occured! ${error.message}`,
+        text2: 'Please try Again!'
+      }); 
+    }
   }  
 
   return (
@@ -109,8 +139,8 @@ const AddProductScreen = () => {
         <ScrollView style={styles.imagesContainer} horizontal>
         {
           images.length > 0 && images.map((image, index) => (
-            <View style={{position: "relative"}}>
-              <Image key={index} style={styles.image} source={{uri: `data:image/jpeg;base64,${image}`}}  />
+            <View style={{position: "relative"}} key={index} >
+              <Image style={styles.image} source={{uri: image}}  />
               <MaterialCommunityIcons onPress={(image) => deleteImage(image)} style={styles.imageIconRight} name='delete' size={20} color="black" />
               <Ionicons  onPress={makeFavorite} style={styles.imageIconLeft} name='star' size={20} color={index===0? "red":"gray"} />
             </View>            

@@ -23,9 +23,9 @@ import IonIcons from "react-native-vector-icons/Ionicons";
 const ProductDetailsScreen = ({navigation, route}) => {
   const {id} = route.params;
   const {data, isLoading, error} = useGetProductQuery(id);
-  //console.log(data, isLoading,error)
+  console.log(data, isLoading,error)
   const product = data?.data;  
-  const [selectedOption, setSelectedOption] = useState(product?.sizes[0])
+  const [selectedOption, setSelectedOption] = useState(product?.sizes? product.sizes[0] : product?.options[0])
   const [liked, setLiked] = useState(false)
   //console.log(selectedOption)
   //const product = useSelector(state => state.products.selectedProduct);
@@ -71,7 +71,7 @@ const ProductDetailsScreen = ({navigation, route}) => {
   if(error){
     return <Text style={{color: "#000"}}>Error Fetching the Product. {error.error}</Text>
   }
-  console.log(product)
+  // console.log(product)
   
   return (
     <View>
@@ -99,13 +99,15 @@ const ProductDetailsScreen = ({navigation, route}) => {
             onValueChange={(itemValue) => setSelectedOption(itemValue)}
           >
             {
-              product.sizes?.map((option) => (<Picker.Item label={option.toString()} value={option} key={option}/>))
+              product.sizes?.length > 0 ? product.sizes?.map((option) => (<Picker.Item label={option.toString()} value={option} key={option}/>))
+              :
+              product.options?.map((option) => (<Picker.Item label={option} value={option} key={option}/>))
             }
           </Picker>
         </View>
         
         <View style={{paddingHorizontal: 20, backgroundColor: '#fff', marginBottom: 50}}>
-          <Text style={styles.title}>{product.name}</Text>
+          <Text style={styles.title}>{product.name || product.title}</Text>
           <Text style={styles.price}>Kshs. {product.price}</Text>
           <Text style={styles.description}>{product.description}</Text>
         </View>

@@ -66,7 +66,7 @@ const ProfileScreen = () => {
         <Text styles={styles.buttonText}>Open Gallery</Text>
       </TouchableOpacity>
       {
-        galleryPhotos && <Image style={styles.image} source={{uri: galleryPhotos[0]}}  />
+        galleryPhotos.length > 0 && <Image style={styles.image} source={{uri: galleryPhotos[0]}}  />
       }
     </View>
   )
