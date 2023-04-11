@@ -8,7 +8,7 @@ const ProfileScreen = () => {
   const [galleryPhotos, setGalleryPhotos] = useState([]);
   const options = {
     saveToPhotos: true,
-    includeBase64: true,
+    // includeBase64: true,
     mediaType: "photo",
     selectionLimit: 10,
   }
@@ -20,12 +20,11 @@ const ProfileScreen = () => {
       try {
         const result = await launchCamera(options);
         console.log(result)
-        const uri = result.assets[0].uri;
-        const response = await uploadImageToS3(uri)
-        
-        setGalleryPhotos(prev => {
-          return prev? [...prev, ...base64Images] : [...base64Images]
-        });       
+        const {uri:url, fileName, type: mimetype} = result.assets[0]
+        const parts = fileName.split(".");
+        const ext = parts[parts.length-1];
+        const uploadUrl = await uploadImageToS3(url, mimetype, ext);
+        uploadUrl && setCameraPhoto(uploadUrl) 
       } catch (error) {
         console.warn(error.message)
       }      
