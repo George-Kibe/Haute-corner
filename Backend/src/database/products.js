@@ -1,11 +1,11 @@
 const { ObjectId } = require('mongodb');
 const getDB = require('./db');
 
-//to review later
-const createProduct = async(id) => {
-    const product = await getDB().products.createProduct()
-    console.log(product)
-    return product
+// to receive product object
+const createProduct = async(product) => {
+    const productDoc = await getDB().products.insertOne(product)
+    console.log(productDoc)
+    return productDoc
 }
 
 const getAllProducts = async() => {
@@ -34,8 +34,8 @@ const updateProduct = async(id) => {
 }
 
 module.exports = {
+    createProduct,
     getAllProducts,
     getProduct,
     deleteProduct,
-    deleteProduct
 }

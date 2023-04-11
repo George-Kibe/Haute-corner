@@ -5,3 +5,4 @@ firebase login
 firebase init functions
 creates a folder called functions
 cd functions
+firebase deploy

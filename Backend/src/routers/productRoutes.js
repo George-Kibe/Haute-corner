@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const {getAllProducts, getProduct} = require("../database/products")
+const {getAllProducts, getProduct, createProduct} = require("../database/products")
 
 router.get("/", async (req, res) => {
     const products = await getAllProducts();
@@ -19,5 +19,17 @@ router.get("/:productId", async(req, res) => {
         res.status(400).send({status:"Bad Request", error:error.message})
     }
 })
+
+router.post("/new", async (req, res) => {
+    // console.log(req.body)
+    const product = req.body
+    try {
+        const productDoc = await createProduct(product);
+        res.status(201).send({status: "Created", data: productDoc})
+    } catch (error) {
+        res.status(422).send({status:"Unprocessable Entry", error:error.message})
+    }
+})
+
 
 module.exports = router;
