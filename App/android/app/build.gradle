@@ -93,9 +93,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.nikeapp"
+    namespace "com.hautecorner.app"
     defaultConfig {
-        applicationId "com.nikeapp"
+        applicationId "com.hautecorner.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
