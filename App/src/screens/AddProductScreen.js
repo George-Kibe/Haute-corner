@@ -10,7 +10,6 @@ const AddProductScreen = () => {
   const [title, setTitle] = useState();
   const [description, setDescription] = useState();
   const [category, setCategory] = useState();
-  // const [image, setImage] = useState();
   const [images, setImages] = useState([]);
   const [options, setOptions] = useState([]);
   const [price, setPrice] = useState();
