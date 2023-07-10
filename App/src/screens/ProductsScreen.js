@@ -9,9 +9,8 @@ const ProductsScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const [category, setCategory] = useState("")
   //const products = useSelector(state => state.products.products);
-  const {data, isLoading, error} = useGetProductsQuery();
-  //console.log(data, isLoading,error)
-  const products = data?.data;
+  const {data:products, isLoading, error} = useGetProductsQuery();
+  // console.log(products, isLoading,error)
 
   if(isLoading){
     return <ActivityIndicator />
@@ -46,8 +45,8 @@ const ProductsScreen = ({navigation}) => {
             }}
             style={styles.itemContainer}>
             <IonIcons style={styles.likeIcon} name="star" size={20} color={"gray"} />
-            <Image source={{uri: item.image}} style={styles.image} />
-            <Text style={styles.itemText}>{item.name|| item.title}</Text>
+            <Image source={{uri: item.images[0]}} style={styles.image} />
+            <Text style={styles.itemText}>{item.title}</Text>
           </Pressable>
         )}
         numColumns={2}
@@ -64,11 +63,12 @@ const styles = StyleSheet.create({
   categories: {
     display: 'flex',
     width: "100%",
-    borderRadius: 20
+    borderRadius: 20,
+    paddingVertical: 10
   },
   categoryButton: {
     alignItems: 'center',
-    margin: 10,
+    margin: 5,
     paddingVertical: 1,
     borderRadius: 50,
     flexDirection: "row",
@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginHorizontal: 8,
     fontSize: 15,
+    paddingVertical:5,
     color: '#fff',
   },
   itemContainer: {
@@ -87,8 +88,9 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#000",
-   fontWeight: "bold",
-    margin: 5
+    fontWeight: "bold",
+    margin: 5,
+    fontSize: 18
   },
   image: {
     width: '100%',

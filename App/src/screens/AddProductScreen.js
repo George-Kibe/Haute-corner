@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import Ionicons from "react-native-vector-icons/Ionicons"
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import uploadImageToS3 from "../utils/UploadToS3"
+import uploadImageToS3 from "../utils/UploadImageToS3"
 import Toast from 'react-native-toast-message';
 import axios from "axios"
 axios.defaults.baseURL = "https://us-central1-airbnb-clone-55b31.cloudfunctions.net/app/";

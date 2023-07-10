@@ -4,7 +4,7 @@ import {
   View,
   Image,
   FlatList,
-  useWindowDimensions,
+  Dimensions,
   ScrollView,
   Pressable,
   ActivityIndicator,
@@ -16,29 +16,22 @@ import {cartSlice} from '../store/cartSlice';
 import { useGetProductQuery } from '../store/apiSlice';
 import { Picker } from '@react-native-picker/picker'
 import Ionicons from "react-native-vector-icons/Ionicons"
-import { ToastAndroid } from 'react-native';
 import Toast from 'react-native-toast-message';
 import IonIcons from "react-native-vector-icons/Ionicons";
 
+
+const {width, height} = Dimensions.get("screen");
+
 const ProductDetailsScreen = ({navigation, route}) => {
   const {id} = route.params;
-  const {data, isLoading, error} = useGetProductQuery(id);
-  console.log(data, isLoading,error)
-  const product = data?.data;  
-  const [selectedOption, setSelectedOption] = useState(product?.sizes? product.sizes[0] : product?.options[0])
+  const {data:product, isLoading, error} = useGetProductQuery(id); 
+  console.log("Product: ", product)
+  const [selectedOption, setSelectedOption] = useState()
   const [liked, setLiked] = useState(false)
-  //console.log(selectedOption)
-  //const product = useSelector(state => state.products.selectedProduct);
+
   const dispatch = useDispatch();
-  const {width} = useWindowDimensions();
   const addToCart = () => {
     dispatch(cartSlice.actions.addCartItem({product}));
-    ToastAndroid.showWithGravity(
-      "Added to Cart",
-        ToastAndroid.LONG,
-        ToastAndroid.CENTER
-    );
-    
     Toast.show({
       type: 'success',
       text1: 'Product Added to Cart',
@@ -71,10 +64,17 @@ const ProductDetailsScreen = ({navigation, route}) => {
   if(error){
     return <Text style={{color: "#000"}}>Error Fetching the Product. {error.error}</Text>
   }
-  // console.log(product)
-  
+
+  const propertiesData = [];
+  for (const key in product.properties) {
+    if (product.properties.hasOwnProperty(key)) {
+      const value = product.properties[key];
+      propertiesData.push({ key, value });
+    }
+  }
+  console.log("propertiesData: ", propertiesData)
   return (
-    <View>
+    <View style={styles.container}>
       <ScrollView>
         <FlatList
           data={product.images}
@@ -92,22 +92,20 @@ const ProductDetailsScreen = ({navigation, route}) => {
           pagingEnabled
         />
         <View style={styles.pickerContainer}>
-          <Text style={styles.option}>Size/Option:</Text>
+          <Text style={styles.option}>Properties:</Text>
 
           <Picker style={{backgroundColor: "#fff", color: "#000", flex:1}}
             selectedValue={selectedOption}
             onValueChange={(itemValue) => setSelectedOption(itemValue)}
           >
             {
-              product.sizes?.length > 0 ? product.sizes?.map((option) => (<Picker.Item label={option.toString()} value={option} key={option}/>))
-              :
-              product.options?.map((option) => (<Picker.Item label={option} value={option} key={option}/>))
+              propertiesData?.length > 0 && propertiesData?.map((prop) => (<Picker.Item label={prop.value} value={prop.value} key={prop.value}/>))
             }
           </Picker>
         </View>
         
         <View style={{paddingHorizontal: 20, backgroundColor: '#fff', marginBottom: 50}}>
-          <Text style={styles.title}>{product.name || product.title}</Text>
+          <Text style={styles.title}>{product.title}</Text>
           <Text style={styles.price}>Kshs. {product.price}</Text>
           <Text style={styles.description}>{product.description}</Text>
         </View>
@@ -122,6 +120,9 @@ const ProductDetailsScreen = ({navigation, route}) => {
 };
 
 const styles = StyleSheet.create({
+  container:{
+    minHeight: height,
+  },
   image: {
     aspectRatio: 1,
   },
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   },
   button: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 200,
     backgroundColor: '#000',
     alignSelf: 'center',
     width: '80%',
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: '500',
-    marginLeft:30,
+    marginLeft: 5,
     fontSize: 20,
     color: '#fff',
   },

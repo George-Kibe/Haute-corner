@@ -36,6 +36,7 @@ const ShoppingCartTotals = () => {
 const ShoppingCartScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
+  console.log(cartItems)
   const subtotal = useSelector(selectSubtotal);
   const deliveryFee = useSelector(selectDeliveryPrice);
   const total = useSelector(selectTotal);

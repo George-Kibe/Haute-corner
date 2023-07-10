@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, Text, TouchableOpacity, PermissionsAndroid } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import uploadImageToS3 from '../utils/UploadToS3';
+import uploadImageToS3 from '../utils/UploadImageToS3';
 
 const ProfileScreen = () => {
   const [cameraPhoto, setCameraPhoto] = useState();

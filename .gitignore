@@ -12,6 +12,8 @@ credentials.txt
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
+UploadImageToS3.js
+
 # Xcode
 #
 build/
