@@ -1,7 +1,7 @@
 import {createApi, fetchBaseQuery} from "@reduxjs/toolkit/query/react";
 
 //const baseUrl = "http://localhost:8000/";
-const baseUrl = "https://us-central1-airbnb-clone-55b31.cloudfunctions.net/app/";
+const baseUrl = "https://buenas-admin.vercel.app/api/";
 
 export const apiSlice = createApi({
     reducerPath: "api",
