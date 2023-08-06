@@ -1,18 +1,19 @@
 import React from 'react';
-import {StatusBar} from 'react-native';
-import HomeStack from './src/navigation/HomeStack';
+import {StatusBar, Text} from 'react-native';
 import BottomTabsNavigator from './src/navigation/BottomTabsNavigator';
 import Toast from 'react-native-toast-message';
-import {Provider} from 'react-redux';
-import {store} from './src/store';
-
+import {Provider as ReduxProvider} from 'react-redux';
+import {store, persistor} from './src/store';
+import { PersistGate } from 'redux-persist/integration/react';
 const App = () => {
   return (
-    <Provider store={store}>
-      <StatusBar style="auto" />
-      <BottomTabsNavigator />
-      <Toast />
-    </Provider>
+    <ReduxProvider store={store}>
+      <PersistGate loading={<Text>Loading...</Text>} persistor={persistor}>
+        <StatusBar style="auto" />
+        <BottomTabsNavigator />
+        <Toast />
+      </PersistGate>
+    </ReduxProvider>
   );
 };
 

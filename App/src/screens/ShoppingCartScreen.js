@@ -36,13 +36,13 @@ const ShoppingCartTotals = () => {
 const ShoppingCartScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
-  console.log(cartItems)
+  // console.log(cartItems)
   const subtotal = useSelector(selectSubtotal);
   const deliveryFee = useSelector(selectDeliveryPrice);
   const total = useSelector(selectTotal);
 
   const [createOrder, {data, isLoading, error}] = useCreateOrderMutation();
-  console.log(data, isLoading, error)
+  // console.log(data, isLoading, error)
   const onCheckoutClick = async() => {
     const result = await createOrder({
       items: cartItems,

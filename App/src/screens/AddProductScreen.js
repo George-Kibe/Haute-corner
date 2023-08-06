@@ -7,7 +7,7 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import uploadImageToS3 from "../utils/UploadImageToS3"
 import Toast from 'react-native-toast-message';
 import axios from "axios"
-axios.defaults.baseURL = "https://us-central1-airbnb-clone-55b31.cloudfunctions.net/app/";
+axios.defaults.baseURL = "https://buenas-admin.vercel.app/";
 
 const AddProductScreen = () => {
   const [title, setTitle] = useState();
@@ -63,7 +63,7 @@ const AddProductScreen = () => {
   }
   // console.log(images)
   const saveProduct = async() => {
-    if (!title|| !description || !category|| !options.length || !images.length || !price){
+    if (!title|| !description || !category || !images.length || !price){
       //toast message
       Toast.show({
         type: 'error',
@@ -72,7 +72,7 @@ const AddProductScreen = () => {
       }); 
       return;
     }
-    const data = {title, description, category, options, image:images[0], images, price}
+    const data = {title, description, category, image:images[0], images, price}
     // console.log(data);
     //call saving to database API
     try {
