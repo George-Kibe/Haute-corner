@@ -1,0 +1,37 @@
+link: https://reactnative.dev/docs/signed-apk-android
+
+Navigate to C:\Program Files\Java\jdk-xx\bin folder in command promot as an administrator
+Generate upload keys keytool -genkeypair -v -storetype PKCS12 -keystore my-upload-key.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
+
+Place the my-upload-key.keystore file under the android/app directory in your project folder.
+Edit the file ~/.gradle/gradle.properties or android/gradle.properties, and add the following (replace ***** with the correct keystore password, alias and key password),
+MYAPP_UPLOAD_STORE_FILE=my-upload-key.keystore
+MYAPP_UPLOAD_KEY_ALIAS=my-key-alias
+MYAPP_UPLOAD_STORE_PASSWORD=*****
+MYAPP_UPLOAD_KEY_PASSWORD=*****
+
+Renaming the app
+npm i react-native-rename
+npx react-native-rename <newName> -b <bundleIdentifier>
+npx react-native-rename "Travel App" -b com.junedomingo.travelapp
+
+Updating future releases
+npm i -g react-native-version
+update version in package.json
+react-native-version --never-amend
+
+Generate icons
+https://easyappicon.com/
+appicon.co
+
+Generate Privacy Policies
+https://app.privacypolicies.com/
+
+
+Generating the release AAB
+cd android
+./gradlew bundleRelease
+
+
+Testing the release build of your app
+npx react-native run-android --variant=release
