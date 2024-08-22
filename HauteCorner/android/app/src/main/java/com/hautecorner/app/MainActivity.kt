@@ -1,4 +1,4 @@
-package com.hautecorner
+package com.hautecorner.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

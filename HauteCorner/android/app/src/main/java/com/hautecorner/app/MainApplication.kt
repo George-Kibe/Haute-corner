@@ -1,4 +1,4 @@
-package com.hautecorner
+package com.hautecorner.app
 
 import android.app.Application
 import com.facebook.react.PackageList
