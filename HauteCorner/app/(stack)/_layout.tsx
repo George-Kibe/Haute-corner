@@ -11,6 +11,7 @@ const StackLayout = () => {
       <Stack>
         <Stack.Screen name="shopping-cart" options={{ headerShown: true, headerLeft:Hleft }} />
         <Stack.Screen name="track-order" options={{ headerShown: true, headerLeft:Hleft }} /> 
+        <Stack.Screen name="products" options={{ headerShown: false}} />
       </Stack>
     </SafeAreaView>
   )

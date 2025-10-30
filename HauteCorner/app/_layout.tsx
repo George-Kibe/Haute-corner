@@ -22,7 +22,6 @@ export default function RootLayout() {
         <PersistGate persistor={persistor}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
             <Stack.Screen name="(stack)" options={{ headerShown: false }} />
           </Stack>
           <Toast />

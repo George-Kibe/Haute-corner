@@ -18,7 +18,7 @@ export const TrackOrder = () => (
   )
 export const MyCart = () => (
     <Pressable
-      onPress={() => router.push('/shopping-cart')}
+      onPress={() => router.push('/(stack)/shopping-cart')}
       style={{flexDirection: 'row', padding: 10}}>
         <View style={{alignItems:"center", position:"relative"}}>
         <FontAwesome5 name="shopping-cart" size={18} color="orange" />
@@ -34,7 +34,7 @@ export const MyCart = () => (
 export  const HRight = () => (
     <View style={{flexDirection: 'row', alignItems: "center"}}>
       <Pressable
-        onPress={() => router.push('/modal')}
+        onPress={() => router.push('/(stack)/track-order')}
         style={{flexDirection: 'row', padding: 0}}>
         <View style={{alignItems:"center"}}>
           <MaterialCommunityIcons name="truck-delivery" size={22} color="orange" />
@@ -44,7 +44,7 @@ export  const HRight = () => (
         </View>
       </Pressable>
       <Pressable
-        onPress={() => router.push('/shopping-cart')}
+        onPress={() => router.push('/(stack)/shopping-cart')}
         style={{flexDirection: 'row', padding: 10}}>
           <View style={{alignItems:"center", position:"relative"}}>
           <FontAwesome5 name="shopping-cart" size={18} color="orange" />
