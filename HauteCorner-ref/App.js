@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 import {Provider as ReduxProvider} from 'react-redux';
 import {store, persistor} from './src/store';
 import { PersistGate } from 'redux-persist/integration/react';
+
 const App = () => {
   return (
     <ReduxProvider store={store}>

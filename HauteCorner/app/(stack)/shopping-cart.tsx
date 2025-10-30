@@ -1,14 +1,15 @@
 import {FlatList, StyleSheet, Text, View, Pressable, ActivityIndicator, Alert} from 'react-native';
 import React from 'react';
-import CartListItem from '../components/CartListItem';
+import CartListItem from '@/components/CartListItem';
 import {useSelector, useDispatch} from 'react-redux';
 import {
   selectDeliveryPrice,
   selectSubtotal,
   selectTotal,
   cartSlice,
-} from '../store/cartSlice';
-import { useCreateOrderMutation } from '../store/apiSlice';
+} from '@/store/cartSlice';
+import { useCreateOrderMutation } from '@/store/apiSlice';
+import { router } from 'expo-router';
 
 const ShoppingCartTotals = () => {
   const subtotal = useSelector(selectSubtotal);
@@ -33,7 +34,7 @@ const ShoppingCartTotals = () => {
   );
 };
 
-const ShoppingCartScreen = ({navigation}) => {
+const ShoppingCartScreen = () => {
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
   // console.log(cartItems)
@@ -68,7 +69,7 @@ const ShoppingCartScreen = ({navigation}) => {
   }
   if(!cartItems.length) {
     const goToProducts = () => {
-      navigation.navigate("Products")
+      router.push("/(tabs)/categories")
     }
     return (
       <View style={styles.noCartcontainer}>

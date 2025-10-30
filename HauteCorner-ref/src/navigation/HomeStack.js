@@ -58,7 +58,6 @@ const HomeStack = () => {
           </View>
       </Pressable>
     </View>
-    
   )
   return (
     <>

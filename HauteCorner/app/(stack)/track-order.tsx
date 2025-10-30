@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TextInput, ScrollView, ActivityIndicator } from
 import React, {useState} from 'react'
 import { useGetOrderQuery } from '@/store/apiSlice'
 
-const ModalScreen = () => {
+const TrackOrderScreen = () => {
   const [ref, setRef] = useState("")
 
   const {data, isLoading, error} = useGetOrderQuery(ref);
@@ -32,7 +32,7 @@ const ModalScreen = () => {
   )
 }
 
-export default ModalScreen;
+export default TrackOrderScreen;
 
 const styles = StyleSheet.create({
   root: {

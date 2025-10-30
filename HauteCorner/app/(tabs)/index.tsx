@@ -1,92 +1,119 @@
-import { Platform, StyleSheet } from 'react-native';
-
+import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { useGetProductsQuery } from '@/store/apiSlice';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
 export default function HomeScreen() {
+  const [category, setCategory] = useState("")
+  const {data: products, isLoading, error} = useGetProductsQuery();
+
+  if(isLoading){
+    return <ActivityIndicator />
+  }
+  if(error){
+    return (
+      <View style={styles.container}>
+        <Text style={styles.text}>Error Fetching Products! {error.toString()}</Text>
+      </View>
+    )
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
+    <View style={styles.container}>
+      <View style={styles.categories}>
         <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <Text style={styles.text}>Choose Category</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryOptions}>
+          <Pressable onPress={() => setCategory("Shoes")} style={[styles.categoryButton, {backgroundColor: category==="Shoes"? "#000": "gray"}]}><Text style={styles.buttonText}>Shoes</Text></Pressable>
+          <Pressable onPress={() => setCategory("Clothes")} style={[styles.categoryButton, {backgroundColor: category==="Clothes"? "#000": "gray"}]}><Text style={styles.buttonText}>Clothes</Text></Pressable>
+          <Pressable onPress={() => setCategory("Men")} style={[styles.categoryButton, {backgroundColor: category==="Men"? "#000": "gray"}]}><Text style={styles.buttonText}>For Men</Text></Pressable>
+          <Pressable onPress={() => setCategory("Women")} style={[styles.categoryButton, {backgroundColor: category==="Women"? "#000": "gray"}]}><Text style={styles.buttonText}>For Women</Text></Pressable>
+          <Pressable onPress={() => setCategory("Children")} style={[styles.categoryButton, {backgroundColor: category==="Children"? "#000": "gray"}]}><Text style={styles.buttonText}>For Children</Text></Pressable>
+        </ScrollView>
+      </View>
+      <FlatList
+        data={products}
+        renderItem={({item}) => (
+          <Pressable
+            onPress={() => router.push(`/products/${item._id}`)}
+            style={styles.itemContainer}>
+            <Ionicons style={styles.likeIcon} name="star" size={20} color={"gray"} />
+            <Image source={{uri: item.images[0]}} style={styles.image} />
+            <Text style={styles.itemText}>{item.title}</Text>
+          </Pressable>
+        )}
+        numColumns={2}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
   );
-}
-
+};
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    backgroundColor: '#e7e7e7',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  categoryOptions: {
+    flexDirection: "row",
+    width: "100%",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  categories: {
+    display: 'flex',
+    width: "100%",
+    borderRadius: 20,
+    paddingVertical: 10
+  },
+  categoryButton: {
+    alignItems: 'center',
+    margin: 5,
+    paddingVertical: 1,
+    borderRadius: 50,
+    flexDirection: "row",
+  }, 
+  buttonText: {
+    fontWeight: '500',
+    marginHorizontal: 8,
+    fontSize: 15,
+    paddingVertical:5,
+    color: '#fff',
+  },
+  itemContainer: {
+    width: '50%',
+    padding: 1,
+    alignItems: "center",
+    position: 'relative'
+  },
+  text: {
+    color: "#000",
+    fontWeight: "bold",
+    margin: 5,
+    fontSize: 18
+  },
+  image: {
+    width: '100%',
+    borderRadius:10,
+    aspectRatio: 1,
+  },
+  likeIcon: {
     position: 'absolute',
+    zIndex: 1,
+    right: 8,
+    top: 8
   },
+  itemText: {
+    color: "#000",
+    bottom: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    position: 'absolute',
+    backgroundColor: "#e7e7e7",
+    margin: "auto",
+    zIndex: 1
+  }
 });
+
+  

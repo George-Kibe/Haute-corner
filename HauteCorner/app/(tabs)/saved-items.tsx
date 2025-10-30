@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
+import { images } from '@/constants';
 
 const SavedItemsScreen = () => {
-  const [amount, setAmount] = useState();
-  const [phoneNumber, setPhoneNumber] = useState()
+  const [amount, setAmount] = useState<number>(0);
+  const [phoneNumber, setPhoneNumber] = useState<string>("")
 
   console.log(amount)
   return (
@@ -17,10 +18,10 @@ const SavedItemsScreen = () => {
       </View>
       <View style={styles.paymentImages}>
         <View style={styles.imageContainer}> 
-          <Image style={styles.image} source={require("../assets/images/mpesa_logo.jpg")} />
+          <Image style={styles.image} source={images.MpesaLogo} />
         </View>
-        <Image style={styles.image} source={require("../assets/images/paypal_logo.png")} />
-        <Image style={styles.image} source={require("../assets/images/mastercard.png")} />
+        <Image style={styles.image} source={images.MasterCardImage} />
+        <Image style={styles.image} source={images.PaypalLogo} />
       </View>
       <View style={styles.inputView}>
         <Text style={styles.text}>Phone Number</Text>
@@ -28,7 +29,7 @@ const SavedItemsScreen = () => {
       </View>
       <View style={styles.inputView}>
         <Text style={styles.text}>Amount</Text>
-        <TextInput value={amount} onChangeText={setAmount} style={styles.input} keyboardType='numeric' placeholder='Enter Amount' />
+        <TextInput value={amount.toString()} onChangeText={amount => setAmount(Number(amount) || 0)} style={styles.input} keyboardType='numeric' placeholder='Enter Amount' />
       </View>
       <TouchableOpacity style={styles.payButton}>
         <Text style={styles.payText}>Pay Now {amount}</Text>

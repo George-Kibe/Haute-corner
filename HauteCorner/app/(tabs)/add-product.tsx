@@ -1,21 +1,18 @@
 import React, {useState} from 'react';
 import {Text, StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Pressable, Image} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import Ionicons from "react-native-vector-icons/Ionicons"
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import uploadImageToS3 from "../utils/UploadImageToS3"
 import Toast from 'react-native-toast-message';
 import axios from "axios"
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 axios.defaults.baseURL = "https://buenas-admin.vercel.app/";
 
 const AddProductScreen = () => {
-  const [title, setTitle] = useState();
-  const [description, setDescription] = useState();
-  const [category, setCategory] = useState();
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
   const [images, setImages] = useState([]);
-  const [options, setOptions] = useState([]);
-  const [price, setPrice] = useState();
+  const [options, setOptions] = useState<[]>([]);
+  const [price, setPrice] = useState<number>(0);
 
   const imageOptions = {
     saveToPhotos: true,
@@ -23,37 +20,14 @@ const AddProductScreen = () => {
     selectionLimit: 10,
   }
 
-  const goSetOptions = (text) => {
+  const goSetOptions = (text:string) => {
     const options = text.split(",");
     setOptions(options)
   } 
-  // console.log("Options", options)
-  const openGallery = async() => {
-    try {
-      const result = await launchImageLibrary(imageOptions);
-      const {assets} = result;
-      const uploadedFiles = [];
-      console.log(assets)
-      for (let i = 0; i < assets.length; i++) {
-        //console.log(req.files[i])
-        const {uri:url, fileName, type: mimetype} = assets[i]
-        const parts = fileName.split(".");
-        const ext = parts[parts.length-1];
-        const uploadUrl = await uploadImageToS3(url, mimetype, ext);
-        uploadedFiles.push(uploadUrl)
-      }
-      console.log("Uploaded Files: ",uploadedFiles)
-      setImages(prev => {
-        return prev? [...prev, ...uploadedFiles] : [...uploadedFiles]
-      }); 
-    } catch (error) {
-      console.warn(error.message)
-    }
-  }
   const makeFavorite = () => {
 
   }
-  const deleteImage = (image) => {
+  const deleteImage = (image:string) => {
     setImages(images.filter(img => img != image))
     Toast.show({
       type: 'success',
@@ -87,7 +61,7 @@ const AddProductScreen = () => {
           text2: 'You can nowview it under the products screen😃'
         }); 
       }
-    } catch (error) {
+    } catch (error:any) {
       console.log(error)
       Toast.show({
         type: 'error',
@@ -126,7 +100,7 @@ const AddProductScreen = () => {
       </View>
       <View style={styles.inputView}>
         <Text style={styles.text}>Price:</Text>
-        <TextInput value={price} onChangeText={setPrice} keyboardType="number-pad" style={styles.input} placeholder='Price' />
+        <TextInput value={price.toString()} onChangeText={(num) => setPrice(Number(num)|| 0)} keyboardType="number-pad" style={styles.input} placeholder='Price' />
       </View>
       <View style={styles.inputView}>
         <Text style={styles.text}>Options:</Text>
@@ -148,7 +122,7 @@ const AddProductScreen = () => {
         }
         </ScrollView>         
        
-        <Pressable onPress={openGallery}><Ionicons name='cloud-upload' size={35} /></Pressable>
+        <Pressable onPress={() =>{}}><Ionicons name='cloud-upload' size={35} /></Pressable>
       </View>      
       <TouchableOpacity style={styles.saveButton} onPress={saveProduct} >
         <Text style={styles.saveText}>Save Product</Text>
@@ -165,7 +139,6 @@ const styles = StyleSheet.create({
     },
     title: {
       color: "black",
-      alignSelf: "flex-start",
       fontWeight: "bold",
       fontSize: 20,
       alignSelf: "center",

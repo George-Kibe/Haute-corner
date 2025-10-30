@@ -1,16 +1,13 @@
-import {View, Image, FlatList, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useSelector, useDispatch} from 'react-redux';
-import {productsSlice} from '../store/productsSlice';
-import { useGetProductsQuery } from '../store/apiSlice';
-import IonIcons from "react-native-vector-icons/Ionicons"
+import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { HelloWave } from '@/components/hello-wave';
+import { useState } from 'react';
+import { useGetProductsQuery } from '@/store/apiSlice';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
-const ProductsScreen = ({navigation}) => {
-  const dispatch = useDispatch();
+export default function CategoriesScreen() {
   const [category, setCategory] = useState("")
-  //const products = useSelector(state => state.products.products);
-  const {data:products, isLoading, error} = useGetProductsQuery();
-  // console.log(products, isLoading,error)
+  const {data: products, isLoading, error} = useGetProductsQuery();
 
   if(isLoading){
     return <ActivityIndicator />
@@ -18,14 +15,15 @@ const ProductsScreen = ({navigation}) => {
   if(error){
     return (
       <View style={styles.container}>
-        <Text style={styles.text}>Error Fetching Products! {error.error}</Text>
+        <Text style={styles.text}>Error Fetching Products! {error.toString()}</Text>
       </View>
     )
-  }  
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.categories}>
+        <HelloWave />
         <Text style={styles.text}>Choose Category</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryOptions}>
           <Pressable onPress={() => setCategory("Shoes")} style={[styles.categoryButton, {backgroundColor: category==="Shoes"? "#000": "gray"}]}><Text style={styles.buttonText}>Shoes</Text></Pressable>
@@ -39,17 +37,15 @@ const ProductsScreen = ({navigation}) => {
         data={products}
         renderItem={({item}) => (
           <Pressable
-            onPress={() => {
-              //dispatch(productsSlice.actions.setSelectedProduct(item.id));
-              navigation.navigate('Product-Details', {"id": item._id});
-            }}
+            onPress={() => router.push(`/products/${item._id}`)}
             style={styles.itemContainer}>
-            <IonIcons style={styles.likeIcon} name="star" size={20} color={"gray"} />
+            <Ionicons style={styles.likeIcon} name="star" size={20} color={"gray"} />
             <Image source={{uri: item.images[0]}} style={styles.image} />
             <Text style={styles.itemText}>{item.title}</Text>
           </Pressable>
         )}
         numColumns={2}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -59,6 +55,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#e7e7e7',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  categoryOptions: {
+    flexDirection: "row",
+    width: "100%",
   },
   categories: {
     display: 'flex',
@@ -116,4 +116,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default ProductsScreen;
+  
