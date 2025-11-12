@@ -1,3 +1,4 @@
+
 By default, React Native apps run in their own development server and are not able to make requests to localhost URLs because they are considered external requests. However, you can use the adb reverse command to forward requests from your device to your development machine.
 Here's how you can do it:
 Make sure your device is connected to your development machine with a USB cable.
