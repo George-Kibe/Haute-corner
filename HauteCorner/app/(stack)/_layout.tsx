@@ -8,7 +8,7 @@ import Hleft from '@/components/HeaderLeft'
 const StackLayout = () => {
   return (
     <SafeAreaView style={styles.container}>
-      <Stack>
+      <Stack screenOptions={{ headerTransparent: false }}>
         <Stack.Screen name="shopping-cart" options={{ headerShown: true, headerLeft:Hleft }} />
         <Stack.Screen name="track-order" options={{ headerShown: true, headerLeft:Hleft }} /> 
         <Stack.Screen name="products" options={{ headerShown: false}} />

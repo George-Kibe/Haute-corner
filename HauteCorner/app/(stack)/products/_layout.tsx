@@ -5,7 +5,7 @@ import Hleft from '@/components/HeaderLeft'
 
 const ProductLayout = () => {
   return (
-    <Stack>
+    <Stack screenOptions={{ headerTransparent: false }}>
       <Stack.Screen
         name="[id]"
         options={{

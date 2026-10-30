@@ -25,7 +25,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'HauteCorner',
-          tabBarIcon: ({ color }) => <Entypo name="home" color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Entypo name="home" color={color as string} size={24} />,
           headerRight: HRight, 
         }}
       />
@@ -33,7 +33,7 @@ export default function TabLayout() {
         name="categories"
         options={{
           title: 'Categories',
-          tabBarIcon: ({ color }) => <Ionicons name="list-circle" color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="list-circle" color={color as string} size={24} />,
           headerRight: TrackOrder,
         }}
       />
@@ -41,7 +41,7 @@ export default function TabLayout() {
         name="add-product"
         options={{
           title: 'Add Product',
-          tabBarIcon: ({ color }) => <Ionicons name="add-circle-sharp" color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Ionicons name="add-circle-sharp" color={color as string} size={24} />,
           headerRight: MyCart,
         }}
       />
@@ -49,7 +49,7 @@ export default function TabLayout() {
         name="saved-items"
         options={{
           title: 'Wish List',
-          tabBarIcon: ({ color }) => <Ionicons name="star" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="star" size={24} color={color as string} />,
           headerRight: MyCart,
         }}
       />
@@ -57,7 +57,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <Entypo name="user" color={color} size={24} />,
+          tabBarIcon: ({ color }) => <Entypo name="user" color={color as string} size={24} />,
           headerRight: MyCart,
         }}
       />
