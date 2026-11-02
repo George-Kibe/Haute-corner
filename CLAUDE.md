@@ -19,14 +19,37 @@ bun install
 bun run start              # Metro, for an installed development build
 bunx expo run:ios          # Build and install
 bunx expo run:android
-bunx tsc --noEmit          # 16 known errors; see docs/KNOWN_ISSUES.md
+bunx tsc --noEmit
 bun run lint
+bun run test
 bunx expo-doctor@latest
 bunx expo install <pkg>    # Always use this for Expo packages, not bun add
 ```
 
+## Web commands
+
+Run from `web/`:
+
+```bash
+bun run dev
+bun run test
+bun run typecheck
+bun run lint
+bun run build              # API routes must show as ƒ (dynamic)
+bun run seed               # Only on a database ending in _dev
+```
+
+This Next.js version differs from older ones. Read `web/node_modules/next/dist/docs/` before using an unfamiliar API.
+
+## Testing
+
+Test on at least two iOS simulators of different sizes and the owner's connected Android phone, not an Android emulator. UI flows are in `HauteCorner/.maestro/` and run against Release builds on iOS. See [Setup](docs/SETUP.md#testing-on-devices).
+
+Run native builds from a scratch copy rather than `android/` or `ios/` if the owner may be using them, and check with `pgrep -fl "expo run|gradle|xcodebuild"` first.
+
 ## Mobile rules
 
+- **Use native components first.** Check `@expo/ui` (universal, `swift-ui`, `jetpack-compose`, `community/*`) and native navigation options such as `NativeTabs`, `Stack.Toolbar` and `Stack.SearchBar` before writing a custom TypeScript component. Build custom only when nothing native fits, and say why.
 - Expo Go does not work; use development builds.
 - `android/` and `ios/` are generated and git-ignored. Change native settings through `app.json` or a plugin in `plugins/`.
 - The app may be running or building while you work. Check before running `expo prebuild --clean` or removing those folders.

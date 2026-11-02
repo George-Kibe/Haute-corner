@@ -8,14 +8,15 @@ The revamp is working through Phases 1 and 2 of the [roadmap](docs/ROADMAP.md).
 
 | Part | State |
 | --- | --- |
-| Mobile app | Upgraded to Expo SDK 58 and verified on iOS and Android. Still has the old screens, and products do not load because the old API returns 401 |
-| API, website, admin dashboard | Not started. Will be one Next.js app in `web/` |
+| Mobile app | On Expo SDK 58 with native tabs. Home, Categories and product details are rebuilt on the new API. The cart, order tracking, Add Product and Wish List screens come in later phases |
+| API and website | Live at [hautecorner.vercel.app](https://hautecorner.vercel.app). The production database is not connected yet |
+| Admin dashboard | Starts in Phase 4 |
 
 ## Stack
 
 | Area | Technology |
 | --- | --- |
-| Mobile | Expo SDK 58, React Native 0.88, Expo Router, TanStack Query, Zustand, MMKV, Expo UI |
+| Mobile | Expo SDK 58, React Native 0.88, Expo Router with native tabs, Expo UI, TanStack Query, Zustand, MMKV |
 | Server and website | Next.js on Vercel, MongoDB Atlas with Mongoose |
 | Images and video | Cloudinary |
 | Payments | M-Pesa through Safaricom Daraja, cards through Paystack |
@@ -26,7 +27,7 @@ The revamp is working through Phases 1 and 2 of the [roadmap](docs/ROADMAP.md).
 
 ```text
 HauteCorner/   Expo mobile app
-web/           Next.js API, website and admin dashboard (created in Phase 1)
+web/           Next.js API, website and admin dashboard
 docs/          Project documentation
 ```
 

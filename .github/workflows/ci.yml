@@ -25,6 +25,25 @@ jobs:
       - run: bun run test
       - run: bun run build
 
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: HauteCorner
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit
+      - run: bun run lint
+      - run: bun run test
+      - run: bunx expo-doctor@latest
+
   secrets:
     runs-on: ubuntu-latest
     steps:

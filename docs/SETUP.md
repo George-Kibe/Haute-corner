@@ -24,9 +24,10 @@ bun install
 Create `HauteCorner/.env.local`:
 
 ```bash
-EXPO_PUBLIC_API_URL=http://<your-computer-ip>:3000/api/v1
-EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<web client id>
+cp .env.example .env.local
 ```
+
+`localhost` works on iOS simulators, and on a USB-connected Android phone after `adb reverse tcp:3000 tcp:3000` and `adb reverse tcp:8081 tcp:8081`.
 
 First run, or after any native change, build and install the app:
 
@@ -50,24 +51,57 @@ bun run start
 ```bash
 bunx tsc --noEmit
 bun run lint
+bun run test
 bunx expo-doctor@latest
 ```
 
 Install Expo packages with `bunx expo install <package>`, not `bun add`, so that they match the SDK.
 
-**Reaching the local API from a device:** Use your computer's LAN IP address. On a USB-connected Android device, `adb reverse tcp:3000 tcp:3000` also lets you use `localhost`.
-
 ## Web and API
-
-`web/` is created in Phase 1. Once it exists:
 
 ```bash
 cd web
 bun install
+cp .env.example .env.local   # then set MONGODB_URI
+bun run seed                 # sample data; only runs on a database ending in _dev
 bun run dev
 ```
 
-Create `web/.env.local` from the variables below. Never commit it.
+| Command | What it does |
+| --- | --- |
+| `bun run test` | API tests, on an in-memory MongoDB |
+| `bun run typecheck` | Generates route types, then runs TypeScript |
+| `bun run lint` | ESLint |
+| `bun run build` | Production build. Check that API routes are listed as `ƒ` |
+| `bun run sync-indexes` | Creates indexes. Production has `autoIndex` off, so run this when indexes change |
+| `bun run check-transactions` | Confirms multi-document transactions work on the database in `MONGODB_URI` |
+
+bun installs packages, but the scripts run on Node through `tsx`, because bun's runtime cannot load MongoDB's `bson` library. Vercel runs on Node too.
+
+`.env.local` is ignored by git. Never commit it.
+
+## Testing on devices
+
+Test on at least two iOS simulators of different sizes and on a connected Android phone, not an Android emulator.
+
+UI flows use [Maestro](https://maestro.dev/) and live in `HauteCorner/.maestro/`. Start the API with seed data first.
+
+**iOS simulators** run a Release build, so the dev menu cannot get in the way of taps. Set `EXPO_PUBLIC_API_URL` in `.env.local`, build with `bunx expo run:ios --configuration Release`, then:
+
+```bash
+xcrun simctl list devices booted            # simulator IDs
+maestro --device <id> test .maestro/catalogue.yaml
+```
+
+**The Android phone** runs a development build through Metro, because Android blocks plain HTTP to `localhost` in Release builds:
+
+```bash
+adb devices                                 # phone serial
+adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081
+maestro --device <serial> test -e METRO_PORT=8081 .maestro/catalogue.yaml
+```
+
+**Xiaomi, Redmi and POCO phones** block automated taps and installs by default. In **Developer options**, turn on both **USB debugging (Security settings)** and **Install via USB**.
 
 ## Environment variables
 
@@ -79,7 +113,8 @@ Create `web/.env.local` from the variables below. Never commit it.
 | `JWT_SECRET` | At least 32 random bytes, for signing access tokens | 3 |
 | `GOOGLE_WEB_CLIENT_ID` | Expected audience of Google ID tokens | 3 |
 | `APPLE_BUNDLE_ID` | `com.hautecorner.app`, the expected audience of Apple tokens | 3 |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary account | 4 |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary account. `demo` until Phase 4 | 1 |
+| `NEXT_PUBLIC_SITE_URL` | Optional. Public address of the website | 1 |
 | `CLOUDINARY_API_KEY` | Sent to clients with a signature | 4 |
 | `CLOUDINARY_API_SECRET` | Signs uploads; never sent to clients | 4 |
 | `PAYSTACK_SECRET_KEY` | Separate test and live values | 5 |
@@ -97,7 +132,7 @@ Daraja names are placeholders until confirmed against Safaricom's documentation.
 | Variable | Purpose |
 | --- | --- |
 | `EXPO_PUBLIC_API_URL` | API base URL for this environment |
-| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | Requests an ID token for the API to verify |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | From Phase 3. Requests an ID token for the API to verify |
 
 `EXPO_PUBLIC_*` values are compiled into the app and readable by anyone. Never put secrets in them.
 
@@ -107,7 +142,9 @@ Set these up when the phase shown begins.
 
 ### MongoDB Atlas (Phase 1)
 
-1. Create a project and Free cluster, in a region near your Vercel function region.
+Your Atlas CLI session must be active (`atlas auth login`) for the automated setup.
+
+1. Create a project and Free cluster in `EU_WEST_1` (Ireland), next to the Vercel functions in `dub1`.
 2. Create separate database users for dev and production, each limited to `readWrite` on its own database.
 3. In **Network Access**, allow `0.0.0.0/0`, because [Vercel uses dynamic IP addresses](https://www.mongodb.com/docs/atlas/reference/partner-integrations/vercel/).
 4. Enable backups, and add alerts for storage and connections.
@@ -116,9 +153,9 @@ Atlas pauses a free cluster after 30 days with no connections. Resume it from th
 
 ### Vercel (Phase 1)
 
-1. Import the GitHub repository, and set **Root Directory** to `web`.
-2. Add environment variables separately for Production and Preview.
-3. Set the function region next to the Atlas cluster.
+Project `hautecorner`, connected to this repository, with **Root Directory** set to `web`. The function region is set to `dub1` in `web/vercel.json`. Every push to `master` deploys to production.
+
+Add environment variables separately for Production and Preview.
 
 ### Google Sign-In (Phase 3)
 
@@ -175,6 +212,9 @@ Needs a Google Play Console account.
 | Prebuild: `Missing iosUrlScheme` | The Google Sign-In plugin in `app.json` needs its option |
 | iOS: app crashes when starting Google Sign-In | `iosUrlScheme` is still the placeholder, or does not match the iOS client |
 | Android: `DEVELOPER_ERROR` on Google Sign-In | SHA-1 for the signing key is missing from the Android OAuth client |
+| iOS simulator: `runtime path not found` | That runtime's disk image is unavailable. Restart the Mac, or reinstall the runtime from Xcode Settings. Simulators on other runtimes still work |
+| Scripts crash with `isBuildingSnapshot is not yet implemented in Bun` | Run them through `bun run <script>`, which uses Node. Do not run them with `bun scripts/...` |
+| Maestro on a Xiaomi phone: `INJECT_EVENTS` or `INSTALL_FAILED_USER_RESTRICTED` | Turn on **USB debugging (Security settings)** and **Install via USB** in Developer options |
 | Emulator says it is already running after a crash | Delete `~/.android/avd/<name>.avd/hardware-qemu.ini.lock`, once you have confirmed no emulator is running |
 | Device cannot reach the API | Use your LAN IP, not `localhost`, and check that the device is on the same network |
 | API cannot reach Atlas | Check `MONGODB_URI`, the access list, and whether the cluster is paused |

@@ -1,77 +1,67 @@
+import { Ionicons } from '@react-native-vector-icons/ionicons/static';
+import { Image } from 'expo-image';
 import React from 'react';
-import {View, Text, StyleSheet, Image} from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { useDispatch } from 'react-redux';
 
-import {useDispatch} from 'react-redux';
-import {cartSlice} from '@/store/cartSlice';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { AppText } from '@/components/app-text';
+import { useColors } from '@/hooks/use-colors';
+import { formatPrice } from '@/lib/format';
+import { cartSlice } from '@/store/cartSlice';
 
 interface CartItemProps {
-    cartItem: {
-        product: {
-        _id: string;
-        title: string;
-        price: number;
-        images: string[];
+  cartItem: {
+    product: {
+      _id: string;
+      title: string;
+      price: number;
+      images: string[];
     };
     quantity: number;
-    size: string;
-    };
+    size?: string;
+  };
 }
-const CartListItem = ({cartItem}: CartItemProps) => {
+
+const CartListItem = ({ cartItem }: CartItemProps) => {
+  const colors = useColors();
   const dispatch = useDispatch();
 
-  const increaseQuantity = () => {
-    dispatch(
-      cartSlice.actions.changeQuantity({
-        productId: cartItem.product._id,
-        amount: 1,
-      }),
-    );
-  };
-
-  const decreaseQuantity = () => {
-    dispatch(
-      cartSlice.actions.changeQuantity({
-        productId: cartItem.product._id,
-        amount: -1,
-      }),
-    );
+  const changeQuantity = (amount: number) => {
+    dispatch(cartSlice.actions.changeQuantity({ productId: cartItem.product._id, amount }));
   };
 
   return (
     <View style={styles.container}>
-      <Image source={{uri: cartItem.product.images[0]}} style={styles.image} />
+      <Image
+        contentFit="cover"
+        source={{ uri: cartItem.product.images[0] }}
+        style={[styles.image, { backgroundColor: colors.tint }]}
+      />
       <View style={styles.contentContainer}>
-        <Text style={styles.name}>{cartItem.product.title}</Text>
-        <Text style={styles.size}>Size {cartItem.size}</Text>
+        <AppText style={styles.name}>{cartItem.product.title}</AppText>
+        {cartItem.size ? <AppText style={[styles.size, { color: colors.muted }]}>Size {cartItem.size}</AppText> : null}
 
         <View style={styles.footer}>
-          {cartItem.quantity <= 1 ? (
-            <MaterialCommunityIcons
-              onPress={decreaseQuantity}
-              name="delete-circle"
-              size={25}
-              color="red"
-            />
-          ) : (
-            <Feather
-              onPress={decreaseQuantity}
-              name="minus-circle"
-              size={25}
-              color="gray"
-            />
-          )}
-
-          <Text style={styles.quantity}>{cartItem.quantity}</Text>
-          <Feather
-            onPress={increaseQuantity}
-            name="plus-circle"
+          <Ionicons
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={cartItem.quantity <= 1 ? 'Remove from cart' : 'Decrease quantity'}
+            color={cartItem.quantity <= 1 ? colors.danger : colors.muted}
+            name={cartItem.quantity <= 1 ? 'trash' : 'remove-circle-outline'}
+            onPress={() => changeQuantity(-1)}
             size={25}
-            color="gray"
           />
-          <Text style={styles.itemTotal}>
-            Kshs. {cartItem.product.price * cartItem.quantity}
-          </Text>
+          <AppText style={[styles.quantity, { color: colors.muted }]}>{cartItem.quantity}</AppText>
+          <Ionicons
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Increase quantity"
+            color={colors.muted}
+            name="add-circle-outline"
+            onPress={() => changeQuantity(1)}
+            size={25}
+          />
+          <AppText style={styles.itemTotal}>{formatPrice(cartItem.product.price * cartItem.quantity)}</AppText>
         </View>
       </View>
     </View>
@@ -91,19 +81,18 @@ const styles = StyleSheet.create({
   image: {
     width: '40%',
     aspectRatio: 1,
+    borderRadius: 12,
   },
   name: {
-    fontWeight: '500',
-    fontSize: 18,
+    fontWeight: '700',
+    fontSize: 16,
   },
   size: {
-    fontSize: 16,
-    color: 'gray',
+    fontSize: 14,
   },
   quantity: {
     marginHorizontal: 10,
-    fontWeight: 'bold',
-    color: 'gray',
+    fontWeight: '700',
   },
   footer: {
     marginTop: 'auto',
@@ -111,10 +100,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   itemTotal: {
-    fontSize: 16,
+    fontSize: 15,
     marginLeft: 'auto',
-    fontWeight: '500',
-    color: '#000',
+    fontWeight: '800',
   },
 });
 

@@ -1,17 +1,12 @@
 import {createApi, fetchBaseQuery} from "@reduxjs/toolkit/query/react";
 
+// Orders still use the old API until checkout is rebuilt in Phase 5.
 const baseUrl = "https://buenas-admin.vercel.app/api/";
 
 export const apiSlice = createApi({
     reducerPath: "api",
     baseQuery: fetchBaseQuery({baseUrl}),
     endpoints: (builder) => ({
-        getProducts: builder.query({
-            query: () => "products",
-        }),
-        getProduct: builder.query({
-            query: (id) => `products/${id}`,
-        }),
         //orders
         createOrder: builder.mutation({
             query: (newOrder) => ({
@@ -28,8 +23,6 @@ export const apiSlice = createApi({
 
 //creates these hooks automatically
 export const {
-    useGetProductQuery,
-    useGetProductsQuery,
     useCreateOrderMutation,
     useGetOrderQuery,
 } = apiSlice

@@ -1,0 +1,120 @@
+# Phase 2: browse, search, filter, open a product and add it to the cart.
+# Needs the API running with seed data, and Metro running.
+# Run with: maestro --device <id> test -e METRO_PORT=8081 .maestro/catalogue.yaml
+# Product cards merge their text into one label on iOS, so names match as prefixes.
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+
+# Home shows the newest products.
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 30000
+- takeScreenshot: 01-home
+
+# Search finds a product, and an unknown word shows the empty state.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Search shoes and clothing
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: Search
+- inputText: sneakers
+- extendedWaitUntil:
+    visible: Blue canvas sneakers.*
+    timeout: 15000
+- assertNotVisible: Graphic tee and joggers set.*
+- takeScreenshot: 02-search
+- eraseText: 10
+- inputText: umbrella
+- extendedWaitUntil:
+    visible: Nothing found for "umbrella"
+    timeout: 15000
+- eraseText: 10
+# The search bar's close button has no reliable label, so tap where it sits.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: 90%,9%
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - back
+- runFlow: dismiss-dev-menu.yaml
+# Let the keyboard finish closing, or the tab bar moves away from under the next tap.
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Categories filter by type and audience.
+- tapOn: Categories
+- tapOn: Shoes
+- extendedWaitUntil:
+    visible: Blue canvas sneakers.*
+    timeout: 15000
+- assertNotVisible: Royal blue evening dress.*
+- tapOn: Men
+- extendedWaitUntil:
+    visible: Black mesh runners.*
+    timeout: 15000
+- assertNotVisible: Blue canvas sneakers.*
+- takeScreenshot: 03-categories
+- tapOn: Clothing
+- tapOn: Kids
+- extendedWaitUntil:
+    visible: Kids sky blue tee.*
+    timeout: 15000
+- tapOn: All
+- tapOn: Everyone
+
+# Product details, then add to the cart.
+- tapOn: Home
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 15000
+- tapOn: Graphic tee and joggers set.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- takeScreenshot: 04-product
+- scrollUntilVisible:
+    element: Add to cart
+    direction: DOWN
+- tapOn: Add to cart
+- extendedWaitUntil:
+    visible: Added to cart
+    timeout: 5000
+- tapOn: My cart
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 10000
+- assertVisible: Subtotal.*
+- takeScreenshot: 05-cart
+
+# Remove it again so the flow can be rerun, and return using the native back button.
+- tapOn: Remove from cart
+- extendedWaitUntil:
+    visible: Your Cart is Empty
+    timeout: 5000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Back
+      - tapOn: Back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - back
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 10000

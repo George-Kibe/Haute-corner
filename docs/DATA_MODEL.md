@@ -128,10 +128,13 @@ type Product = {
   media: Media[];          // At least one image; limits on video come from settings
   options: string[];       // Sizes or variants
   stock: number;           // Integer, at least 0
-  status: 'active' | 'archived' | 'removed'; // 'removed' is set by an admin
+  status: 'active' | 'archived' | 'removed' | 'hidden';
   removedReason?: string;
 };
 
+// 'removed' is set by an admin. 'hidden' covers products whose seller is not
+// currently approved, so public queries only need to filter on 'active'. It is
+// restored to 'active' when the seller is approved again.
 type Media = {
   kind: 'image' | 'video';
   publicId: string;
@@ -146,6 +149,7 @@ type Media = {
 | `{ status: 1, _id: -1 }` | Default listing, newest first |
 | `{ status: 1, type: 1, _id: -1 }` | Filter by type |
 | `{ status: 1, audience: 1, _id: -1 }` | Filter by audience |
+| `{ status: 1, type: 1, audience: 1, _id: -1 }` | Filter by both |
 | `{ sellerId: 1, status: 1, _id: -1 }` | Seller's listings, and the public seller page |
 | `{ title: 'text', description: 'text' }` | Search |
 
@@ -385,7 +389,7 @@ Stock returns when a reservation expires, or an order is cancelled or refunded.
 
 ## Seed data
 
-`web/scripts/seed.ts` (Phase 2) creates sample sellers and products, and promotes one account to `admin` by email. It must refuse to run if `MONGODB_URI` points at the production database.
+`web/scripts/seed.ts` creates sample sellers and products, using Cloudinary's demo images. It refuses to run unless the database name ends in `_dev`. From Phase 3, it also promotes one account to `admin` by email.
 
 ## Storage
 

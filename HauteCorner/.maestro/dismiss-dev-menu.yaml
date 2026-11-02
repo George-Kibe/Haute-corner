@@ -1,0 +1,9 @@
+# The dev menu can open by itself in development builds. Tap outside it to close.
+appId: com.hautecorner.app
+---
+- runFlow:
+    when:
+      visible: Source code explorer
+    commands:
+      - tapOn:
+          point: 50%,15%

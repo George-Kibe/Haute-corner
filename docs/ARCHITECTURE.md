@@ -40,7 +40,7 @@ flowchart LR
 | Part | Technology | Location |
 | --- | --- | --- |
 | Mobile app | Expo SDK 58, React Native 0.88, Expo Router, TypeScript | `HauteCorner/` |
-| API, website, admin dashboard | Next.js 16 App Router, TypeScript, Mongoose 9 | `web/` (Phase 1) |
+| API, website, admin dashboard | Next.js 16 App Router, TypeScript, Mongoose 9 | `web/` |
 | Database | MongoDB Atlas | Hosted |
 | Images and video | Cloudinary | Hosted |
 | M-Pesa | Safaricom Daraja | Hosted |
@@ -52,7 +52,7 @@ flowchart LR
 ```text
 .
 ├── HauteCorner/   Expo mobile app
-├── web/           Next.js API, website and admin dashboard (created in Phase 1)
+├── web/           Next.js API, website and admin dashboard
 ├── docs/          Project documentation
 ├── CLAUDE.md      Working notes for coding agents
 └── readme.MD      Project entry point
@@ -67,9 +67,10 @@ Existing folders stay, and new code is organised by feature so that screens stay
 ```text
 HauteCorner/
 ├── app/                 Routes only (Expo Router)
-│   ├── (tabs)/          Home, Categories, Wish List, Profile
-│   ├── (stack)/         Product details, cart, checkout, orders, disputes
-│   └── (seller)/        Seller application, listings, seller orders, earnings
+│   ├── (tabs)/          Native tabs, each nesting a native Stack: (home), categories, add-product, saved-items, profile
+│   ├── products/[id]    Product details, pushed over the tabs on the root Stack
+│   ├── shopping-cart    Cart, also on the root Stack, as are checkout, orders and disputes later
+│   └── (seller)/        Seller application, listings, seller orders, earnings (Phase 4)
 ├── features/
 │   ├── auth/            Google and Apple sign-in, session store
 │   ├── products/        Query hooks, product UI, video player
@@ -101,11 +102,11 @@ HauteCorner/
 
 ### Conventions
 
+- **Native components come first** ([ADR-032](DECISIONS.md#adr-032-native-components-first)). Use Expo UI and native navigation before writing a custom component. Product cards and the grid are custom only because no native equivalent exists.
 - Remote images use `expo-image`, requested through `lib/media.ts`, never React Native's `Image`.
 - User feedback uses `react-native-toast-message`.
-- Native controls come from `@expo/ui` where a suitable one exists.
 - Configuration comes from `EXPO_PUBLIC_*` variables, which are compiled into the app and must never hold secrets.
-- Stack screens set `headerTransparent: false` or handle content insets, because iOS 26+ draws content under transparent headers.
+- On iOS 26+, content draws under transparent headers. Screens with a scrolling list set `contentInsetAdjustmentBehavior="automatic"` and keep the Liquid Glass header. Screens without one use `headerTransparent: false`.
 
 ## Server
 
@@ -157,7 +158,9 @@ export async function dbConnect() {
 }
 ```
 
-Vercel's [pooling guidance](https://vercel.com/kb/guide/connection-pooling-with-functions) is to create the pool in global scope, keep a minimum size of 1, never set the maximum to 1, use a short idle timeout, and call `attachDatabasePool` from `@vercel/functions`. That guide only shows `pg` and `mysql2`, so test `attachDatabasePool` with Mongoose in Phase 1 and watch connection counts in Atlas.
+This follows Vercel's [pooling guidance](https://vercel.com/kb/guide/connection-pooling-with-functions): a pool in global scope, a minimum size of 1, a maximum above 1, a short idle timeout, and `attachDatabasePool` from `@vercel/functions`, which lists MongoDB among its supported pools.
+
+**API routes must stay at request time.** With Cache Components on, a handler that finishes without touching the request can be prerendered during the build, which would freeze even an error response. The `route()` wrapper in `lib/http.ts` reads the request first to prevent this. `next build` should list every API route as `ƒ`.
 
 ## Key flows
 
@@ -389,6 +392,6 @@ Permissions, pricing, the ledger and payouts must have tests, because mistakes t
 
 ## Current state
 
-- **Mobile:** Runs on SDK 58, verified on iOS and Android, but still has the original Redux code and single-store screens. It points at `buenas-admin.vercel.app`, which returned 401 in October 2026, so products do not load. The libraries added for the revamp are installed but not used yet.
-- **Server:** `web/` does not exist yet.
+- **Mobile:** Home, Categories and product details are rebuilt on the new API with native components. The cart, order tracking, Add Product and Wish List screens are still the old ones, restyled, until their phases.
+- **Server:** The API has health, config, products and sellers routes. The website and draft legal pages are live.
 - **Details:** [Known issues](KNOWN_ISSUES.md) lists the defects to fix along the way.

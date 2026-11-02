@@ -9,9 +9,9 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "seed": "bun run scripts/seed.ts",
-    "sync-indexes": "bun run scripts/sync-indexes.ts",
-    "check-transactions": "bun run scripts/check-transactions.ts"
+    "seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
+    "sync-indexes": "tsx --env-file-if-exists=.env.local scripts/sync-indexes.ts",
+    "check-transactions": "tsx --env-file-if-exists=.env.local scripts/check-transactions.ts"
   },
   "dependencies": {
     "@vercel/functions": "^3.10.5",
@@ -30,6 +30,7 @@
     "eslint-config-next": "16.4.4",
     "mongodb-memory-server": "^11.3.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.5"
   },

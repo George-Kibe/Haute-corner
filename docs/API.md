@@ -45,6 +45,7 @@ Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-an
 | 409 | `conflict` | For example, insufficient stock or an invalid status change |
 | 429 | `rate_limited` | Too many requests |
 | 500 | `internal_error` | Unexpected failure. Details are logged, never returned |
+| 503 | `service_unavailable` | A dependency such as the database is not reachable |
 
 **Pagination:** Lists use `?limit=` (default 20, maximum 50) and `?cursor=` with the `nextCursor` from the previous response. `nextCursor` is `null` on the last page.
 
@@ -59,7 +60,18 @@ Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-an
 | Method and path | Access | Purpose |
 | --- | --- | --- |
 | `GET /health` | Public | Confirms the deployment is running and the database is reachable |
-| `GET /config` | Public | Minimum supported app version, video limits, dispute window |
+| `GET /config` | Public | Values the app needs at runtime |
+
+```json
+{
+  "data": {
+    "minimumAppVersion": "1.0.0",
+    "cloudinaryCloudName": "demo"
+  }
+}
+```
+
+Video limits and the dispute window join this response once they are decided ([open items](DECISIONS.md#open-items)).
 
 ## Authentication
 
@@ -114,9 +126,9 @@ Both return:
 | --- | --- | --- |
 | `GET /products` | Public | List active products from approved sellers |
 | `GET /products/{id}` | Public | Product details |
-| `GET /sellers/{id}` | Public | Public seller profile: name, delivery fee, returns note |
+| `GET /sellers/{id}` | Public | Public seller profile: `id`, `name`, `deliveryFee`, `deliveryAreas`, `returnsNote` |
 
-`GET /products` filters: `type` (`shoes`, `clothing`), `audience` (`men`, `women`, `children`, `unisex`), `seller`, `q` (text search), plus pagination. Results are newest first.
+`GET /products` filters: `type` (`shoes`, `clothing`), `audience` (`men`, `women`, `children`, `unisex`), `seller`, `q` (text search), plus pagination. Results are newest first. Only active products from approved sellers appear, and a seller's phone, payout number and documents are never returned.
 
 ```json
 {

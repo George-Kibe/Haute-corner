@@ -1,0 +1,36 @@
+# Starts the app clean, so every run begins on Home with an empty cart.
+# Release builds run as they are. For a development build, pass -e METRO_PORT=<port>
+# to load the JavaScript from Metro, though its dev tools can get in the way of taps.
+appId: com.hautecorner.app
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      true: ${METRO_PORT}
+    commands:
+      - openLink: exp+hautecorner://expo-development-client/?url=http%3A%2F%2Flocalhost%3A${METRO_PORT}
+      - runFlow:
+          when:
+            visible: Open
+          commands:
+            - tapOn: Open
+- extendedWaitUntil:
+    visible: Home
+    timeout: 120000
+- runFlow:
+    when:
+      true: ${METRO_PORT}
+    commands:
+      # The dev menu's first-run popup appears shortly after the app loads.
+      - extendedWaitUntil:
+          visible: Continue
+          timeout: 8000
+          optional: true
+      - runFlow:
+          when:
+            visible: Continue
+          commands:
+            - tapOn: Continue
+- waitForAnimationToEnd:
+    timeout: 3000

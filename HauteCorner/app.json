@@ -70,7 +70,8 @@
           "iosUrlScheme": "com.googleusercontent.apps.REPLACE-WITH-IOS-CLIENT-ID"
         }
       ],
-      "./plugins/with-gradle-memory"
+      "./plugins/with-gradle-memory",
+      "@react-native-vector-icons/ionicons"
     ],
     "experiments": {
       "typedRoutes": true,

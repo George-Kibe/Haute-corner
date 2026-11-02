@@ -33,7 +33,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [x] Delete `Backend/`, which held the exposed credential
 - [x] Review the Recommended items needed for Phases 1 and 2, the API and the data model
 - [x] Commit the upgrade and documents
-- [ ] Build and install a development build on each platform
+- [x] Build and install a development build on each platform
 
 **Exit:** The old password no longer works, the upgrade is committed, and the app runs from a development build on a real device.
 
@@ -41,14 +41,14 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 
 **Goal:** A deployed Next.js app with a working database connection and a public website.
 
-- [ ] Scaffold `web/` with Next.js 16, TypeScript and the App Router
+- [x] Scaffold `web/` with Next.js 16, TypeScript and the App Router
 - [ ] Create the Atlas Free cluster, with separate dev and production databases and users
-- [ ] Create the Vercel project with root directory `web/`, and set the function region next to Atlas
-- [ ] Add `lib/db.ts`, `lib/http.ts`, `GET /api/v1/health` and `GET /api/v1/config`
+- [x] Create the Vercel project with root directory `web/`, and set the function region (`dub1`, Ireland)
+- [x] Add `lib/db.ts`, `lib/http.ts`, `GET /api/v1/health` and `GET /api/v1/config`
 - [ ] Test `attachDatabasePool` with Mongoose, and watch Atlas connection counts during a burst of requests
 - [ ] Prove multi-document transactions work on Atlas Free, since the ledger depends on them
-- [ ] Build the full marketing page, plus draft privacy, terms, seller terms, support and delete-account pages
-- [ ] Add GitHub Actions for web checks and a secret scan
+- [x] Build the full marketing page, plus draft privacy, terms, seller terms, support and delete-account pages
+- [x] Add GitHub Actions for web and mobile checks, and a secret scan
 
 **Exit:** `/api/v1/health` confirms database access from the production URL, the website is live, CI runs on pull requests, and a transaction test passes on Atlas.
 
@@ -56,16 +56,19 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 
 **Goal:** The app shows real products from the new API.
 
-- [ ] Add Seller and Product models, the public read endpoints, API tests and a seed script
-- [ ] Add `lib/api-client.ts`, `lib/media.ts` and TanStack Query, and point the app at `EXPO_PUBLIC_API_URL`
-- [ ] Rebuild Home and Categories on one shared product list, with filters, search and pagination
-- [ ] Rebuild product details without nested lists, showing the seller
-- [ ] Switch remote images to `expo-image` with Cloudinary sizes and placeholders
-- [ ] Replace `@react-native-picker/picker` with Expo UI's picker
-- [ ] Replace deprecated `@expo/vector-icons` using `npx @react-native-vector-icons/codemod`
-- [ ] Apply the brand colours and Nunito, fix the `Colors` theme mismatch and remaining TypeScript errors, then make `tsc` a required CI check
-- [ ] Review screens on iOS 26+, and check layout when an iPhone app is resized on iOS 27
-- [ ] Add real app screenshots to the marketing page
+- [x] Add Seller and Product models, the public read endpoints, API tests and a seed script
+- [x] Add `lib/api-client.ts`, `lib/media.ts` and TanStack Query, and point the app at `EXPO_PUBLIC_API_URL`
+- [x] Rebuild Home and Categories on one shared product list, with filters, search and pagination
+- [x] Switch to native tabs and native header controls
+- [x] Rebuild product details without nested lists, showing the seller
+- [x] Switch remote images to `expo-image` with Cloudinary sizes and placeholders
+- [x] Replace `@react-native-picker/picker` with Expo UI's picker
+- [x] Replace deprecated `@expo/vector-icons`
+- [x] Apply the brand colours and Nunito, fix the `Colors` theme mismatch and remaining TypeScript errors, then make `tsc` a required CI check
+- [x] Review screens on iOS 26+
+- [ ] Check layout when an iPhone app is resized on iOS 27
+- [ ] Run the catalogue flow on the Android phone
+- [ ] Add real app screenshots to the marketing page, once they can show real product photos rather than Cloudinary's demo images
 
 **Exit:** Live products display on both platforms with proper loading and error states, and `tsc` reports no errors.
 

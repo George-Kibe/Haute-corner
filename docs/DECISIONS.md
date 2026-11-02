@@ -14,7 +14,7 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 ### ADR-001: Expo SDK 58 and its library set
 
-**Decided:** Expo `58.0.21` (React Native 0.88.1, React 19.3.0), with Expo UI for native components, `expo-updates`, `expo-image-picker`, `expo-image`, `expo-notifications`, `react-native-toast-message` and `@react-native-google-signin/google-signin`.
+**Decided:** Expo SDK 58 (React Native 0.88.1, React 19.3.0), on the latest patch release ([ADR-033](#adr-033-stay-on-the-latest-expo-58-patches)), with Expo UI for native components, `expo-updates`, `expo-image-picker`, `expo-image`, `expo-notifications`, `react-native-toast-message` and `@react-native-google-signin/google-signin`.
 
 **What follows:** These native libraries do not run in Expo Go, so development uses development builds. `android/` and `ios/` are generated and git-ignored, so native settings belong in `app.json` and config plugins.
 
@@ -210,6 +210,20 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **Decided 2 November 2026:** The old Express server is removed from the code. Past commits still contain the exposed credential, which you have confirmed is no longer valid, so history is not rewritten.
 
+### ADR-032: Native components first
+
+**Decided 2 November 2026:** Bottom tabs use Expo Router's `NativeTabs`, which gives Liquid Glass on iOS 26+ and Material on Android. All UI uses native components from Expo UI first, and custom TypeScript components are a last resort.
+
+**What follows:** Each tab nests a native `Stack`, because native tabs have no header. Header buttons use `Stack.Toolbar`, search uses `Stack.SearchBar`, filters use Expo UI's `SegmentedControl`, the size picker uses its menu `Picker`, and the main button uses its `Button`. Android toolbar icons come from `@expo/material-symbols`. Native tabs cannot change at runtime without resetting state, which affects how the seller-only tab appears in Phase 4. Native controls use the system font rather than Nunito.
+
+### ADR-033: Stay on the latest Expo 58 patches
+
+**Decided 2 November 2026:** Move to `expo@58.0.22` and matching packages, rather than pinning to 58.0.21, and keep `expo-doctor` passing.
+
+### ADR-034: Maestro for device testing
+
+**Decided 2 November 2026:** UI flows use [Maestro](https://maestro.dev/), and live in `HauteCorner/.maestro/`. Every UI test runs on at least two iOS simulators of different sizes and the owner's Android phone, never an Android emulator.
+
 ## Recommended
 
 These are technical suggestions the other documents assume. You were not asked about them individually, so approve or change them when you review the documents.
@@ -222,6 +236,8 @@ These are technical suggestions the other documents assume. You were not asked a
 | R-8 | Admins sign in to the dashboard with Google, with a secure cookie session and a server-side role check | Reuses the same accounts, and Google can enforce two-factor authentication | Separate admin credentials |
 | R-11 | Reserve stock at checkout, for about 15 minutes, until payment completes | Stops two customers buying the last unit | Reduce stock only on payment, which risks overselling |
 | R-15 | Send push through the Expo push service with `expo-server-sdk` | The standard server side of `expo-notifications` | Direct FCM and APNs |
+| R-16 | A `hidden` product status for products whose seller is not approved | Public queries then filter on one indexed field, and suspending a seller is one update | Check each seller's status on every query |
+| R-17 | Show toasts at the bottom of the screen | At the top they covered the native header buttons, including the cart, just after adding to the cart | Keep them at the top, below the header |
 
 ## Open items
 
