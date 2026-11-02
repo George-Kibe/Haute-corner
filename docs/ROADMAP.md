@@ -42,11 +42,11 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 **Goal:** A deployed Next.js app with a working database connection and a public website.
 
 - [x] Scaffold `web/` with Next.js 16, TypeScript and the App Router
-- [ ] Create the Atlas Free cluster, with separate dev and production databases and users
+- [x] Create the Atlas Free cluster, with separate dev and production databases and users
 - [x] Create the Vercel project with root directory `web/`, and set the function region (`dub1`, Ireland)
 - [x] Add `lib/db.ts`, `lib/http.ts`, `GET /api/v1/health` and `GET /api/v1/config`
-- [ ] Test `attachDatabasePool` with Mongoose, and watch Atlas connection counts during a burst of requests
-- [ ] Prove multi-document transactions work on Atlas Free, since the ledger depends on them
+- [x] Test `attachDatabasePool` with Mongoose, and watch Atlas connection counts during a burst of requests (peak 92 of 500, across 700 requests at 30 concurrent)
+- [x] Prove multi-document transactions work on Atlas Free, since the ledger depends on them
 - [x] Build the full marketing page, plus draft privacy, terms, seller terms, support and delete-account pages
 - [x] Add GitHub Actions for web and mobile checks, and a secret scan
 

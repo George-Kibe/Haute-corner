@@ -142,12 +142,20 @@ Set these up when the phase shown begins.
 
 ### MongoDB Atlas (Phase 1)
 
-Your Atlas CLI session must be active (`atlas auth login`) for the automated setup.
+Project `HauteCorner`, cluster `hautecorner` (Free tier, `EU_WEST_1`, Ireland), next to the Vercel functions in `dub1`.
 
-1. Create a project and Free cluster in `EU_WEST_1` (Ireland), next to the Vercel functions in `dub1`.
-2. Create separate database users for dev and production, each limited to `readWrite` on its own database.
-3. In **Network Access**, allow `0.0.0.0/0`, because [Vercel uses dynamic IP addresses](https://www.mongodb.com/docs/atlas/reference/partner-integrations/vercel/).
-4. Enable backups, and add alerts for storage and connections.
+| Database | User | Used by |
+| --- | --- | --- |
+| `hautecorner_dev` | `hautecorner-dev` | `web/.env.local` and Vercel Preview |
+| `hautecorner_prod` | `hautecorner-prod` | Vercel Production |
+
+Each user can only read and write its own database. **Network Access** allows `0.0.0.0/0`, because [Vercel uses dynamic IP addresses](https://www.mongodb.com/docs/atlas/reference/partner-integrations/vercel/).
+
+The production password exists only in Vercel, where it cannot be read back. To run a script such as `sync-indexes` against production, set a new password for that user in Atlas, update `MONGODB_URI` in Vercel, and redeploy.
+
+The dev password is in `web/.env.local` on this computer. On another computer, set a new password for `hautecorner-dev` in Atlas. If you change it, update your `.env.local` and Vercel Preview.
+
+Still to do before launch: enable backups, and add alerts for storage and connections.
 
 Atlas pauses a free cluster after 30 days with no connections. Resume it from the dashboard.
 

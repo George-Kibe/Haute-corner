@@ -160,6 +160,8 @@ export async function dbConnect() {
 
 This follows Vercel's [pooling guidance](https://vercel.com/kb/guide/connection-pooling-with-functions): a pool in global scope, a minimum size of 1, a maximum above 1, a short idle timeout, and `attachDatabasePool` from `@vercel/functions`, which lists MongoDB among its supported pools.
 
+Measured on production in November 2026: 700 health checks at 30 concurrent all succeeded, with connections peaking at 92 of the free tier's 500. Connection counts come from `atlas metrics processes`, because `serverStatus` is blocked on the free tier.
+
 **API routes must stay at request time.** With Cache Components on, a handler that finishes without touching the request can be prerendered during the build, which would freeze even an error response. The `route()` wrapper in `lib/http.ts` reads the request first to prevent this. `next build` should list every API route as `ƒ`.
 
 ## Key flows
@@ -393,5 +395,5 @@ Permissions, pricing, the ledger and payouts must have tests, because mistakes t
 ## Current state
 
 - **Mobile:** Home, Categories and product details are rebuilt on the new API with native components. The cart, order tracking, Add Product and Wish List screens are still the old ones, restyled, until their phases.
-- **Server:** The API has health, config, products and sellers routes. The website and draft legal pages are live.
+- **Server:** The API has health, config, products and sellers routes, connected to Atlas. The website and draft legal pages are live. The production catalogue is empty, while the dev database holds sample data.
 - **Details:** [Known issues](KNOWN_ISSUES.md) lists the defects to fix along the way.
