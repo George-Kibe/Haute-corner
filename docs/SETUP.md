@@ -108,7 +108,7 @@ Set these up when the phase shown begins.
 ### MongoDB Atlas (Phase 1)
 
 1. Create a project and Free cluster, in a region near your Vercel function region.
-2. Create separate database users for dev and production, each limited to `readWrite` on its own database. Do not reuse the old exposed user.
+2. Create separate database users for dev and production, each limited to `readWrite` on its own database.
 3. In **Network Access**, allow `0.0.0.0/0`, because [Vercel uses dynamic IP addresses](https://www.mongodb.com/docs/atlas/reference/partner-integrations/vercel/).
 4. Enable backups, and add alerts for storage and connections.
 
@@ -164,7 +164,7 @@ Needs a paid Apple Developer account. Enable Sign in with Apple for `com.hauteco
 
 ### Google Play (Phase 8)
 
-Needs a Google Play Console account. The production Android build must be an app bundle (see [open items](DECISIONS.md#open-items)).
+Needs a Google Play Console account.
 
 ## Troubleshooting
 

@@ -2,7 +2,7 @@
 
 The target MongoDB schema, written as TypeScript shapes for the Mongoose models in `web/models/`. All documents get `_id`, and `createdAt` and `updatedAt` through `{ timestamps: true }`.
 
-This design is **recommended**, based on the [decisions](DECISIONS.md), and is ready for review.
+Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-and-2).
 
 ```mermaid
 erDiagram

@@ -2,7 +2,7 @@
 
 This is the contract between the mobile app, admin dashboard and Next.js API. Change this document in the same pull request as any endpoint change.
 
-This design is **recommended**, based on the [decisions](DECISIONS.md), and is ready for review. Daraja details need confirming against Safaricom's documentation when Phase 5 starts.
+Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-and-2). Daraja details need confirming against Safaricom's documentation when Phase 5 starts.
 
 **Base URL:** `https://<production-domain>/api/v1`
 
@@ -340,7 +340,9 @@ Called by Vercel Cron, requiring `Authorization: Bearer <CRON_SECRET>`. See [Arc
 
 ## Old to new endpoints
 
-| Old (`Backend/`) | New |
+For reference. The old Express server has been deleted.
+
+| Old | New |
 | --- | --- |
 | `GET /products` | `GET /api/v1/products` |
 | `GET /products/:productId` | `GET /api/v1/products/{id}` |

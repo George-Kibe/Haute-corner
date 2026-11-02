@@ -6,7 +6,6 @@ These problems existed before the SDK 58 upgrade and were left in place on purpo
 
 | Location | Problem | Fixed in |
 | --- | --- | --- |
-| `Backend/serverless.yml:18` | Database credentials are committed to a public repository. See [Security](SECURITY.md#action-required-exposed-database-credential) | Phase 0 |
 | `HauteCorner/store/apiSlice.js:3` | The API URL is hard-coded to `buenas-admin.vercel.app`, which returned 401 in October 2026, so products do not load | Phase 2 |
 
 ## Security and data
@@ -14,8 +13,6 @@ These problems existed before the SDK 58 upgrade and were left in place on purpo
 | Location | Problem | Fixed in |
 | --- | --- | --- |
 | `HauteCorner/app/(stack)/shopping-cart.tsx:50-58` | Totals come from the client, and checkout sends a hard-coded customer with personal details | Phase 5 |
-| `Backend/src/routers/orderRoutes.js` | Anyone with a reference can read an order, and `Math.random()` generates the references | Phase 2 (deleted) |
-| `Backend/src/routers/productRoutes.js` | Product creation has no authentication or validation | Phase 2 (deleted) |
 | `HauteCorner/app/(tabs)/add-product.tsx:7,53` | The form posts to a second hard-coded URL with no authentication | Phase 4 |
 | `HauteCorner/app/(tabs)/saved-items.tsx:13-14` | A hard-coded name and card number are displayed | Phase 5 |
 

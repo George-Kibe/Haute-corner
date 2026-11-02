@@ -53,7 +53,6 @@ flowchart LR
 .
 ├── HauteCorner/   Expo mobile app
 ├── web/           Next.js API, website and admin dashboard (created in Phase 1)
-├── Backend/       Legacy Express server, unused by the app (to be removed)
 ├── docs/          Project documentation
 ├── CLAUDE.md      Working notes for coding agents
 └── readme.MD      Project entry point
@@ -391,5 +390,5 @@ Permissions, pricing, the ledger and payouts must have tests, because mistakes t
 ## Current state
 
 - **Mobile:** Runs on SDK 58, verified on iOS and Android, but still has the original Redux code and single-store screens. It points at `buenas-admin.vercel.app`, which returned 401 in October 2026, so products do not load. The libraries added for the revamp are installed but not used yet.
-- **Server:** `web/` does not exist yet. `Backend/` is unused by the app.
+- **Server:** `web/` does not exist yet.
 - **Details:** [Known issues](KNOWN_ISSUES.md) lists the defects to fix along the way.

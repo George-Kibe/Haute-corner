@@ -27,11 +27,12 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 
 **Goal:** A safe, current base.
 
-- [x] Upgrade to Expo SDK 58.0.21 and install the required libraries ([record](UPGRADE_SDK58.md))
+- [x] Upgrade to Expo SDK 58.0.21 and install the required libraries
 - [x] Make the product and architecture decisions, and write the documents
-- [ ] **Rotate the exposed database password** ([instructions](SECURITY.md#action-required-exposed-database-credential))
-- [ ] Review the **Recommended** items in the [decision log](DECISIONS.md#recommended), and the API and data model
-- [ ] Commit the upgrade and documents
+- [x] Rotate the exposed database password (confirmed by the owner on 2 November 2026)
+- [x] Delete `Backend/`, which held the exposed credential
+- [x] Review the Recommended items needed for Phases 1 and 2, the API and the data model
+- [x] Commit the upgrade and documents
 - [ ] Build and install a development build on each platform
 
 **Exit:** The old password no longer works, the upgrade is committed, and the app runs from a development build on a real device.
@@ -46,7 +47,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Add `lib/db.ts`, `lib/http.ts`, `GET /api/v1/health` and `GET /api/v1/config`
 - [ ] Test `attachDatabasePool` with Mongoose, and watch Atlas connection counts during a burst of requests
 - [ ] Prove multi-document transactions work on Atlas Free, since the ledger depends on them
-- [ ] Build the landing page, plus draft privacy, terms, seller terms, support and delete-account pages
+- [ ] Build the full marketing page, plus draft privacy, terms, seller terms, support and delete-account pages
 - [ ] Add GitHub Actions for web checks and a secret scan
 
 **Exit:** `/api/v1/health` confirms database access from the production URL, the website is live, CI runs on pull requests, and a transaction test passes on Atlas.
@@ -62,9 +63,9 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Switch remote images to `expo-image` with Cloudinary sizes and placeholders
 - [ ] Replace `@react-native-picker/picker` with Expo UI's picker
 - [ ] Replace deprecated `@expo/vector-icons` using `npx @react-native-vector-icons/codemod`
-- [ ] Fix the `Colors` theme mismatch and remaining TypeScript errors, then make `tsc` a required CI check
+- [ ] Apply the brand colours and Nunito, fix the `Colors` theme mismatch and remaining TypeScript errors, then make `tsc` a required CI check
 - [ ] Review screens on iOS 26+, and check layout when an iPhone app is resized on iOS 27
-- [ ] Delete `Backend/`
+- [ ] Add real app screenshots to the marketing page
 
 **Exit:** Live products display on both platforms with proper loading and error states, and `tsc` reports no errors.
 
@@ -155,7 +156,6 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Buy the domain, and finalise privacy policy, terms and seller terms with legal review
 - [ ] Decide the Atlas tier, and enable backups and alerts
 - [ ] Add error reporting and alerts for failed payouts and webhooks
-- [ ] Switch the production Android build to an app bundle
 - [ ] Onboard the first sellers
 - [ ] Run the [release checklist](DEPLOYMENT.md#release-checklist)
 - [ ] Prepare store listings, screenshots, Play Data Safety and Apple App Privacy answers

@@ -1,18 +1,17 @@
 # Security
 
-## Action required: exposed database credential
+## Past incident: exposed database credential
 
-`Backend/serverless.yml` contains a MongoDB connection string with a username and password. It was committed to git, and **the repository is public on GitHub**, so anyone may have copied it. Treat that database and its contents as exposed. Whether the password still works has not been tested.
+The old `Backend/serverless.yml` held a MongoDB connection string with a username and password, committed to this public repository.
 
-Do this first, before any other work:
+| Step | Status |
+| --- | --- |
+| Change the password | Done, confirmed by the owner on 2 November 2026 |
+| Remove the credential from the code | Done; `Backend/` deleted |
+| Rewrite git history | Decided against ([ADR-031](DECISIONS.md#adr-031-backend-deleted-git-history-kept)), since the old value no longer works |
+| Review the old cluster for unexpected data and unknown access list entries | **Still to do, by the owner.** Past orders may hold customer names, phone numbers and addresses. If real customer data was stored there, consider your obligations under Kenya's Data Protection Act |
 
-1. **Change the password.** In Atlas, open **Database Access**, then edit or delete that user. This step is what actually fixes the exposure.
-2. **Review the data.** Check the cluster for unexpected or missing data. Past orders may contain customer names, phone numbers and addresses. If real customer data was stored there, consider your obligations under Kenya's Data Protection Act.
-3. **Check Network Access.** Remove any access list entries you do not recognise.
-4. **Remove the credential from the code.** Delete the value from `Backend/serverless.yml`.
-5. **Decide about git history.** Removing the file does not remove it from past commits. Rewriting history with `git filter-repo` is optional once the password is changed, because the old value is then useless. It also needs a force-push, so plan it deliberately.
-
-Do not reuse this cluster's old user or password for the new setup.
+The new database lives in a separate Atlas project and imports nothing from the old cluster. The old value stays visible in past commits, so never reuse that user or password anywhere.
 
 ## Secret handling rules
 

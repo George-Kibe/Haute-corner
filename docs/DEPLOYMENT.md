@@ -33,7 +33,7 @@ eas build --profile production --platform all
 
 The free plan's allowance is limited, so for routine work use `bunx expo run:*` or `eas build --local`.
 
-**Current profile setting:** `preview` and `production` set `android.buildType` to `apk`. An APK is handy for direct installs, but Google Play requires an app bundle for store submission. Change `production` before Phase 8.
+**Build formats:** `preview` builds an APK for direct installs. `production` builds an app bundle, which Google Play requires.
 
 **Version numbers:** `appVersionSource` is `remote`, so EAS manages build numbers. The user-facing version is `version` in `app.json`.
 
@@ -81,7 +81,6 @@ eas submit --profile production --platform android
 | Reporting and moderation of user-generated listings ([guideline 1.2](https://developer.apple.com/app-store/review/guidelines/)) | iOS | Report and remove, Phase 4 |
 | Data Safety form and App Privacy answers | Both | Phase 8 |
 | Permission purpose strings | iOS | `app.json` |
-| App bundle | Play | Change `eas.json` before Phase 8 |
 
 **For reviewers:** Sign-in uses the reviewer's own Google or Apple account, and browsing needs no account. Provide a way to reach the seller screens, and explain the payment flow in the review notes, ideally with a test path that does not need a Kenyan M-Pesa number.
 

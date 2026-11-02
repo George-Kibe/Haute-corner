@@ -16,7 +16,7 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **Decided:** Expo `58.0.21` (React Native 0.88.1, React 19.3.0), with Expo UI for native components, `expo-updates`, `expo-image-picker`, `expo-image`, `expo-notifications`, `react-native-toast-message` and `@react-native-google-signin/google-signin`.
 
-**What follows:** These native libraries do not run in Expo Go, so development uses development builds. `android/` and `ios/` are generated and git-ignored, so native settings belong in `app.json` and config plugins. See the [upgrade record](UPGRADE_SDK58.md).
+**What follows:** These native libraries do not run in Expo Go, so development uses development builds. `android/` and `ios/` are generated and git-ignored, so native settings belong in `app.json` and config plugins.
 
 ### ADR-002: Next.js, MongoDB Atlas and Mongoose on Vercel
 
@@ -43,6 +43,8 @@ To change a decision, add a dated note to its entry and update the documents aff
 **Why:** Vercel's [fair use guidelines](https://vercel.com/docs/limits/fair-use-guidelines) restrict Hobby to "non-commercial personal use only". Their examples of commercial use include requesting payment and advertising a product for sale.
 
 **What follows:** Pro costs about $20 per developer seat per month. It also allows cron jobs every minute (Hobby is limited to once a day), which the payout and reconciliation jobs need in production. Other running costs at launch include the Apple Developer Program (about $99 a year) and a one-time Google Play registration (about $25). Confirm these prices when you sign up.
+
+**Note, 2 November 2026:** The full marketing page goes live on Hobby before launch ([ADR-025](#adr-025-a-full-marketing-page-before-launch)). Vercel lists advertising the sale of a product as commercial use, so this risk is accepted knowingly until the move to Pro.
 
 ### ADR-006: Multi-seller marketplace
 
@@ -146,7 +148,7 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **Decided:** A new database with sample data for development, and real sellers adding their own products.
 
-**What follows:** Nothing is imported from the old cluster, whose password is exposed. See [Security](SECURITY.md#action-required-exposed-database-credential).
+**What follows:** Nothing is imported from the old cluster, whose password was exposed. See [Security](SECURITY.md#past-incident-exposed-database-credential).
 
 ### ADR-021: Raise Gradle's memory through a config plugin
 
@@ -163,26 +165,62 @@ To change a decision, add a dated note to its entry and update the documents aff
 - iOS photo and camera permission wording, with the microphone permission off. See [Open items](#open-items), since this interacts with seller video.
 - A placeholder `iosUrlScheme` for Google Sign-In, so that prebuild passes until the OAuth client exists. It must be replaced in Phase 3.
 
+### ADR-023: Technical foundations for Phases 1 and 2
+
+**Decided 2 November 2026:** Approved as written:
+
+- `docs/API.md` and `docs/DATA_MODEL.md`, with routes under `/api/v1`, Zod validation of every request, and amounts stored as whole Kenyan shillings.
+- Separate `type` and `audience` product fields, replacing the old mixed `category`.
+- bun for `web/`, and FlashList for product lists.
+- Vitest with `mongodb-memory-server` for the API, `jest-expo` for mobile, and GitHub Actions checks, including a secret scan.
+
+### ADR-024: Atlas and Vercel in Ireland, created by CLI
+
+**Decided 2 November 2026:** A new Atlas project with a Free cluster in `EU_WEST_1`, and Vercel functions in `dub1`. Separate dev and production database users, each limited to its own database, with secrets written straight to Vercel and `web/.env.local`.
+
+### ADR-025: A full marketing page before launch
+
+**Decided 2 November 2026:** Publish the full marketing page now, with Tailwind CSS, placeholder store buttons, your logo and real app screenshots.
+
+**What follows:** The page advertises a business while on Vercel's non-commercial plan ([ADR-005](#adr-005-real-store-hobby-while-building-pro-before-launch)). No stock photos are used, and screenshots are labelled as sample listings while the catalogue is sample data.
+
+### ADR-026: Brand: logo blue with Nunito
+
+**Decided 2 November 2026:** Both the website and the app use the blue from the logo as their primary colour, the logo's pale background as a soft surface, and the Nunito font. This replaces the cyan, yellow and orange in the old code.
+
+### ADR-027: Public business name and contact
+
+**Decided 2 November 2026:** HauteCorner, with `buenasconsultants@gmail.com` as the public contact on the website and legal pages.
+
+### ADR-028: Cloudinary's demo cloud for sample data until Phase 4
+
+**Decided 2 November 2026:** Sample products use Cloudinary's public demo images. The app reads the cloud name from `GET /config`, so moving to your own account in Phase 4 means changing one setting and reseeding.
+
+### ADR-029: Home is a feed, Categories is for browsing
+
+**Decided 2 November 2026:** Home shows the newest products with search. Categories lets people pick a type and audience, then see filtered results. Both share one product grid.
+
+### ADR-030: Commit straight to master
+
+**Decided 2 November 2026:** Work is committed and pushed directly to `master`.
+
+**What follows:** Once Vercel is linked, every push deploys to production with no review step or preview. Run all checks before pushing.
+
+### ADR-031: `Backend/` deleted, git history kept
+
+**Decided 2 November 2026:** The old Express server is removed from the code. Past commits still contain the exposed credential, which you have confirmed is no longer valid, so history is not rewritten.
+
 ## Recommended
 
 These are technical suggestions the other documents assume. You were not asked about them individually, so approve or change them when you review the documents.
 
 | # | Recommendation | Why | Alternative |
 | --- | --- | --- | --- |
-| R-1 | Use bun for `web/`, as `HauteCorner/` already does | One package manager across the repo | npm or pnpm for `web/` |
-| R-2 | Version the API under `/api/v1` | Installed apps stay on phones for months and cannot be forced to update | Add versioning only when first needed |
-| R-3 | Validate every request with Zod | Stops malformed data and operator injection | Mongoose validation alone |
-| R-4 | Store money as whole Kenyan shillings | Avoids floating-point errors. Paystack amounts are multiplied by 100 when sent | Store cents, which helps if cents ever matter |
 | R-5 | An append-only ledger for all money movement | Lets every balance be traced and reconciled, which holding funds requires | Balance fields on each seller, which are simpler but cannot be audited |
 | R-6 | Take card payments on Paystack's hosted page, opened with `expo-web-browser` (already installed) | Card numbers never touch our code or our PCI scope | Paystack's native mobile SDKs, whose React Native support I have not verified |
 | R-7 | Pay out M-Pesa-funded money through Daraja B2C. For card-funded money, compare Paystack transfers to M-Pesa wallets with topping up the B2C account | Money from cards and M-Pesa ends up in different places | One float funded by hand. See [Open items](#open-items) |
 | R-8 | Admins sign in to the dashboard with Google, with a secure cookie session and a server-side role check | Reuses the same accounts, and Google can enforce two-factor authentication | Separate admin credentials |
-| R-9 | Jest with `jest-expo` for mobile, and Vitest with `mongodb-memory-server` for the API, with GitHub Actions for CI | `jest-expo` is pinned to the SDK. The API can be tested without external services | Other test runners |
-| R-10 | Put Atlas and Vercel functions in the same European region, such as Frankfurt or Ireland | Close to Kenya compared with the default US East. Atlas Free offers only some regions, so check when creating it | South Africa, if Atlas Free offers it there |
 | R-11 | Reserve stock at checkout, for about 15 minutes, until payment completes | Stops two customers buying the last unit | Reduce stock only on payment, which risks overselling |
-| R-12 | Keep `type` and `audience` as separate product fields | The old `category` mixed them, so a product could not be both "shoes" and "for women" | One category tree |
-| R-13 | Delete `Backend/` at the end of Phase 2 | The app does not use it, and it holds the exposed credential | Delete it sooner |
-| R-14 | Use FlashList for product lists | Pinned by SDK 58, and better for long lists with images | FlatList |
 | R-15 | Send push through the Expo push service with `expo-server-sdk` | The standard server side of `expo-notifications` | Direct FCM and APNs |
 
 ## Open items
@@ -202,6 +240,5 @@ These are technical suggestions the other documents assume. You were not asked a
 | Who handles disputes and seller reviews day to day | Before Phase 8 | Admins need to be available |
 | Domain name | Before Phase 8 | Store listings and legal pages should use the final domain |
 | Atlas tier at launch | Before Phase 8 | The free tier has 0.5 GB and limited backups, which may not suit a financial ledger |
-| Production build format | Before Phase 8 | `eas.json` currently builds an APK for production. Google Play requires an app bundle (`.aab`) for store submission |
 | Tax treatment of commission | Before Phase 8 | Ask an accountant about VAT and income tax on commission |
 | Rate limiting and error reporting tools | Before Phases 3 and 8 | Not yet compared |
