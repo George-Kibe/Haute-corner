@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.turbo/
+.next/
+.pnpm-store/
+coverage/
+*.lock
+*.log
+.env*
+graphify-out/
