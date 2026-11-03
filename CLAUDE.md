@@ -36,7 +36,7 @@ bun run test
 bun run typecheck
 bun run lint
 bun run build              # API routes must show as ƒ (dynamic)
-bun run seed               # Only on a database ending in _dev
+bun run seed               # Sample data. A database not ending in _dev needs --confirm=<name>
 ```
 
 This Next.js version differs from older ones. Read `web/node_modules/next/dist/docs/` before using an unfamiliar API.

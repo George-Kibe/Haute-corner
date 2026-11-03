@@ -68,7 +68,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [x] Review screens on iOS 26+
 - [x] Make layouts adapt to any window size and orientation, checked on two iPhones in both orientations, an iPad and the iPhone Duo ([ADR-035](DECISIONS.md#adr-035-adapt-to-any-window-size-with-no-orientation-lock))
 - [ ] Run the catalogue flow on the Android phone
-- [ ] Add real app screenshots to the marketing page, once they can show real product photos rather than Cloudinary's demo images
+- [ ] Add real app screenshots to the marketing page, once real listings exist. The sample catalogue uses Cloudinary's sample photos
 
 **Exit:** Live products display on both platforms with proper loading and error states, and `tsc` reports no errors.
 
@@ -91,7 +91,8 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 **Goal:** Approved sellers can list products with photos and short videos.
 
 - [ ] Decide video limits and the microphone setting
-- [ ] Create the Cloudinary account, check its terms, and set folders and upload rules
+- [x] Create the Cloudinary account (cloud `dxnevfcm`, 3 November 2026)
+- [ ] Check Cloudinary's terms, set folders and upload rules, and add `CLOUDINARY_URL` to Vercel Preview
 - [ ] Add `POST /uploads/sign` for images, video and private documents
 - [ ] Build the seller application in the app
 - [ ] Build the admin dashboard base: Google sign-in, role check, audit log
@@ -159,6 +160,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Buy the domain, and finalise privacy policy, terms and seller terms with legal review
 - [ ] Decide the Atlas tier, and enable backups and alerts
 - [ ] Add error reporting and alerts for failed payouts and webhooks
+- [ ] Remove the sample catalogue from production with `remove-samples`
 - [ ] Onboard the first sellers
 - [ ] Run the [release checklist](DEPLOYMENT.md#release-checklist)
 - [ ] Prepare store listings, screenshots, Play Data Safety and Apple App Privacy answers

@@ -10,6 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
+    "remove-samples": "tsx --env-file-if-exists=.env.local scripts/remove-samples.ts",
     "sync-indexes": "tsx --env-file-if-exists=.env.local scripts/sync-indexes.ts",
     "check-transactions": "tsx --env-file-if-exists=.env.local scripts/check-transactions.ts"
   },

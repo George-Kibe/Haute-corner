@@ -62,8 +62,8 @@ Install Expo packages with `bunx expo install <package>`, not `bun add`, so that
 ```bash
 cd web
 bun install
-cp .env.example .env.local   # then set MONGODB_URI
-bun run seed                 # sample data; only runs on a database ending in _dev
+cp .env.example .env.local   # then set MONGODB_URI and the Cloudinary values
+bun run seed                 # sample data, see below
 bun run dev
 ```
 
@@ -75,10 +75,41 @@ bun run dev
 | `bun run build` | Production build. Check that API routes are listed as `ƒ` |
 | `bun run sync-indexes` | Creates indexes. Production has `autoIndex` off, so run this when indexes change |
 | `bun run check-transactions` | Confirms multi-document transactions work on the database in `MONGODB_URI` |
+| `bun run seed` | Adds the sample catalogue. See [Sample data](#sample-data) |
+| `bun run remove-samples` | Removes the sample catalogue, and with `--media` its photos |
 
 bun installs packages, but the scripts run on Node through `tsx`, because bun's runtime cannot load MongoDB's `bson` library. Vercel runs on Node too.
 
 `.env.local` is ignored by git. Never commit it.
+
+### Sample data
+
+The sample catalogue has 4 sellers and 21 products. They are not real businesses. Their photos are Cloudinary's sample images, copied into our account under `hautecorner/samples/`.
+
+On the dev database, `bun run seed` replaces all products and sellers. On any other database, both scripts need the database name repeated, and touch only the sample records:
+
+```bash
+MONGODB_URI='<connection string>' bun run seed --confirm=hautecorner_prod
+MONGODB_URI='<connection string>' bun run remove-samples --confirm=hautecorner_prod
+```
+
+Production holds the sample catalogue too, so remove it there before launch. Delete the photos with `--media` only after both databases are clear of samples, because they share the photos.
+
+### Running a script against production
+
+The production password exists only in Vercel, where it cannot be read back. Rather than changing it, create a temporary user that Atlas deletes by itself, and delete it when you finish:
+
+```bash
+atlas dbusers create --username hautecorner-tmp --password '<random>' \
+  --role readWrite@hautecorner_prod --scope hautecorner \
+  --deleteAfter <UTC time, such as 2026-11-04T12:00:00Z> --projectId <project ID>
+
+MONGODB_URI='mongodb+srv://hautecorner-tmp:<password>@hautecorner.1fn0yhu.mongodb.net/hautecorner_prod' bun run sync-indexes
+
+atlas dbusers delete hautecorner-tmp --force --projectId <project ID>
+```
+
+A new user can take a minute to start working.
 
 ## Testing on devices
 
@@ -116,10 +147,9 @@ maestro --device <serial> test -e METRO_PORT=8081 .maestro/catalogue.yaml
 | `JWT_SECRET` | At least 32 random bytes, for signing access tokens | 3 |
 | `GOOGLE_WEB_CLIENT_ID` | Expected audience of Google ID tokens | 3 |
 | `APPLE_BUNDLE_ID` | `com.hautecorner.app`, the expected audience of Apple tokens | 3 |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary account. `demo` until Phase 4 | 1 |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name, `dxnevfcm`. Sent to the app, which builds image addresses from it | 1 |
+| `CLOUDINARY_URL` | `cloudinary://<api key>:<api secret>@<cloud name>`. Secret. Used by the seed script, and to sign uploads from Phase 4 | 2 |
 | `NEXT_PUBLIC_SITE_URL` | Optional. Public address of the website | 1 |
-| `CLOUDINARY_API_KEY` | Sent to clients with a signature | 4 |
-| `CLOUDINARY_API_SECRET` | Signs uploads; never sent to clients | 4 |
 | `PAYSTACK_SECRET_KEY` | Separate test and live values | 5 |
 | `MPESA_ENV` | `sandbox` or `production` | 5 |
 | `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET` | Daraja app credentials | 5 |
@@ -154,7 +184,7 @@ Project `HauteCorner`, cluster `hautecorner` (Free tier, `EU_WEST_1`, Ireland), 
 
 Each user can only read and write its own database. **Network Access** allows `0.0.0.0/0`, because [Vercel uses dynamic IP addresses](https://www.mongodb.com/docs/atlas/reference/partner-integrations/vercel/).
 
-The production password exists only in Vercel, where it cannot be read back. To run a script such as `sync-indexes` against production, set a new password for that user in Atlas, update `MONGODB_URI` in Vercel, and redeploy.
+The production password exists only in Vercel, where it cannot be read back. To run a script against production, use a [temporary user](#running-a-script-against-production).
 
 The dev password is in `web/.env.local` on this computer. On another computer, set a new password for `hautecorner-dev` in Atlas. If you change it, update your `.env.local` and Vercel Preview.
 
@@ -186,11 +216,15 @@ See the [library's Expo guide](https://react-native-google-signin.github.io/docs
 
 Needs a paid Apple Developer account. Enable Sign in with Apple for `com.hautecorner.app`. EAS can generate an APNs key during the first build with push enabled.
 
-### Cloudinary (Phase 4)
+### Cloudinary (Phases 2 and 4)
 
-1. Create an account, and check that its terms permit the planned use.
-2. Note the cloud name, API key and API secret.
-3. Set allowed upload types, and restrict uploads to signed requests.
+The account exists: cloud `dxnevfcm`, on the Free plan. `CLOUDINARY_URL` is in `web/.env.local` and Vercel Production, and `CLOUDINARY_CLOUD_NAME` in both Vercel environments.
+
+Before Phase 4:
+
+1. Check that Cloudinary's terms permit the planned use.
+2. Set allowed upload types, and restrict uploads to signed requests.
+3. Add `CLOUDINARY_URL` to Vercel Preview.
 
 ### Safaricom Daraja (Phase 5)
 

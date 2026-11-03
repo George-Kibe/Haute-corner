@@ -389,7 +389,13 @@ Stock returns when a reservation expires, or an order is cancelled or refunded.
 
 ## Seed data
 
-`web/scripts/seed.ts` creates sample sellers and products, using Cloudinary's demo images. It refuses to run unless the database name ends in `_dev`. From Phase 3, it also promotes one account to `admin` by email.
+`web/scripts/seed.ts` adds the sample catalogue in `web/scripts/sample-catalogue.ts`: 4 sellers and 21 products. Their photos are Cloudinary's sample images, copied into our account under `hautecorner/samples/` and tagged `hautecorner-sample`.
+
+- On a database ending in `_dev`, it replaces all products and sellers.
+- On any other database, it needs `--confirm=<database name>`, and replaces only its own previous batch.
+- It records the IDs it created in one `samplebatches` document. `web/scripts/remove-samples.ts` removes exactly those sellers, their products and the record, and with `--media` also deletes the photos.
+- Sample sellers have a random `userId` that belongs to no user, so nobody can sign in as them.
+ From Phase 3, it also promotes one account to `admin` by email.
 
 ## Storage
 

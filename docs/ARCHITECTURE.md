@@ -396,5 +396,5 @@ Permissions, pricing, the ledger and payouts must have tests, because mistakes t
 ## Current state
 
 - **Mobile:** Home, Categories and product details are rebuilt on the new API with native components. The cart, order tracking, Add Product and Wish List screens are still the old ones, restyled, until their phases.
-- **Server:** The API has health, config, products and sellers routes, connected to Atlas. The website and draft legal pages are live. The production catalogue is empty, while the dev database holds sample data.
+- **Server:** The API has health, config, products and sellers routes, connected to Atlas. The website and draft legal pages are live. Both the production and dev databases hold the same sample catalogue, with photos in our Cloudinary account.
 - **Details:** [Known issues](KNOWN_ISSUES.md) lists the defects to fix along the way.

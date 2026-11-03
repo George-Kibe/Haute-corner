@@ -66,7 +66,7 @@ Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-an
 {
   "data": {
     "minimumAppVersion": "1.0.0",
-    "cloudinaryCloudName": "demo"
+    "cloudinaryCloudName": "dxnevfcm"
   }
 }
 ```

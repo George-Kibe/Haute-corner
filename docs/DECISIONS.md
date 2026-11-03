@@ -196,6 +196,8 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **Decided 2 November 2026:** Sample products use Cloudinary's public demo images. The app reads the cloud name from `GET /config`, so moving to your own account in Phase 4 means changing one setting and reseeding.
 
+**Update, 3 November 2026:** You created your own Cloudinary account (`dxnevfcm`) and asked for real sample data in production as well, to be deleted later. The sample photos are now copies in that account, under `hautecorner/samples/`, and both databases hold 21 sample products. `remove-samples` deletes them ([Setup](SETUP.md#sample-data)).
+
 ### ADR-029: Home is a feed, Categories is for browsing
 
 **Decided 2 November 2026:** Home shows the newest products with search. Categories lets people pick a type and audience, then see filtered results. Both share one product grid.

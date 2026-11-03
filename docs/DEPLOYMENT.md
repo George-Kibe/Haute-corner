@@ -106,6 +106,7 @@ eas submit --profile production --platform android
 - [ ] Layouts on small and large phones, in dark mode, and with resizing on iOS 27
 - [ ] Slow network behaviour for images and video
 - [ ] Live keys are set in production, and no test keys remain
+- [ ] No sample sellers or products remain in production
 - [ ] Privacy policy and terms are current
 
 **After release:**

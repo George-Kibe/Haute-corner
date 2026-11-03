@@ -1,185 +1,96 @@
-// Creates sample sellers and products for development. Run with: bun run seed
+// Adds the sample catalogue from sample-catalogue.ts, copying its photos into our Cloudinary account.
+//
+//   bun run seed                                         the database in .env.local, ending in _dev
+//   MONGODB_URI=... bun run seed --confirm=<database>    any other database
+//
+// On a database ending in _dev, all products and sellers are replaced. Anywhere else, only the
+// previous sample batch is replaced. Remove the samples again with remove-samples.
 import mongoose, { Types } from 'mongoose';
+import { cloudinaryAccount, signParams, type CloudinaryAccount } from '@/lib/cloudinary';
 import { dbConnect } from '@/lib/db';
-import { Product, type ProductAttributes } from '@/models/Product';
-import { Seller, type SellerAttributes } from '@/models/Seller';
+import { Product, type Media } from '@/models/Product';
+import { Seller } from '@/models/Seller';
+import { recordSamples, removeSampleBatch, requireConfirmation, startSampleBatch } from './sample-batch';
+import { SAMPLE_CATALOGUE, SAMPLE_FOLDER, SAMPLE_IMAGES, SAMPLE_TAG, type SampleImage } from './sample-catalogue';
 
-type SampleSeller = Pick<SellerAttributes, 'businessName' | 'deliveryFee' | 'deliveryAreas'> &
-  Partial<Pick<SellerAttributes, 'returnsNote'>>;
-type SampleProduct = Pick<
-  ProductAttributes,
-  'title' | 'description' | 'type' | 'audience' | 'price' | 'media' | 'options' | 'stock'
->;
+// Copies a sample photo into our account. An existing copy is kept rather than overwritten.
+async function uploadImage(account: CloudinaryAccount, key: SampleImage): Promise<Media> {
+  const source = SAMPLE_IMAGES[key];
+  const sourceCloud = source.cloud === 'own' ? account.cloudName : 'demo';
+  const params = {
+    asset_folder: SAMPLE_FOLDER,
+    overwrite: 'false',
+    public_id: `${SAMPLE_FOLDER}/${key}`,
+    tags: SAMPLE_TAG,
+    timestamp: Math.floor(Date.now() / 1000),
+  };
 
-const image = (publicId: string) => [{ kind: 'image' as const, publicId }];
-const shoeSizes = ['38', '39', '40', '41', '42', '43'];
-const clothingSizes = ['S', 'M', 'L', 'XL'];
+  const body = new FormData();
+  for (const [name, value] of Object.entries(params)) body.set(name, String(value));
+  body.set('file', `https://res.cloudinary.com/${sourceCloud}/image/upload/${source.publicId}`);
+  body.set('api_key', account.apiKey);
+  body.set('signature', signParams(params, account.apiSecret));
 
-const catalogue: { seller: SampleSeller; products: SampleProduct[] }[] = [
-  {
-    seller: {
-      businessName: 'Nairobi Soles',
-      deliveryFee: 250,
-      deliveryAreas: 'Nairobi and Kiambu',
-      returnsNote: 'Unworn shoes within 7 days',
-    },
-    products: [
-      {
-        title: 'Purple running shoes',
-        description: 'Lightweight mesh trainers with a cushioned sole, made for daily runs and long days out.',
-        type: 'shoes',
-        audience: 'women',
-        price: 5200,
-        media: image('shoes'),
-        options: shoeSizes.slice(0, 4),
-        stock: 14,
-      },
-      {
-        title: 'Retro air trainers',
-        description: 'A retro silhouette in cream and tan with a visible air sole. Comfortable from the first wear.',
-        type: 'shoes',
-        audience: 'unisex',
-        price: 7900,
-        media: image('samples/shoe'),
-        options: shoeSizes,
-        stock: 6,
-      },
-      {
-        title: 'Black mesh runners',
-        description: 'Breathable black running shoes with a flexible sole for the road or the gym.',
-        type: 'shoes',
-        audience: 'men',
-        price: 6400,
-        media: image('docs/shoes'),
-        options: shoeSizes.slice(2),
-        stock: 9,
-      },
-      {
-        title: 'Blue canvas sneakers',
-        description: 'Everyday low-top sneakers in washed blue canvas, with a clean white sole.',
-        type: 'shoes',
-        audience: 'unisex',
-        price: 2800,
-        media: image('sneakers'),
-        options: shoeSizes,
-        stock: 22,
-      },
-    ],
-  },
-  {
-    seller: {
-      businessName: 'Kilimani Threads',
-      deliveryFee: 200,
-      deliveryAreas: 'Nairobi',
-      returnsNote: 'Unworn items with tags within 5 days',
-    },
-    products: [
-      {
-        title: 'Royal blue evening dress',
-        description: 'A flowing royal blue dress with a fitted waist and soft pleats, made for special occasions.',
-        type: 'clothing',
-        audience: 'women',
-        price: 6500,
-        media: image('dress'),
-        options: clothingSizes,
-        stock: 4,
-      },
-      {
-        title: 'Sky blue cotton tee',
-        description: 'A soft, breathable cotton T-shirt in a relaxed fit. An everyday essential.',
-        type: 'clothing',
-        audience: 'unisex',
-        price: 1200,
-        media: image('tshirt'),
-        options: clothingSizes,
-        stock: 40,
-      },
-      {
-        title: 'Kids sky blue tee',
-        description: 'Our soft cotton tee in sizes for children. Easy to wash and comfortable to play in.',
-        type: 'clothing',
-        audience: 'children',
-        price: 800,
-        media: image('tshirt'),
-        options: ['4-6', '7-9', '10-12'],
-        stock: 18,
-      },
-      {
-        title: 'Lilac pullover hoodie',
-        description: 'A heavyweight lilac hoodie with a roomy hood and a relaxed fit for cooler evenings.',
-        type: 'clothing',
-        audience: 'men',
-        price: 3400,
-        media: image('samples/man-portrait'),
-        options: clothingSizes,
-        stock: 11,
-      },
-    ],
-  },
-  {
-    seller: {
-      businessName: 'Westlands Denim Co.',
-      deliveryFee: 300,
-      deliveryAreas: 'Nairobi, Thika and Nakuru',
-    },
-    products: [
-      {
-        title: 'Light wash denim jacket',
-        description: 'A classic light wash denim jacket with a slightly cropped cut. Goes with everything.',
-        type: 'clothing',
-        audience: 'women',
-        price: 4600,
-        media: image('model'),
-        options: clothingSizes,
-        stock: 8,
-      },
-      {
-        title: 'Oversized denim jacket',
-        description: 'An easy oversized jacket in mid-wash denim, for layering over any outfit.',
-        type: 'clothing',
-        audience: 'women',
-        price: 4900,
-        media: image('docs/model'),
-        options: clothingSizes,
-        stock: 0,
-      },
-      {
-        title: 'Graphic tee and joggers set',
-        description: 'A matching relaxed tee and tapered joggers. Comfortable enough for the whole weekend.',
-        type: 'clothing',
-        audience: 'women',
-        price: 3800,
-        media: image('samples/woman-on-a-football-field'),
-        options: clothingSizes,
-        stock: 12,
-      },
-    ],
-  },
-];
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${account.cloudName}/image/upload`, {
+    method: 'POST',
+    body,
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(`Copying ${key} failed: ${result.error?.message ?? response.status}`);
+  return { kind: 'image', publicId: result.public_id, width: result.width, height: result.height };
+}
 
 async function main() {
+  const account = cloudinaryAccount();
   const { connection } = await dbConnect();
   const databaseName = connection.db!.databaseName;
+  requireConfirmation(databaseName, 'seed it');
 
-  if (!databaseName.endsWith('_dev')) {
-    throw new Error(`Refusing to seed "${databaseName}". Seeding only runs on a database ending in _dev.`);
+  if (process.env.CLOUDINARY_CLOUD_NAME !== account.cloudName) {
+    console.warn(
+      `Warning: CLOUDINARY_CLOUD_NAME is "${process.env.CLOUDINARY_CLOUD_NAME}", but the photos are in "${account.cloudName}". ` +
+        'The app will not show them until the API reports the same cloud.',
+    );
   }
 
-  await Promise.all([Product.init(), Seller.init()]);
-  await Promise.all([Product.deleteMany({}), Seller.deleteMany({})]);
+  const keys = [...new Set(SAMPLE_CATALOGUE.flatMap(({ products }) => products.flatMap((product) => product.images)))];
+  const media = new Map<SampleImage, Media>();
+  for (const key of keys) media.set(key, await uploadImage(account, key));
+  console.log(`${media.size} photos are in ${account.cloudName}, folder ${SAMPLE_FOLDER}.`);
 
-  for (const { seller, products } of catalogue) {
-    const created = await Seller.create({
+  await Promise.all([Product.init(), Seller.init()]);
+  if (databaseName.endsWith('_dev')) {
+    await Promise.all([Product.deleteMany({}), Seller.deleteMany({})]);
+  }
+  const removed = await removeSampleBatch(connection);
+  if (removed) console.log(`Removed the previous batch: ${removed.sellers} sellers and ${removed.products} products.`);
+
+  await startSampleBatch(connection);
+  let productCount = 0;
+  for (const { seller, products } of SAMPLE_CATALOGUE) {
+    const createdSeller = await Seller.create({
       ...seller,
       userId: new Types.ObjectId(),
       status: 'approved',
       phone: '+254700000000',
       payoutMpesaNumber: '+254700000000',
     });
-    await Product.create(products.map((product) => ({ ...product, sellerId: created._id })));
+    const createdProducts = await Product.insertMany(
+      products.map(({ images, ...product }) => ({
+        ...product,
+        sellerId: createdSeller._id,
+        media: images.map((key) => media.get(key)!),
+      })),
+    );
+    await recordSamples(
+      connection,
+      createdSeller._id,
+      createdProducts.map((product) => product._id),
+    );
+    productCount += createdProducts.length;
   }
 
-  console.log(`Seeded ${await Seller.countDocuments()} sellers and ${await Product.countDocuments()} products into ${databaseName}.`);
+  console.log(`Seeded ${SAMPLE_CATALOGUE.length} sellers and ${productCount} products into ${databaseName}.`);
 }
 
 main()
