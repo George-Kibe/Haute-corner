@@ -97,7 +97,12 @@ Holding funds for sellers has [an open legal question](DECISIONS.md#open-items).
 - Access tokens are JWTs that last 15 minutes and carry only the user ID and role.
 - Refresh tokens are random values that last 30 days. Only their SHA-256 hash is stored.
 - Each refresh issues a new token. Reusing an old one revokes the session, since it suggests theft.
-- `JWT_SECRET` is at least 32 random bytes. Changing it invalidates access tokens, and refresh tokens then restore sessions.
+- `JWT_SECRET` is at least 32 random bytes, with a different value in production, Preview and each developer's `.env.local`. Changing it invalidates access tokens, and refresh tokens then restore sessions.
+- The app keeps the refresh token in the Keychain or Keystore through `expo-secure-store`, and the access token only in memory. It sends one refresh at a time, because two at once would look like reuse.
+- Google and Apple tokens are checked for signature, issuer, audience and expiry. Google's audience is the web client ID, and Apple's is the bundle ID.
+- Access tokens are checked without reading the database. Routes that act on the account load the user and refuse deleted accounts, so deletion takes effect at once there, and everywhere else within 15 minutes.
+- Sign-in does not use a nonce yet. One would stop a stolen provider token being replayed within its few minutes of validity.
+- Before App Store submission, account deletion must also revoke Sign in with Apple tokens through Apple's REST API. This needs a Sign in with Apple key.
 
 ## Database access
 

@@ -59,14 +59,29 @@ export function route<Context = unknown>(
   };
 }
 
-export function parseQuery<Schema extends z.ZodType>(schema: Schema, request: Request): z.output<Schema> {
-  const params = Object.fromEntries(new URL(request.url).searchParams);
-  const result = schema.safeParse(params);
+export const noContent = () => new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
+
+function validate<Schema extends z.ZodType>(schema: Schema, input: unknown): z.output<Schema> {
+  const result = schema.safeParse(input);
   if (result.success) return result.data;
 
   const details: Record<string, string> = {};
   for (const issue of result.error.issues) {
-    details[issue.path.join('.')] = issue.message;
+    details[issue.path.join('.') || 'body'] ??= issue.message;
   }
   throw new ApiError(400, 'validation_failed', 'The request is not valid', details);
+}
+
+export function parseQuery<Schema extends z.ZodType>(schema: Schema, request: Request): z.output<Schema> {
+  return validate(schema, Object.fromEntries(new URL(request.url).searchParams));
+}
+
+export async function parseBody<Schema extends z.ZodType>(schema: Schema, request: Request): Promise<z.output<Schema>> {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    throw new ApiError(400, 'validation_failed', 'The request body must be JSON');
+  }
+  return validate(schema, body);
 }

@@ -57,6 +57,10 @@ type Address = {
 | --- | --- |
 | `{ provider: 1, providerId: 1 }`, unique | Find the user at sign-in |
 
+**Deleted accounts** *(recommended, R-18)* keep only `_id`, `provider`, `role`, `deletedAt` and timestamps, so orders can still refer to them. `providerId` becomes `deleted:<_id>`, so signing in again with the same Google or Apple account creates a new, empty account.
+
+`phone` is stored as `+254` followed by nine digits *(recommended, R-19)*.
+
 ## Session
 
 ```ts
@@ -75,6 +79,8 @@ type Session = {
 | `{ previousTokenHash: 1 }`, sparse | Detect reuse |
 | `{ userId: 1 }` | Revoke all sessions on account deletion |
 | `{ expiresAt: 1 }`, TTL with `expireAfterSeconds: 0` | Remove expired sessions automatically |
+
+Signing out or detected reuse sets `revokedAt`, and the session stays until it expires. Deleting the account removes all its sessions at once.
 
 ## PushToken
 

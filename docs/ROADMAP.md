@@ -76,12 +76,15 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 
 **Goal:** People can sign in, stay signed in, and delete their account.
 
-- [ ] Create Google OAuth clients, and replace the `iosUrlScheme` placeholder in `app.json`
-- [ ] Install `expo-secure-store` and `expo-apple-authentication`, enable Sign in with Apple, and rebuild
-- [ ] Add User and Session models and auth endpoints, with tests for rotation and reuse
+- [ ] Create Google OAuth clients, set `GOOGLE_WEB_CLIENT_ID` and the app's client IDs, and replace the `iosUrlScheme` placeholder in `app.json`
+- [x] Install `expo-secure-store` and `expo-apple-authentication`, and turn on `usesAppleSignIn`
+- [ ] Enable Sign in with Apple for `com.hautecorner.app` in the Apple Developer account
+- [x] Add User and Session models and auth endpoints, with tests for rotation and reuse
+- [x] Set `JWT_SECRET` and `APPLE_BUNDLE_ID` locally and in both Vercel environments
 - [ ] Add rate limiting to auth endpoints
-- [ ] Build sign-in, required only for checkout, wish list, orders and selling
-- [ ] Build the Profile screen: details, address, sign out, delete account
+- [x] Build sign-in, required only for checkout, wish list, orders and selling
+- [x] Build the Profile screen: details, address, sign out, delete account
+- [ ] Revoke Sign in with Apple tokens when an account is deleted
 - [ ] Make `/delete-account` on the website functional
 
 **Exit:** Google sign-in works on real iOS and Android devices, Apple sign-in works on iOS, expired sessions refresh silently, and deleted accounts lose access with their data removed.

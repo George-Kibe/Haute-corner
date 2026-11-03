@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@vercel/functions": "^3.10.5",
+    "google-auth-library": "^11.3.2",
+    "jose": "^6.2.15",
     "mongoose": "^9.11.4",
     "next": "16.4.4",
     "react": "19.3.0",

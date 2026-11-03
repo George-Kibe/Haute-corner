@@ -248,6 +248,9 @@ These are technical suggestions the other documents assume. You were not asked a
 | R-15 | Send push through the Expo push service with `expo-server-sdk` | The standard server side of `expo-notifications` | Direct FCM and APNs |
 | R-16 | A `hidden` product status for products whose seller is not approved | Public queries then filter on one indexed field, and suspending a seller is one update | Check each seller's status on every query |
 | R-17 | Show toasts at the bottom of the screen | At the top they covered the native header buttons, including the cart, just after adding to the cart | Keep them at the top, below the header |
+| R-18 | A deleted account keeps an empty record with only its ID, provider and role, and signing in again creates a new account | Orders and the ledger can still point to it, without keeping personal details | Remove the user document entirely, leaving orders pointing at nothing |
+| R-19 | Store phone numbers as `+254` and nine digits, accepting the usual local ways of writing them | M-Pesa and sellers need one format, and people type numbers differently | Store what was typed |
+| R-20 | The access token stays in memory only, and the refresh token in secure storage | Nothing long-lived sits in plain storage, and a restart costs one refresh | Store both in secure storage |
 
 ## Open items
 
@@ -267,4 +270,7 @@ These are technical suggestions the other documents assume. You were not asked a
 | Domain name | Before Phase 8 | Store listings and legal pages should use the final domain |
 | Atlas tier at launch | Before Phase 8 | The free tier has 0.5 GB and limited backups, which may not suit a financial ledger |
 | Tax treatment of commission | Before Phase 8 | Ask an accountant about VAT and income tax on commission |
-| Rate limiting and error reporting tools | Before Phases 3 and 8 | Not yet compared |
+| Rate limiting tool | Before Phase 3 ends | Candidates: counters in MongoDB, Upstash Redis, or Vercel Firewall rules. Not yet chosen |
+| Error reporting tool | Before Phase 8 | Not yet compared |
+| How the website handles account deletion | Before Phase 3 ends | The page explains in-app deletion and email requests. Choose whether to add web sign-in, or a way for admins to act on emailed requests |
+| Revoking Sign in with Apple tokens on deletion | Before App Store submission | Needs a Sign in with Apple key from the Apple Developer account. Either keep Apple's refresh token from sign-in, or ask the user to sign in with Apple again when deleting |

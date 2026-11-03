@@ -2,11 +2,13 @@ import { Types } from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { Product, type ProductAttributes } from '@/models/Product';
 import { Seller, type SellerAttributes } from '@/models/Seller';
+import { Session } from '@/models/Session';
+import { User } from '@/models/User';
 
 export async function resetDatabase() {
   await dbConnect();
-  await Promise.all([Product.init(), Seller.init()]);
-  await Promise.all([Product.deleteMany({}), Seller.deleteMany({})]);
+  await Promise.all([Product.init(), Seller.init(), User.init(), Session.init()]);
+  await Promise.all([Product.deleteMany({}), Seller.deleteMany({}), User.deleteMany({}), Session.deleteMany({})]);
 }
 
 export function createSeller(overrides: Partial<SellerAttributes> = {}) {
@@ -41,3 +43,16 @@ export function createProduct(sellerId: Types.ObjectId, overrides: Partial<Produ
 export const get = (path: string) => new Request(`http://localhost${path}`);
 
 export const params = <T extends Record<string, string>>(value: T) => ({ params: Promise.resolve(value) });
+
+export function request(method: string, path: string, { body, token }: { body?: unknown; token?: string } = {}) {
+  const headers = new Headers();
+  if (body !== undefined) headers.set('Content-Type', 'application/json');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  return new Request(`http://localhost${path}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body),
+  });
+}
+
+export const noParams = { params: Promise.resolve({}) };

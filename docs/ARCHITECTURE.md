@@ -72,7 +72,7 @@ HauteCorner/
 │   ├── shopping-cart    Cart, also on the root Stack, as are checkout, orders and disputes later
 │   └── (seller)/        Seller application, listings, seller orders, earnings (Phase 4)
 ├── features/
-│   ├── auth/            Google and Apple sign-in, session store
+│   ├── auth/            Google and Apple sign-in, session, profile queries, sign-in prompt
 │   ├── products/        Query hooks, product UI, video player
 │   ├── cart/            Zustand store, grouping by seller
 │   ├── checkout/        Delivery details, M-Pesa and card payment
@@ -84,7 +84,7 @@ HauteCorner/
 ├── components/          Shared UI with no business logic
 ├── plugins/             Local config plugins
 ├── lib/
-│   ├── api-client.ts    fetch wrapper: base URL, auth header, token refresh, errors
+│   ├── api-client.ts    fetch wrapper: base URL, auth header, errors
 │   ├── media.ts         Cloudinary URL helpers
 │   └── storage.ts       MMKV instance
 ├── constants/
@@ -97,7 +97,7 @@ HauteCorner/
 | --- | --- | --- |
 | Server data | TanStack Query | Products, orders, earnings, wish list |
 | Local data that survives restarts | Zustand with MMKV | Cart, preferences |
-| Secrets | `expo-secure-store` | Refresh and access tokens |
+| Secrets | `expo-secure-store`, and memory | Refresh token in secure storage; access token in memory only |
 | Screen state | React state | Form inputs, selected option |
 
 ### Conventions
@@ -121,7 +121,9 @@ web/
 │   └── api/v1/        Route Handlers, one folder per resource
 ├── lib/
 │   ├── db.ts          Cached Mongoose connection
-│   ├── auth.ts        Token verification, requireUser, requireSeller, requireAdmin
+│   ├── auth.ts        Access and refresh tokens, authenticate, requireUser; later requireSeller, requireAdmin
+│   ├── identity.ts    Google and Apple token verification
+│   ├── users.ts       Sign-in, profile and account deletion
 │   ├── http.ts        Response envelope and error handling
 │   ├── ledger.ts      The only code allowed to write ledger entries
 │   ├── daraja.ts      STK Push, B2C, status queries
@@ -189,6 +191,8 @@ sequenceDiagram
 ```
 
 Google tokens are verified with `google-auth-library`, with the web client ID as the audience. Apple tokens are verified against Apple's public keys with `jose`, with the bundle ID as the audience. Apple sends the user's name only on first sign-in, so save it then.
+
+In the app, `features/auth/session.ts` keeps the session. On launch, a stored refresh token means signed in. `authRequest` adds the access token, and on a 401 refreshes once and retries. Concurrent callers share one refresh. A refused refresh signs the user out, while a network failure keeps the session. Screens that need an account wrap their content in `SignInRequired`, which offers the sign-in sheet instead.
 
 ### Becoming a seller
 
@@ -395,6 +399,6 @@ Permissions, pricing, the ledger and payouts must have tests, because mistakes t
 
 ## Current state
 
-- **Mobile:** Home, Categories and product details are rebuilt on the new API with native components. The cart, order tracking, Add Product and Wish List screens are still the old ones, restyled, until their phases.
-- **Server:** The API has health, config, products and sellers routes, connected to Atlas. The website and draft legal pages are live. Both the production and dev databases hold the same sample catalogue, with photos in our Cloudinary account.
+- **Mobile:** Home, Categories and product details are rebuilt on the new API with native components. Sign-in with Google and Apple, and the Profile screen with editing and account deletion, are built. Google sign-in waits for its OAuth clients. The cart, order tracking, Add Product and Wish List screens are still the old ones, restyled, and now ask the shopper to sign in.
+- **Server:** The API has health, config, products, sellers, auth and `/me` routes, connected to Atlas. The website and draft legal pages are live. Both the production and dev databases hold the same sample catalogue, with photos in our Cloudinary account.
 - **Details:** [Known issues](KNOWN_ISSUES.md) lists the defects to fix along the way.

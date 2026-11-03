@@ -117,13 +117,16 @@ Test on at least two iOS simulators of different sizes and on a connected Androi
 
 UI flows use [Maestro](https://maestro.dev/) and live in `HauteCorner/.maestro/`. Start the API with seed data first.
 
-**iOS simulators** run a Release build, so the dev menu cannot get in the way of taps. Set `EXPO_PUBLIC_API_URL` in `.env.local`, build with `bunx expo run:ios --configuration Release`, then:
+**iOS simulators** run a Release build, so the dev menu cannot get in the way of taps. Set `EXPO_PUBLIC_API_URL` in `.env.local`, and build with `bunx expo run:ios --configuration Release`. Without an Apple team set up in Xcode, build with `xcodebuild` and ad-hoc signing (`CODE_SIGN_IDENTITY=-`) instead, not `CODE_SIGNING_ALLOWED=NO`: an unsigned app cannot use the Keychain, so it can never stay signed in. Then:
 
 ```bash
 xcrun simctl list devices booted            # simulator IDs
 maestro --device <id> test .maestro/catalogue.yaml
 maestro --device <id> test .maestro/orientation.yaml
+maestro --device <id> test .maestro/sign-in-required.yaml
 ```
+
+`sign-in-required.yaml` checks that browsing needs no account and that the profile, wish list, selling and checkout ask for one. It does not press the sign-in buttons, so test real Google and Apple sign-in by hand on a device.
 
 The app has no orientation lock, so also check new screens on an iPad and the iPhone Duo simulator (iOS 27.1). Simulator screenshots taken in landscape come out rotated, which is expected.
 
@@ -144,9 +147,9 @@ maestro --device <serial> test -e METRO_PORT=8081 .maestro/catalogue.yaml
 | Variable | Purpose | Phase |
 | --- | --- | --- |
 | `MONGODB_URI` | Atlas connection string for this environment | 1 |
-| `JWT_SECRET` | At least 32 random bytes, for signing access tokens | 3 |
-| `GOOGLE_WEB_CLIENT_ID` | Expected audience of Google ID tokens | 3 |
-| `APPLE_BUNDLE_ID` | `com.hautecorner.app`, the expected audience of Apple tokens | 3 |
+| `JWT_SECRET` | At least 32 random characters, for signing access tokens. Different in each environment. Create one with `openssl rand -base64 48`. Set locally and in both Vercel environments | 3 |
+| `GOOGLE_WEB_CLIENT_ID` | Expected audience of Google ID tokens. Not set yet | 3 |
+| `APPLE_BUNDLE_ID` | `com.hautecorner.app`, the expected audience of Apple tokens. Set locally and in both Vercel environments | 3 |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name, `dxnevfcm`. Sent to the app, which builds image addresses from it | 1 |
 | `CLOUDINARY_URL` | `cloudinary://<api key>:<api secret>@<cloud name>`. Secret. Used by the seed script, and to sign uploads from Phase 4 | 2 |
 | `NEXT_PUBLIC_SITE_URL` | Optional. Public address of the website | 1 |
@@ -166,6 +169,7 @@ Daraja names are placeholders until confirmed against Safaricom's documentation.
 | --- | --- |
 | `EXPO_PUBLIC_API_URL` | API base URL for this environment |
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | From Phase 3. Requests an ID token for the API to verify |
+| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | From Phase 3. The iOS OAuth client. Without both IDs, the app says Google sign-in is not set up instead of starting it |
 
 `EXPO_PUBLIC_*` values are compiled into the app and readable by anyone. Never put secrets in them.
 
@@ -210,11 +214,21 @@ In Google Cloud Console, create OAuth clients for one project:
 
 Android needs a SHA-1 for each key that signs the app: your local debug key, the EAS key, and Google Play's app signing key. Missing one of these is the most common cause of `DEVELOPER_ERROR`.
 
+| Key | SHA-1 |
+| --- | --- |
+| Local debug key, shared by every React Native project | `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25` |
+| EAS | Shown on expo.dev under the project's credentials, once EAS has created a keystore, or with `eas credentials -p android` |
+| Google Play app signing | In Play Console, under Test and release, App integrity |
+
+Then set `GOOGLE_WEB_CLIENT_ID` in Vercel, both `EXPO_PUBLIC_GOOGLE_*` values in `HauteCorner/.env.local`, and the iOS client's reversed ID as `iosUrlScheme` in `app.json`, and rebuild the app.
+
 See the [library's Expo guide](https://react-native-google-signin.github.io/docs/setting-up/expo).
 
 ### Apple (Phases 3 and 7)
 
-Needs a paid Apple Developer account. Enable Sign in with Apple for `com.hautecorner.app`. EAS can generate an APNs key during the first build with push enabled.
+Needs a paid Apple Developer account. Enable Sign in with Apple for `com.hautecorner.app`; the app already asks for it through `usesAppleSignIn` in `app.json`. EAS can generate an APNs key during the first build with push enabled.
+
+Revoking Apple tokens when an account is deleted also needs a Sign in with Apple key (a `.p8` file with its key ID) and the team ID. Keep the key out of the repository.
 
 ### Cloudinary (Phases 2 and 4)
 

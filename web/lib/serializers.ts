@@ -1,6 +1,7 @@
 import type { Types } from 'mongoose';
 import type { ProductAttributes } from '@/models/Product';
 import type { SellerAttributes } from '@/models/Seller';
+import type { UserAttributes } from '@/models/User';
 
 type WithId<T> = T & { _id: Types.ObjectId };
 
@@ -37,5 +38,22 @@ export function serializeProduct(product: WithId<ProductAttributes>, seller: Wit
     status: product.status,
     seller: serializeSellerSummary(seller),
     createdAt: product.createdAt.toISOString(),
+  };
+}
+
+// Only ever returned to the user themselves.
+export function serializeUser(user: WithId<UserAttributes>, seller: WithId<SellerAttributes> | null) {
+  const address = user.deliveryAddress;
+  return {
+    id: String(user._id),
+    name: user.name ?? null,
+    email: user.email ?? null,
+    avatarUrl: user.avatarUrl ?? null,
+    phone: user.phone ?? null,
+    deliveryAddress: address
+      ? { line1: address.line1, area: address.area ?? null, city: address.city, notes: address.notes ?? null }
+      : null,
+    role: user.role,
+    seller: seller ? { id: String(seller._id), status: seller.status } : null,
   };
 }

@@ -15,7 +15,7 @@ Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-an
 - **Seller:** an approved seller, limited to their own products, orders and earnings
 - **Admin:** a platform admin
 
-**Success responses** wrap data in `data`. Lists add `meta`.
+**Success responses** wrap data in `data`. Lists add `meta`. Actions with nothing to return, such as signing out, answer `204 No Content` with no body.
 
 ```json
 {
@@ -82,7 +82,9 @@ Video limits and the dispute window join this response once they are decided ([o
 | `POST /auth/refresh` | Public | Exchange a refresh token for a new pair |
 | `POST /auth/logout` | Public | Revoke the session belonging to a refresh token |
 
-`POST /auth/google` takes `{ "idToken": "..." }`. `POST /auth/apple` takes `{ "identityToken": "...", "fullName": { "givenName": "...", "familyName": "..." } }`.
+`POST /auth/google` takes `{ "idToken": "..." }`, an ID token requested for the web client ID. `POST /auth/apple` takes `{ "identityToken": "...", "fullName": { "givenName": "...", "familyName": "..." } }`. Apple gives the app the name only on the first sign-in, and `fullName` and its parts may be `null`. The name is saved only when the account is created, so later changes made in the app are kept.
+
+A provider token that fails verification returns 401. If Google or Apple cannot be reached to fetch their keys, the API returns 503.
 
 Both return:
 
@@ -96,6 +98,8 @@ Both return:
       "name": "Asha Otieno",
       "email": "asha@example.com",
       "avatarUrl": null,
+      "phone": null,
+      "deliveryAddress": null,
       "role": "customer",
       "seller": null
     }
@@ -103,7 +107,11 @@ Both return:
 }
 ```
 
-`POST /auth/refresh` takes `{ "refreshToken": "..." }` and returns a new pair. The old token stops working immediately, and presenting a used token revokes the session and returns 401.
+`user` has the same shape as `GET /me`. `seller` is `null`, or `{ "id": "...", "status": "applied" }` once the user has applied to sell.
+
+`POST /auth/refresh` takes `{ "refreshToken": "..." }` and returns `{ "accessToken", "refreshToken" }`. The old token stops working immediately. Presenting the token that was just replaced revokes the session and returns 401, so a client must never send two refreshes at once.
+
+`POST /auth/logout` takes `{ "refreshToken": "..." }` and returns 204, even for an unknown or already revoked token.
 
 ## Current user
 
@@ -118,7 +126,21 @@ Both return:
 | `PUT /me/wishlist/{productId}` | User | Save a product, idempotent |
 | `DELETE /me/wishlist/{productId}` | User | Remove a saved product, idempotent |
 
-`DELETE /me` removes sessions, push tokens, the wish list and the profile. Past orders and ledger entries are kept for business and legal records, with personal details replaced. It is refused with 409 while the user has open orders, disputes or an unpaid seller balance. The privacy policy must state this.
+`PATCH /me` takes any of these, and `null` clears a field:
+
+```json
+{
+  "name": "Asha Otieno",
+  "phone": "0712 345 678",
+  "deliveryAddress": { "line1": "Ngong Road, Prestige Plaza", "area": "Kilimani", "city": "Nairobi", "notes": "Gate B" }
+}
+```
+
+- `phone` accepts Kenyan mobile numbers written as `0712 345 678`, `712345678`, `254712345678` or `+254 712 345 678`, and is stored and returned as `+254712345678`.
+- `deliveryAddress` needs `line1` and `city`. `area` and `notes` are optional.
+- Any other field, such as `role`, is refused with 400. It returns the updated profile.
+
+`DELETE /me` returns 204. It removes sessions, push tokens, the wish list and the profile. Past orders and ledger entries are kept for business and legal records, with personal details replaced. It is refused with 409 while the user has open orders, disputes or an unpaid seller balance; those checks are added with orders in Phases 5 and 6. The privacy policy must state this.
 
 ## Products
 
