@@ -2,6 +2,8 @@
 
 # dependencies
 node_modules/
+# bun is the package manager; a second lockfile fails expo-doctor in CI
+package-lock.json
 
 # Expo
 .expo/
