@@ -3,7 +3,7 @@ import { Host, Picker } from '@expo/ui';
 import Star from '@expo/material-symbols/star.xml';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useDispatch } from 'react-redux';
@@ -15,7 +15,10 @@ import { StateMessage } from '@/components/state-message';
 import { useAppConfig } from '@/features/config/use-app-config';
 import { ProductImage } from '@/features/products/product-image';
 import { useProduct } from '@/features/products/queries';
+import { ProductDetailsSkeleton } from '@/features/products/skeletons';
 import { firstImage, type Product } from '@/features/products/types';
+import { useIsLiked } from '@/features/wishlist/store';
+import { toggleLike } from '@/features/wishlist/sync';
 import { useColors } from '@/hooks/use-colors';
 import { ApiError } from '@/lib/api-client';
 import { formatPrice } from '@/lib/format';
@@ -29,7 +32,7 @@ function ProductDetails({ product }: { product: Product }) {
   const { width, height } = useWindowDimensions();
   const { data: config } = useAppConfig();
   const [selectedOption, setSelectedOption] = useState(product.options[0]);
-  const [liked, setLiked] = useState(false);
+  const liked = useIsLiked(product.id);
 
   const images = product.media.filter((item) => item.kind === 'image');
   const soldOut = product.stock === 0;
@@ -54,12 +57,17 @@ function ProductDetails({ product }: { product: Product }) {
     Toast.show({ type: 'success', text1: 'Added to cart', text2: product.title });
   };
 
-  const toggleLiked = () => {
-    setLiked(!liked);
-    Toast.show({
-      type: liked ? 'info' : 'success',
-      text1: liked ? 'Removed from likes' : 'Added to likes',
-    });
+  const toggleLiked = async () => {
+    try {
+      const nowLiked = await toggleLike(product.id);
+      Toast.show({ type: 'success', text1: nowLiked ? 'Saved to your wish list' : 'Removed from your wish list' });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Could not update your wish list',
+        text2: error instanceof Error ? error.message : undefined,
+      });
+    }
   };
 
   return (
@@ -69,7 +77,7 @@ function ProductDetails({ product }: { product: Product }) {
       style={{ backgroundColor: colors.background }}>
       <HeaderActions showTrackOrder={false}>
         <Stack.Toolbar.Button
-          accessibilityLabel={liked ? 'Remove from likes' : 'Add to likes'}
+          accessibilityLabel={liked ? 'Remove from wish list' : 'Save to wish list'}
           icon={process.env.EXPO_OS === 'ios' ? (liked ? 'star.fill' : 'star') : Star}
           onPress={toggleLiked}
         />
@@ -132,9 +140,9 @@ export default function ProductDetailsScreen() {
 
   if (isPending) {
     return (
-      <View style={[styles.loading, { backgroundColor: colors.background }]}>
-        <ActivityIndicator accessibilityLabel="Loading product" color={colors.primary} />
-      </View>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: colors.background }}>
+        <ProductDetailsSkeleton />
+      </ScrollView>
     );
   }
 

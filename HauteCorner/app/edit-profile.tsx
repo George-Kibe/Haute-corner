@@ -1,26 +1,18 @@
 import { FieldGroup, Host, Text, TextInput } from '@expo/ui';
 import { router, Stack } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+import { ProfileSkeleton } from '@/features/auth/profile-skeleton';
 import { useMe, useUpdateMe } from '@/features/auth/queries';
 import type { ProfileChanges, User } from '@/features/auth/types';
 import { useColors } from '@/hooks/use-colors';
 import { ApiError } from '@/lib/api-client';
 
 export default function EditProfileScreen() {
-  const colors = useColors();
   const { data: user } = useMe();
-
-  if (!user) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
-  }
-  return <EditProfileForm user={user} />;
+  return user ? <EditProfileForm user={user} /> : <ProfileSkeleton />;
 }
 
 function EditProfileForm({ user }: { user: User }) {
@@ -39,6 +31,9 @@ function EditProfileForm({ user }: { user: User }) {
   const form = useRef(initial);
 
   async function save() {
+    // Close the keyboard first: a SwiftUI form that changes while one of its
+    // fields has focus can crash UIKit.
+    Keyboard.dismiss();
     const { name, phone, line1, area, city, notes } = form.current;
     const hasAddress = [line1, area, city, notes].some((value) => value.trim());
     const changes: ProfileChanges = {
@@ -146,10 +141,5 @@ function EditProfileForm({ user }: { user: User }) {
 const styles = StyleSheet.create({
   fill: {
     flex: 1,
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

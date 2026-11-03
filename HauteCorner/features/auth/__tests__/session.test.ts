@@ -93,7 +93,18 @@ describe('authRequest', () => {
 });
 
 describe('restoreSession', () => {
+  it('starts signed out on a fresh install, even if the Keychain kept a token', async () => {
+    const { storage } = require('@/lib/storage');
+    storage.remove('installed');
+
+    await session.restoreSession();
+
+    expect(session.useSession.getState().status).toBe('signedOut');
+    expect(secureStore.store.has(KEY)).toBe(false);
+  });
+
   it('is signed in only when a refresh token is stored', async () => {
+    require('@/lib/storage').storage.set('installed', true);
     await session.restoreSession();
     expect(session.useSession.getState().status).toBe('signedIn');
 

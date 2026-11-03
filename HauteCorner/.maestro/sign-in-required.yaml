@@ -1,12 +1,12 @@
-# Phase 3: browsing needs no account, but the profile, wish list, selling and
+# Phase 3: browsing and liking need no account, but the profile, selling and
 # checkout ask the shopper to sign in.
-# Needs the API running with seed data. It does not press the sign-in buttons,
-# because a real sign-in needs a Google or Apple account.
+# Needs the API running with seed data. It does not press the Google or Apple
+# buttons, because a real sign-in needs an account with them.
 appId: com.hautecorner.app
 ---
 - runFlow: open-app.yaml
 
-# The profile asks to sign in, and opens the sign-in sheet.
+# The profile asks to sign in, and opens the sign-in screens.
 - tapOn: Profile
 - extendedWaitUntil:
     visible: Your profile
@@ -16,33 +16,22 @@ appId: com.hautecorner.app
     visible: Sign in to HauteCorner
     timeout: 10000
 - assertVisible: Sign in with Google
+- assertVisible: Continue with email
 - runFlow:
     when:
       platform: iOS
     commands:
       - assertVisible: Sign in with Apple
 - takeScreenshot: 01-sign-in
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - swipe:
-          start: 50%,30%
-          end: 50%,95%
-          duration: 400
-- runFlow:
-    when:
-      platform: Android
-    commands:
-      - back
+- tapOn: Close
 - extendedWaitUntil:
     visible: Your profile
     timeout: 10000
 
-# The wish list and selling ask too.
+# The wish list works without an account. Selling asks to sign in.
 - tapOn: Wish List
 - extendedWaitUntil:
-    visible: Your wish list
+    visible: Nothing saved yet
     timeout: 10000
 - tapOn: Add Product
 - extendedWaitUntil:
@@ -77,3 +66,4 @@ appId: com.hautecorner.app
     visible: Sign in to HauteCorner
     timeout: 10000
 - takeScreenshot: 03-checkout-sign-in
+- tapOn: Close

@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import type { SessionTokens, SignInResult } from '@/features/auth/types';
 import { apiRequest, ApiError } from '@/lib/api-client';
 import { queryClient } from '@/lib/query-client';
+import { storage } from '@/lib/storage';
 
 const REFRESH_TOKEN_KEY = 'hautecorner.refreshToken';
 
@@ -20,8 +21,16 @@ let refreshing: Promise<string> | null = null;
 
 const readRefreshToken = () => SecureStore.getItemAsync(REFRESH_TOKEN_KEY).catch(() => null);
 
+const INSTALLED_KEY = 'installed';
+
 // Reading never throws, so this always settles on signed in or out.
 export async function restoreSession() {
+  // iOS keeps Keychain items after the app is deleted, but MMKV goes with it.
+  // A fresh install therefore starts signed out, as people expect.
+  if (!storage.getBoolean(INSTALLED_KEY)) {
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY).catch(() => undefined);
+    storage.set(INSTALLED_KEY, true);
+  }
   const refreshToken = await readRefreshToken();
   useSession.setState({ status: refreshToken ? 'signedIn' : 'signedOut' });
 }

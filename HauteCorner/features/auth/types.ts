@@ -6,6 +6,8 @@ export type Address = {
   notes: string | null;
 };
 
+export type SignInMethod = 'google' | 'apple' | 'email';
+
 export type SellerStatus = 'applied' | 'approved' | 'rejected' | 'suspended';
 
 export type User = {
@@ -16,6 +18,7 @@ export type User = {
   phone: string | null;
   deliveryAddress: Address | null;
   role: 'customer' | 'admin';
+  signInMethods: SignInMethod[];
   seller: { id: string; status: SellerStatus } | null;
 };
 

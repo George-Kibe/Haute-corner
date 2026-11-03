@@ -68,7 +68,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.REPLACE-WITH-IOS-CLIENT-ID"
+          "iosUrlScheme": "com.googleusercontent.apps.1036812234355-b05r525ptnl28srs7i4aoshv1vv8veo2"
         }
       ],
       "./plugins/with-gradle-memory",

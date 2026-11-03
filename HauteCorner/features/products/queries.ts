@@ -24,3 +24,16 @@ export function useProduct(id: string) {
     queryFn: async ({ signal }) => (await apiGet<Product>(`/products/${id}`, { signal })).data,
   });
 }
+
+// Products by ID, as for the wish list. Only products still for sale come back.
+export function useProductsByIds(ids: string[]) {
+  // Sorted for the key, so reordering likes does not refetch.
+  const sorted = [...ids].sort();
+  return useQuery({
+    queryKey: ['products', 'ids', sorted],
+    queryFn: async ({ signal }) =>
+      (await apiGet<Product[]>('/products', { query: { ids: sorted.join(',') }, signal })).data,
+    enabled: ids.length > 0,
+    placeholderData: (previous) => previous,
+  });
+}

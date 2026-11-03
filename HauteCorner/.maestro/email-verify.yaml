@@ -1,0 +1,64 @@
+# Part 2 of 2, straight after email-sign-up.yaml with the app still open:
+# enter the code from the API log, then check the account and the wish list
+# across signing out and back in.
+#   maestro --device <id> test -e EMAIL=... -e PASSWORD=... -e CODE=123456 .maestro/email-verify.yaml
+appId: com.hautecorner.app
+---
+- tapOn: 6-digit code
+- inputText: ${CODE}
+# The code is sent as soon as the sixth digit is typed.
+- extendedWaitUntil:
+    visible: Maestro Shopper
+    timeout: 15000
+- assertVisible: Email and password
+- takeScreenshot: 01-profile
+
+# The like from before signing up is now in the account.
+- tapOn: Wish List
+- extendedWaitUntil:
+    visible: Light wash denim jacket.*
+    timeout: 15000
+- assertNotVisible: Your likes are saved on this phone
+- takeScreenshot: 02-wish-list
+
+# Signing out clears the device.
+- tapOn: Profile
+# Centred, so the row is not under the floating tab bar when tapped.
+- scrollUntilVisible:
+    element: Sign out
+    direction: DOWN
+    centerElement: true
+- tapOn: Sign out
+- tapOn:
+    text: Sign out
+    rightOf: Cancel
+- extendedWaitUntil:
+    visible: Your profile
+    timeout: 10000
+- tapOn: Wish List
+- extendedWaitUntil:
+    visible: Nothing saved yet
+    timeout: 10000
+
+# Signing back in with the password brings the likes back.
+- tapOn: Profile
+- tapOn: Sign in
+- tapOn: Continue with email
+- extendedWaitUntil:
+    visible: Your password
+    timeout: 10000
+- tapOn: you@example.com
+- inputText: ${EMAIL}
+- tapOn: Your password
+- inputText: ${PASSWORD}
+- tapOn:
+    text: Sign in
+    below: Your password
+- extendedWaitUntil:
+    visible: Maestro Shopper
+    timeout: 15000
+- tapOn: Wish List
+- extendedWaitUntil:
+    visible: Light wash denim jacket.*
+    timeout: 15000
+- takeScreenshot: 03-wish-list-restored

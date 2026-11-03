@@ -2,21 +2,25 @@ import { FieldGroup, Host, ListItem, Text } from '@expo/ui';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { StateMessage } from '@/components/state-message';
 import { SITE_URL } from '@/constants/site';
 import { deleteAccount, signOut } from '@/features/auth/providers';
+import { ProfileSkeleton } from '@/features/auth/profile-skeleton';
 import { useMe } from '@/features/auth/queries';
 import { SignInRequired } from '@/features/auth/sign-in-required';
-import type { Address } from '@/features/auth/types';
+import type { Address, SignInMethod } from '@/features/auth/types';
 import { useColors } from '@/hooks/use-colors';
 
 const formatAddress = (address: Address | null) =>
   address ? [address.line1, address.area, address.city].filter(Boolean).join(', ') : null;
 
 const editProfile = () => router.push('/edit-profile');
+
+const METHOD_NAMES: Record<SignInMethod, string> = { google: 'Google', apple: 'Apple', email: 'Email and password' };
+const describeMethods = (methods: SignInMethod[]) => methods.map((method) => METHOD_NAMES[method]).join(', ');
 
 export default function ProfileScreen() {
   return (
@@ -64,13 +68,7 @@ function Profile() {
   const secondary = (text: string) => <Text textStyle={{ color: colors.muted }}>{text}</Text>;
   const { data: user, error, isPending, refetch } = useMe();
 
-  if (isPending) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
-  }
+  if (isPending) return <ProfileSkeleton />;
 
   if (!user) {
     return (
@@ -101,6 +99,13 @@ function Profile() {
               onPress={editProfile}>
               {user.name ?? 'Add your name'}
             </ListItem>
+            <ListItem supportingText={secondary(describeMethods(user.signInMethods))}>Sign in with</ListItem>
+            {user.email ? (
+              <ListItem
+                onPress={() => router.push({ pathname: '/forgot-password', params: { email: user.email!, change: '1' } })}>
+                {user.signInMethods.includes('email') ? 'Change password' : 'Add a password'}
+              </ListItem>
+            ) : null}
           </FieldGroup.Section>
 
           <FieldGroup.Section title="Delivery">
