@@ -4,11 +4,13 @@ import mongoose from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { Product } from '@/models/Product';
 import { Seller } from '@/models/Seller';
+import { Session } from '@/models/Session';
+import { User } from '@/models/User';
 
 async function main() {
   const { connection } = await dbConnect();
 
-  for (const model of [Seller, Product]) {
+  for (const model of [Seller, Product, User, Session] as const) {
     await model.createCollection();
     const dropped = await model.syncIndexes();
     const indexes = await model.listIndexes();
