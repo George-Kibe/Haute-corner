@@ -15,8 +15,20 @@ appId: com.hautecorner.app
             visible: Open
           commands:
             - tapOn: Open
+      # On Android the link can arrive before the dev launcher is ready, which
+      # leaves it on its list of servers. Pick the Metro server from the list.
+      - extendedWaitUntil:
+          visible: Wish List
+          timeout: 15000
+          optional: true
+      - runFlow:
+          when:
+            visible: Development servers
+          commands:
+            - tapOn: .*:${METRO_PORT}
+# The dev launcher has a Home tab too, so wait for a tab only the app has.
 - extendedWaitUntil:
-    visible: Home
+    visible: Wish List
     timeout: 120000
 - runFlow:
     when:

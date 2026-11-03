@@ -1,3 +1,4 @@
+import CloseIcon from '@expo/material-symbols/close.xml';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { router, Stack } from 'expo-router';
@@ -50,7 +51,8 @@ export default function SignInScreen() {
       contentContainerStyle={styles.scroll}
       contentInsetAdjustmentBehavior="automatic">
       <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={closeAuth}>
+        {/* Android header buttons show only icons. */}
+        <Stack.Toolbar.Button accessibilityLabel="Close" icon={isIOS ? undefined : CloseIcon} onPress={closeAuth}>
           <Stack.Toolbar.Label>Close</Stack.Toolbar.Label>
         </Stack.Toolbar.Button>
       </Stack.Toolbar>

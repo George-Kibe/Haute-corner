@@ -1,6 +1,8 @@
 import { PagerView } from '@expo/ui/community/pager-view';
 import { Host, Picker } from '@expo/ui';
 import Star from '@expo/material-symbols/star.xml';
+// The package ships outlined icons only, so the filled star is kept in the app.
+import StarFilled from '@/assets/icons/star_fill.xml';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -78,7 +80,8 @@ function ProductDetails({ product }: { product: Product }) {
       <HeaderActions showTrackOrder={false}>
         <Stack.Toolbar.Button
           accessibilityLabel={liked ? 'Remove from wish list' : 'Save to wish list'}
-          icon={process.env.EXPO_OS === 'ios' ? (liked ? 'star.fill' : 'star') : Star}
+          icon={process.env.EXPO_OS === 'ios' ? (liked ? 'star.fill' : 'star') : liked ? StarFilled : Star}
+          tintColor={liked ? colors.primary : undefined}
           onPress={toggleLiked}
         />
       </HeaderActions>

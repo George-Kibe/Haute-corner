@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { Fonts } from '@/constants/theme';
 
 export const unstable_settings = {
-  initialRouteName: 'sign-in',
+  anchor: 'sign-in',
 };
 
 // Sign-in screens open as one modal stack over the app, so the email steps can

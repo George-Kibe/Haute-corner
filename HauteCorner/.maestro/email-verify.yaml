@@ -51,9 +51,10 @@ appId: com.hautecorner.app
 - inputText: ${EMAIL}
 - tapOn: Your password
 - inputText: ${PASSWORD}
+# Android drops a placeholder once the field has text, so anchor on the section title.
 - tapOn:
     text: Sign in
-    below: Your password
+    below: Password
 - extendedWaitUntil:
     visible: Maestro Shopper
     timeout: 15000

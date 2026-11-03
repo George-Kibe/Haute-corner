@@ -1,3 +1,4 @@
+import EditIcon from '@expo/material-symbols/edit.xml';
 import { FieldGroup, Host, ListItem, Text } from '@expo/ui';
 import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
@@ -86,7 +87,11 @@ function Profile() {
   return (
     <>
       <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button onPress={editProfile}>
+        {/* Android header buttons show only icons. */}
+        <Stack.Toolbar.Button
+          accessibilityLabel="Edit profile"
+          icon={process.env.EXPO_OS === 'ios' ? undefined : EditIcon}
+          onPress={editProfile}>
           <Stack.Toolbar.Label>Edit</Stack.Toolbar.Label>
         </Stack.Toolbar.Button>
       </Stack.Toolbar>

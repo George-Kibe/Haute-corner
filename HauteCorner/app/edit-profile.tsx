@@ -1,3 +1,5 @@
+import CheckIcon from '@expo/material-symbols/check.xml';
+import CloseIcon from '@expo/material-symbols/close.xml';
 import { FieldGroup, Host, Text, TextInput } from '@expo/ui';
 import { router, Stack } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -9,6 +11,8 @@ import { useMe, useUpdateMe } from '@/features/auth/queries';
 import type { ProfileChanges, User } from '@/features/auth/types';
 import { useColors } from '@/hooks/use-colors';
 import { ApiError } from '@/lib/api-client';
+
+const isIOS = process.env.EXPO_OS === 'ios';
 
 export default function EditProfileScreen() {
   const { data: user } = useMe();
@@ -64,12 +68,18 @@ function EditProfileForm({ user }: { user: User }) {
   return (
     <>
       <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={() => router.back()}>
+        {/* Android header buttons show only icons. */}
+        <Stack.Toolbar.Button accessibilityLabel="Cancel" icon={isIOS ? undefined : CloseIcon} onPress={() => router.back()}>
           <Stack.Toolbar.Label>Cancel</Stack.Toolbar.Label>
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button disabled={update.isPending} variant="done" onPress={save}>
+        <Stack.Toolbar.Button
+          accessibilityLabel="Save"
+          disabled={update.isPending}
+          icon={isIOS ? undefined : CheckIcon}
+          variant="done"
+          onPress={save}>
           <Stack.Toolbar.Label>Save</Stack.Toolbar.Label>
         </Stack.Toolbar.Button>
       </Stack.Toolbar>

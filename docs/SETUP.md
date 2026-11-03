@@ -146,7 +146,12 @@ The app has no orientation lock, so also check new screens on an iPad and the iP
 adb devices                                 # phone serial
 adb reverse tcp:3000 tcp:3000 && adb reverse tcp:8081 tcp:8081
 maestro --device <serial> test -e METRO_PORT=8081 .maestro/catalogue.yaml
+maestro --device <serial> test -e METRO_PORT=8081 .maestro/wishlist.yaml
+maestro --device <serial> test -e METRO_PORT=8081 -e EMAIL=you+1@example.com -e PASSWORD='a long passphrase' .maestro/email-sign-up.yaml
+maestro --device <serial> test -e EMAIL=you+1@example.com -e PASSWORD='a long passphrase' -e CODE=123456 .maestro/email-verify.yaml
 ```
+
+In a development build, the `.env` files are read into the bundle and override variables set in the shell, so `EXPO_PUBLIC_API_URL=... bun run start` does not change the API. Set it in `.env.local`. Every Metro serving this folder picks the change up, so to point one device at another API while the other stays put, run that device's Metro from a copy of `HauteCorner/` with its own `.env.local`.
 
 **Xiaomi, Redmi and POCO phones** block automated taps and installs by default. In **Developer options**, turn on both **USB debugging (Security settings)** and **Install via USB**.
 

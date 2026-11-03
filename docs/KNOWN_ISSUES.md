@@ -10,7 +10,7 @@ These problems are known and left in place on purpose, because a later phase rep
 | `HauteCorner/store/apiSlice.js:4` | Orders still use the old `buenas-admin.vercel.app` API, which returns 401, so checkout and order tracking do not work | Phases 5 and 6 |
 | `HauteCorner/app/(tabs)/add-product/index.tsx` | The form posts to the old API with no authentication, and it is shown to everyone | Phase 4 |
 | `web/lib/users.ts` | Deleting an account does not yet revoke Sign in with Apple tokens, which App Store review expects | Phase 3 |
-| Android Google sign-in | Fails with `DEVELOPER_ERROR` until the Android OAuth client lists the SHA-1 of the key that signed the build ([how](SETUP.md#google-sign-in-phase-3)) | Phase 3 |
+| Android Google sign-in | Works on the local debug build (checked on 4 November 2026). Release and EAS builds fail with `DEVELOPER_ERROR` until the Android OAuth client also lists the SHA-1 of the key that signed them ([how](SETUP.md#google-sign-in-phase-3)) | Phase 3 |
 
 ## Functional bugs
 
@@ -41,4 +41,6 @@ These problems are known and left in place on purpose, because a later phase rep
 | Email | Gmail sends about 500 messages a day from one account, so it suits testing only. The Amazon SES path is written but untested until its domain is verified ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple)) |
 | Welcome email | It mentions paying with M-Pesa or card and tracking orders, which arrive in Phases 5 and 6. Check the wording in `web/lib/email-templates.ts` before launch |
 | iOS forms | Changing a SwiftUI form while one of its fields has focus can crash UIKit. Auth screens close the keyboard before submitting; do the same in new forms |
+| Android header buttons | `Stack.Toolbar.Button` draws only icons on Android, and silently drops a button that has only a label. Give every header button an Android icon from `@expo/material-symbols` and an `accessibilityLabel`, and keep the label for iOS |
+| Android form colours | Expo UI forms on Android take Material You colours from the wallpaper, so Profile and the email sign-in screens can look brown or green beside the navy header. A `seedColor` or `colorOverrides` on their `Host` would fix this, but the look has not been chosen |
 | Sample data in production | Production holds 21 sample products from 4 sellers that are not real businesses. Remove them before launch with `remove-samples` ([how](SETUP.md#sample-data)) |
