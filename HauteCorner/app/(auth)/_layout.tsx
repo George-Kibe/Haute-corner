@@ -4,6 +4,7 @@ import { Fonts } from '@/constants/theme';
 
 export const unstable_settings = {
   anchor: 'sign-in',
+  initialRouteName: 'sign-in',
 };
 
 // Sign-in screens open as one modal stack over the app, so the email steps can

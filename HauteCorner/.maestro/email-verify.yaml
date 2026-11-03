@@ -55,6 +55,9 @@ appId: com.hautecorner.app
 - tapOn:
     text: Sign in
     below: Password
+- tapOn:
+    text: Sign in
+    below: Your password
 - extendedWaitUntil:
     visible: Maestro Shopper
     timeout: 15000

@@ -13,7 +13,6 @@ import { useColors } from '@/hooks/use-colors';
 import { ApiError } from '@/lib/api-client';
 
 const isIOS = process.env.EXPO_OS === 'ios';
-
 export default function EditProfileScreen() {
   const { data: user } = useMe();
   return user ? <EditProfileForm user={user} /> : <ProfileSkeleton />;
