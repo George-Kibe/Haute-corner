@@ -1,141 +1,76 @@
-import { StyleSheet, View, Image, TextInput, TouchableOpacity } from 'react-native'
-import { AppText as Text } from '@/components/app-text';
-import { SignInRequired } from '@/features/auth/sign-in-required';
-import React, { useState } from 'react'
-import { images } from '@/constants';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-const SavedItemsScreen = () => {
-  const [amount, setAmount] = useState<number>(0);
-  const [phoneNumber, setPhoneNumber] = useState<string>("")
+import { AppText } from '@/components/app-text';
+import { Button } from '@/components/button';
+import { useSession } from '@/features/auth/session';
+import { openSignIn } from '@/features/auth/sign-in-required';
+import { ProductGridView } from '@/features/products/product-grid';
+import { useProductsByIds } from '@/features/products/queries';
+import { useWishlist } from '@/features/wishlist/store';
+import { refreshFromAccount } from '@/features/wishlist/sync';
+import { useColors } from '@/hooks/use-colors';
 
-  console.log(amount)
+// Likes work without an account. Signed out, a note offers to keep them on every device.
+function SyncNote() {
+  const colors = useColors();
   return (
-    <View style={styles.mainContainer}>
-      <View style={styles.card}>
-        <Text style={styles.username}>George Test Kibe</Text>
-        <Text style={styles.cardNumber}>4563 2637 1910 2728</Text>
-      </View>
-      <View style={styles.select}>
-        <Text style={styles.selectText}>Select Payment Method</Text>
-      </View>
-      <View style={styles.paymentImages}>
-        <View style={styles.imageContainer}> 
-          <Image style={styles.image} source={images.MpesaLogo} />
-        </View>
-        <Image style={styles.image} source={images.MasterCardImage} />
-        <Image style={styles.image} source={images.PaypalLogo} />
-      </View>
-      <View style={styles.inputView}>
-        <Text style={styles.text}>Phone Number</Text>
-        <TextInput value={phoneNumber} onChangeText={setPhoneNumber} style={styles.input} keyboardType='numeric' placeholder='Enter Phone Number' />
-      </View>
-      <View style={styles.inputView}>
-        <Text style={styles.text}>Amount</Text>
-        <TextInput value={amount.toString()} onChangeText={amount => setAmount(Number(amount) || 0)} style={styles.input} keyboardType='numeric' placeholder='Enter Amount' />
-      </View>
-      <TouchableOpacity style={styles.payButton}>
-        <Text style={styles.payText}>Pay Now {amount}</Text>
-      </TouchableOpacity>
+    <View style={[styles.note, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <AppText style={styles.noteTitle}>Your likes are saved on this phone</AppText>
+      <AppText style={[styles.noteText, { color: colors.muted }]}>
+        Sign in to keep them in your account and see them on any device.
+      </AppText>
+      <Button label="Sign in" onPress={openSignIn} />
     </View>
-  )
+  );
 }
 
-// Replaced in a later phase; until then it is only shown to signed-in users.
-export default function SavedItemsScreenGate() {
+export default function WishListScreen() {
+  const productIds = useWishlist((state) => state.productIds);
+  const signedIn = useSession((state) => state.status === 'signedIn');
+  const { data, error, isPending, isRefetching, refetch } = useProductsByIds(productIds);
+
+  // Newest like first. Products no longer for sale are left out.
+  const products = useMemo(() => {
+    const byId = new Map((data ?? []).map((product) => [product.id, product]));
+    return productIds.flatMap((id) => byId.get(id) ?? []);
+  }, [data, productIds]);
+
+  const refresh = async () => {
+    if (signedIn) await refreshFromAccount().catch(() => undefined);
+    await refetch();
+  };
+
   return (
-    <SignInRequired title="Your wish list" message="Sign in to save items and find them again on any device.">
-      <SavedItemsScreen />
-    </SignInRequired>
+    <ProductGridView
+      emptyMessage="Tap the star on any product to save it here."
+      emptyTitle="Nothing saved yet"
+      error={productIds.length > 0 ? error : null}
+      header={!signedIn && productIds.length > 0 ? <SyncNote /> : null}
+      isPending={productIds.length > 0 && isPending}
+      onRefresh={refresh}
+      onRetry={() => refetch()}
+      products={products}
+      refreshing={isRefetching}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-    mainContainer: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center"
-    },
-    text: {
-        color: "#000"
-    },
-    card: {
-      backgroundColor: "#0E4BB4",
-      padding:40,
-      width: "90%",
-      height: 150,
-      borderRadius: 10,
-      justifyContent: "flex-start",
-      alignItems: "flex-start"
-    },
-    username: {
-      color: "#fff",
-      fontSize: 20,
-      fontWeight: "bold",
-      letterSpacing: 1
-    },
-    cardNumber: {
-      color: "#FFFFFF",
-      marginTop: 10,
-    },
-    select: {
-      justifyContent: 'flex-start',
-      alignItems: "flex-start",
-      marginVertical: 10,
-      width: "70%"
-    },
-    selectText: {
-      color: "black",
-      alignSelf: "flex-start",
-      fontWeight: "bold",
-      fontSize: 15,
-      letterSpacing: 1
-    },
-    imageContainer: {
-      width: 80, 
-      height: 50,
-      paddingHorizontal: 5,
-      borderWidth: 1,
-      borderColor: "black",
-      borderRadius: 10
-    },
-    paymentImages: {
-      width: "60%",
-      justifyContent: 'space-between',
-      alignItems: "center",
-      display: "flex",
-      flexDirection: "row"
-    },
-    image: {
-      width: 50,
-      height: 50,
-      aspectRatio: 4 / 3,
-      resizeMode: "contain"
-    },
-    inputView: {
-      width: "80%",
-      marginTop: 20
-    },
-    input: {
-      backgroundColor: "#e5e7eb",
-      color: "#000",
-      height: 40,
-      marginTop: 10,
-      borderRadius: 10,
-      padding: 10,
-      fontSize: 15,
-    },
-    payButton: {
-      marginTop: 70,
-      width: "80%",
-      backgroundColor: "#0E4BB4",
-      height: 40,
-      borderRadius: 20,
-      alignItems: "center",
-      justifyContent: "center"
-    },
-    payText: {
-      color: "#fff",
-      fontWeight: "bold",
-      fontSize: 18
-    }
-})
+  note: {
+    margin: 8,
+    padding: 16,
+    gap: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  noteTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  noteText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+});

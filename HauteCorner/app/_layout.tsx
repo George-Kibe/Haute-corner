@@ -20,6 +20,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { restoreSession } from '@/features/auth/session';
+import { startWishlistSync } from '@/features/wishlist/sync';
 import { queryClient } from '@/lib/query-client';
 import { persistor, store } from '@/store';
 
@@ -45,7 +46,10 @@ export default function RootLayout() {
   }, [ready]);
 
   useEffect(() => {
+    // Listen first, so restoring a session also refreshes the wish list.
+    const stopWishlistSync = startWishlistSync();
     restoreSession();
+    return stopWishlistSync;
   }, []);
 
   if (!ready) return null;
@@ -79,16 +83,7 @@ export default function RootLayout() {
               <Stack.Screen name="products/[id]" options={{ title: 'Product Details' }} />
               <Stack.Screen name="shopping-cart" options={{ title: 'My Cart', headerTransparent: false }} />
               <Stack.Screen name="track-order" options={{ title: 'Track Order', headerTransparent: false }} />
-              <Stack.Screen
-                name="sign-in"
-                options={{
-                  title: 'Sign In',
-                  headerShown: false,
-                  presentation: 'formSheet',
-                  sheetAllowedDetents: 'fitToContents',
-                  sheetGrabberVisible: true,
-                }}
-              />
+              <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen
                 name="edit-profile"
                 options={{ title: 'Edit Profile', presentation: 'modal', headerTransparent: false }}

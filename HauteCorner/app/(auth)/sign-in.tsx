@@ -1,13 +1,14 @@
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import Toast from 'react-native-toast-message';
 
 import { AppText } from '@/components/app-text';
+import { Button } from '@/components/button';
 import { SITE_URL } from '@/constants/site';
+import { signedInToast, useCloseAuth } from '@/features/auth/auth-form';
 import { signInWithApple, signInWithGoogle } from '@/features/auth/providers';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useColors } from '@/hooks/use-colors';
@@ -17,8 +18,9 @@ const isIOS = process.env.EXPO_OS === 'ios';
 export default function SignInScreen() {
   const colors = useColors();
   const dark = useColorScheme() === 'dark';
+  const closeAuth = useCloseAuth();
   const [busy, setBusy] = useState(false);
-  // Shown in the sheet, because toasts appear behind native sheets.
+  // Shown on the screen, because toasts appear behind modals.
   const [error, setError] = useState<string | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
 
@@ -32,8 +34,8 @@ export default function SignInScreen() {
     setError(null);
     try {
       if (await signIn()) {
-        router.back();
-        Toast.show({ type: 'success', text1: 'You are signed in' });
+        closeAuth();
+        signedInToast();
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Something went wrong. Please try again');
@@ -47,6 +49,11 @@ export default function SignInScreen() {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.scroll}
       contentInsetAdjustmentBehavior="automatic">
+      <Stack.Toolbar placement="left">
+        <Stack.Toolbar.Button onPress={closeAuth}>
+          <Stack.Toolbar.Label>Close</Stack.Toolbar.Label>
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
       <View style={styles.content}>
         <AppText style={styles.title}>Sign in to HauteCorner</AppText>
         <AppText style={[styles.message, { color: colors.muted }]}>
@@ -74,6 +81,15 @@ export default function SignInScreen() {
           style={styles.provider}
           onPress={() => run(signInWithGoogle)}
         />
+
+        <AppText style={[styles.or, { color: colors.muted }]}>or</AppText>
+        <Button disabled={busy} label="Continue with email" onPress={() => router.push('/email-sign-in')} />
+        <AppText style={[styles.legal, { color: colors.muted }]}>
+          New to HauteCorner?{' '}
+          <AppText style={[styles.link, { color: colors.primary }]} onPress={() => router.push('/sign-up')}>
+            Create an account
+          </AppText>
+        </AppText>
 
         <View style={styles.status}>
           {busy ? <ActivityIndicator color={colors.primary} /> : null}
@@ -126,6 +142,10 @@ const styles = StyleSheet.create({
   provider: {
     width: '100%',
     height: 50,
+  },
+  or: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   status: {
     minHeight: 24,

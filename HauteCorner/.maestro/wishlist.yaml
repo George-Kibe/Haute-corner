@@ -1,0 +1,74 @@
+# Likes work without an account: save a product, find it on the Wish List
+# tab, and remove it again. Needs the API running with seed data.
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+
+- tapOn: Wish List
+- extendedWaitUntil:
+    visible: Nothing saved yet
+    timeout: 10000
+
+- tapOn: Home
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 30000
+- tapOn: Graphic tee and joggers set.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- runFlow:
+    when:
+      notVisible: Save to wish list
+    commands:
+      - tapOn: More
+- tapOn: Save to wish list
+- extendedWaitUntil:
+    visible: Saved to your wish list
+    timeout: 5000
+- takeScreenshot: 01-saved
+
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- tapOn: Wish List
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 15000
+- assertVisible: Your likes are saved on this phone
+- takeScreenshot: 02-wish-list
+
+# Remove it from the product page, and the list is empty again.
+- tapOn: Graphic tee and joggers set.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- runFlow:
+    when:
+      notVisible: Remove from wish list
+    commands:
+      - tapOn: More
+- tapOn: Remove from wish list
+- extendedWaitUntil:
+    visible: Removed from your wish list
+    timeout: 5000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- extendedWaitUntil:
+    visible: Nothing saved yet
+    timeout: 10000

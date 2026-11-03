@@ -93,3 +93,30 @@ export async function deleteAccount() {
   }
   await endSession();
 }
+
+// Email sign-up, sign-in and password reset. Codes arrive by email.
+export type CodeSent = { email: string; expiresInSeconds: number; resendAfterSeconds: number };
+export type CodePurpose = 'signup' | 'reset';
+
+const post = <T>(path: string, body: unknown) => apiRequest<T>(path, { method: 'POST', body }).then((response) => response.data);
+
+export const startEmailSignUp = (details: { name: string; email: string; password: string }) =>
+  post<CodeSent>('/auth/email/signup', details);
+
+export async function verifyEmail(email: string, code: string) {
+  await startSession(await post<SignInResult>('/auth/email/verify', { email, code }));
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  await startSession(await post<SignInResult>('/auth/email/sign-in', { email, password }));
+}
+
+export const requestPasswordReset = (email: string) => post<CodeSent>('/auth/password/forgot', { email });
+
+// Signs out other devices, and signs in this one with the new password.
+export async function resetPassword(email: string, code: string, password: string) {
+  await startSession(await post<SignInResult>('/auth/password/reset', { email, code, password }));
+}
+
+export const resendCode = (email: string, purpose: CodePurpose) =>
+  post<CodeSent>('/auth/email/resend', { email, purpose });

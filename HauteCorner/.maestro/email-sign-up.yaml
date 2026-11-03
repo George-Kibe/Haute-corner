@@ -1,0 +1,68 @@
+# Part 1 of 2: like a product while signed out, then start an email sign-up
+# and stop at the code screen. Part 2 is email-verify.yaml.
+#
+# Run the API with EMAIL_TRANSPORT=log so codes appear in its log instead of
+# being emailed, and use a new address each time. On iOS, turn off Settings >
+# General > AutoFill & Passwords > Suggest Strong Passwords on the simulator
+# first, or its sheet covers the password field.
+#   maestro --device <id> test -e EMAIL=you+1@example.com -e PASSWORD='a long passphrase' .maestro/email-sign-up.yaml
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+
+# A like from before signing in, which should move into the new account.
+- tapOn: Light wash denim jacket.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- runFlow:
+    when:
+      notVisible: Save to wish list
+    commands:
+      - tapOn: More
+- tapOn: Save to wish list
+- extendedWaitUntil:
+    visible: Saved to your wish list
+    timeout: 5000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+
+- tapOn: Profile
+- tapOn: Sign in
+- extendedWaitUntil:
+    visible: Continue with email
+    timeout: 10000
+- tapOn: Continue with email
+# Wait for a field only this screen has, so the tap does not land mid-transition.
+- extendedWaitUntil:
+    visible: Your password
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: Create an account
+- extendedWaitUntil:
+    visible: Your name
+    timeout: 10000
+- tapOn: Your name
+- inputText: Maestro Shopper
+- tapOn: you@example.com
+- inputText: ${EMAIL}
+- tapOn: At least 8 characters
+- inputText: ${PASSWORD}
+- takeScreenshot: 01-sign-up
+# Text matching ignores case, so pick the button, not the "Create Account" title.
+- tapOn:
+    text: Create account
+    below: Password
+- extendedWaitUntil:
+    visible: Code sent to.*
+    timeout: 15000
+- takeScreenshot: 02-code
