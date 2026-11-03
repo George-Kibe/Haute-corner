@@ -1,0 +1,2 @@
+# A fixed JWT_SECRET used only by the tests, since replaced with a random one.
+1b158ef973ae0b159b2cd2587adb1d17a6223f8f:web/tests/global-setup.ts:generic-api-key:7

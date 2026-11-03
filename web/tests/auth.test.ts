@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { SignJWT } from 'jose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as appleSignIn } from '@/app/api/v1/auth/apple/route';
@@ -237,7 +237,7 @@ describe('access tokens', () => {
   it('are refused when expired, malformed or signed with another key', async () => {
     const { user } = await signedIn();
     const expired = await token({ sub: user.id, exp: Math.floor(Date.now() / 1000) - 60 });
-    const forged = await token({ sub: user.id }, new TextEncoder().encode('a-different-secret-of-at-least-32-chars'));
+    const forged = await token({ sub: user.id }, new TextEncoder().encode(randomBytes(32).toString('hex')));
 
     expect((await fetchMe(expired)).status).toBe(401);
     expect((await fetchMe(forged)).status).toBe(401);
