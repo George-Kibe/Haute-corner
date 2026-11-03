@@ -9,6 +9,7 @@ export default async function setup() {
   process.env.JWT_SECRET = randomBytes(32).toString('hex');
   process.env.GOOGLE_WEB_CLIENT_ID = 'test-web-client.apps.googleusercontent.com';
   process.env.APPLE_BUNDLE_ID = 'com.hautecorner.app';
+  process.env.EMAIL_TRANSPORT = 'memory';
 
   return async () => {
     await server.stop();

@@ -31,13 +31,22 @@ describe('verifyAppleIdentityToken', () => {
     createLocalJWKSet({ keys: [{ ...(await exportJWK(providerKeys.publicKey)), kid: 'test-key', alg: 'RS256' }] });
 
   it('accepts a token Apple issued for our bundle ID', async () => {
-    const token = await sign({ ...apple, email: 'abc@privaterelay.appleid.com' });
+    const token = await sign({ ...apple, email: 'ABC@privaterelay.appleid.com', email_verified: 'true' });
 
     await expect(verifyAppleIdentityToken(token, await keySet())).resolves.toEqual({
       provider: 'apple',
       providerId: '001234.abcdef',
       email: 'abc@privaterelay.appleid.com',
     });
+  });
+
+  // A matching address links accounts, so an unverified one must not count.
+  it('ignores an email address Apple has not verified', async () => {
+    const token = await sign({ ...apple, email: 'someone@example.com', email_verified: false });
+
+    const identity = await verifyAppleIdentityToken(token, await keySet());
+
+    expect(identity.email).toBeUndefined();
   });
 
   it.each([

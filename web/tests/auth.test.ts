@@ -76,6 +76,7 @@ describe('POST /auth/google', () => {
       phone: null,
       deliveryAddress: null,
       role: 'customer',
+      signInMethods: ['google'],
       seller: null,
     });
 
@@ -314,9 +315,8 @@ describe('DELETE /me', () => {
 
     expect(status).toBe(204);
     const user = await User.findById(phone.user.id).lean();
-    expect(user).toMatchObject({ provider: 'google', role: 'customer', wishlist: [], deletedAt: expect.any(Date) });
-    expect(user!.providerId).toBe(`deleted:${phone.user.id}`);
-    for (const field of ['email', 'name', 'avatarUrl', 'phone', 'deliveryAddress']) {
+    expect(user).toMatchObject({ identities: [], role: 'customer', wishlist: [], deletedAt: expect.any(Date) });
+    for (const field of ['email', 'passwordHash', 'name', 'avatarUrl', 'phone', 'deliveryAddress']) {
       expect(user).not.toHaveProperty(field);
     }
     expect(await Session.countDocuments()).toBe(0);

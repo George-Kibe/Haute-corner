@@ -9,4 +9,10 @@ export const listProductsQuery = z.object({
   q: z.string().trim().min(1).max(100).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   cursor: objectId.optional(),
+  // Comma-separated product IDs, as for a wish list. Up to 200, all in one page.
+  ids: z
+    .string()
+    .transform((value) => value.split(',').filter(Boolean))
+    .pipe(z.array(objectId).min(1).max(200))
+    .optional(),
 });

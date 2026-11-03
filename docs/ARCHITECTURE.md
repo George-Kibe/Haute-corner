@@ -72,14 +72,14 @@ HauteCorner/
 │   ├── shopping-cart    Cart, also on the root Stack, as are checkout, orders and disputes later
 │   └── (seller)/        Seller application, listings, seller orders, earnings (Phase 4)
 ├── features/
-│   ├── auth/            Google and Apple sign-in, session, profile queries, sign-in prompt
+│   ├── auth/            Google, Apple and email sign-in, session, profile queries, skeletons, sign-in prompt
 │   ├── products/        Query hooks, product UI, video player
 │   ├── cart/            Zustand store, grouping by seller
 │   ├── checkout/        Delivery details, M-Pesa and card payment
 │   ├── orders/          Order history, status timeline, confirm delivery
 │   ├── disputes/
 │   ├── seller/          Application, listing editor, media upload, earnings
-│   ├── wishlist/
+│   ├── wishlist/        Likes on the device, synced with the account once signed in
 │   └── notifications/   Permission, token registration, handlers
 ├── components/          Shared UI with no business logic
 ├── plugins/             Local config plugins
@@ -123,7 +123,11 @@ web/
 │   ├── db.ts          Cached Mongoose connection
 │   ├── auth.ts        Access and refresh tokens, authenticate, requireUser; later requireSeller, requireAdmin
 │   ├── identity.ts    Google and Apple token verification
-│   ├── users.ts       Sign-in, profile and account deletion
+│   ├── users.ts       Google and Apple sign-in with account linking, profile, account deletion
+│   ├── email-auth.ts  Email sign-up, sign-in and password reset
+│   ├── one-time-codes.ts, passwords.ts, rate-limit.ts
+│   ├── mail.ts        Gmail, SES, log or memory transport; email-templates.ts holds the messages
+│   ├── wishlist.ts    Save, remove and merge likes
 │   ├── http.ts        Response envelope and error handling
 │   ├── ledger.ts      The only code allowed to write ledger entries
 │   ├── daraja.ts      STK Push, B2C, status queries
@@ -192,7 +196,9 @@ sequenceDiagram
 
 Google tokens are verified with `google-auth-library`, with the web client ID as the audience. Apple tokens are verified against Apple's public keys with `jose`, with the bundle ID as the audience. Apple sends the user's name only on first sign-in, so save it then.
 
-In the app, `features/auth/session.ts` keeps the session. On launch, a stored refresh token means signed in. `authRequest` adds the access token, and on a 401 refreshes once and retries. Concurrent callers share one refresh. A refused refresh signs the user out, while a network failure keeps the session. Screens that need an account wrap their content in `SignInRequired`, which offers the sign-in sheet instead.
+In the app, `features/auth/session.ts` keeps the session. On launch, a stored refresh token means signed in. `authRequest` adds the access token, and on a 401 refreshes once and retries. Concurrent callers share one refresh. A refused refresh signs the user out, while a network failure keeps the session. Screens that need an account wrap their content in `SignInRequired`, which offers the sign-in screens instead. Those live in `app/(auth)/`, one modal stack: choose a method, email sign-in, create account, enter the code, and reset the password.
+
+Likes live in a Zustand store saved to MMKV, so they work signed out. `features/wishlist/sync.ts` watches the session: signing in posts the device's likes to `POST /me/wishlist`, opening the app signed in takes the account's list, and signing out clears the device.
 
 ### Becoming a seller
 

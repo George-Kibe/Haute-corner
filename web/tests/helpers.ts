@@ -2,13 +2,26 @@ import { Types } from 'mongoose';
 import { dbConnect } from '@/lib/db';
 import { Product, type ProductAttributes } from '@/models/Product';
 import { Seller, type SellerAttributes } from '@/models/Seller';
+import { sentEmails } from '@/lib/mail';
+import { EmailCode } from '@/models/EmailCode';
+import { RateLimit } from '@/models/RateLimit';
 import { Session } from '@/models/Session';
 import { User } from '@/models/User';
 
 export async function resetDatabase() {
   await dbConnect();
-  await Promise.all([Product.init(), Seller.init(), User.init(), Session.init()]);
-  await Promise.all([Product.deleteMany({}), Seller.deleteMany({}), User.deleteMany({}), Session.deleteMany({})]);
+  const models = [Product, Seller, User, Session, EmailCode, RateLimit];
+  for (const model of models) {
+    await (model as typeof Product).init();
+    await (model as typeof Product).deleteMany({});
+  }
+  sentEmails.length = 0;
+}
+
+// The code in the last email sent to an address.
+export function lastCodeSentTo(email: string) {
+  const message = sentEmails.findLast((sent) => sent.to === email);
+  return message?.subject.match(/^(\d{6}) /)?.[1];
 }
 
 export function createSeller(overrides: Partial<SellerAttributes> = {}) {

@@ -77,6 +77,7 @@ bun run dev
 | `bun run check-transactions` | Confirms multi-document transactions work on the database in `MONGODB_URI` |
 | `bun run seed` | Adds the sample catalogue. See [Sample data](#sample-data) |
 | `bun run remove-samples` | Removes the sample catalogue, and with `--media` its photos |
+| `bun run migrate-user-identities` | One-off: moves users to linked identities. Run `sync-indexes` after it |
 
 bun installs packages, but the scripts run on Node through `tsx`, because bun's runtime cannot load MongoDB's `bson` library. Vercel runs on Node too.
 
@@ -124,9 +125,18 @@ xcrun simctl list devices booted            # simulator IDs
 maestro --device <id> test .maestro/catalogue.yaml
 maestro --device <id> test .maestro/orientation.yaml
 maestro --device <id> test .maestro/sign-in-required.yaml
+maestro --device <id> test .maestro/wishlist.yaml
 ```
 
-`sign-in-required.yaml` checks that browsing needs no account and that the profile, wish list, selling and checkout ask for one. It does not press the sign-in buttons, so test real Google and Apple sign-in by hand on a device.
+`sign-in-required.yaml` checks that browsing and liking need no account, and that the profile, selling and checkout ask for one. It does not press the Google or Apple buttons, so test real Google and Apple sign-in by hand on a device.
+
+Email sign-up runs in two parts, because the code has to be read from the API log in between. Start the API with `EMAIL_TRANSPORT=log` and use a new address each time. On each iOS simulator, first turn off **Settings > General > AutoFill & Passwords > Suggest Strong Passwords**, or its sheet covers the password field and Maestro cannot see it:
+
+```bash
+maestro --device <id> test -e EMAIL=you+1@example.com -e PASSWORD='a long passphrase' .maestro/email-sign-up.yaml
+# find "[email] to you+1@example.com" in the API log, then:
+maestro --device <id> test -e EMAIL=you+1@example.com -e PASSWORD='a long passphrase' -e CODE=123456 .maestro/email-verify.yaml
+```
 
 The app has no orientation lock, so also check new screens on an iPad and the iPhone Duo simulator (iOS 27.1). Simulator screenshots taken in landscape come out rotated, which is expected.
 
@@ -148,7 +158,11 @@ maestro --device <serial> test -e METRO_PORT=8081 .maestro/catalogue.yaml
 | --- | --- | --- |
 | `MONGODB_URI` | Atlas connection string for this environment | 1 |
 | `JWT_SECRET` | At least 32 random characters, for signing access tokens. Different in each environment. Create one with `openssl rand -base64 48`. Set locally and in both Vercel environments | 3 |
-| `GOOGLE_WEB_CLIENT_ID` | Expected audience of Google ID tokens. Not set yet | 3 |
+| `GOOGLE_WEB_CLIENT_ID` | Expected audience of Google ID tokens: the web client. Set locally and in both Vercel environments | 3 |
+| `EMAIL_TRANSPORT` | `gmail`, `ses`, `log` (prints emails, for local testing) or `memory` (tests). `gmail` in both Vercel environments until SES is ready | 3 |
+| `EMAIL_FROM` | The sender's display name, such as `HauteCorner Lifestyle` | 3 |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | The Gmail account and its [app password](https://support.google.com/accounts/answer/185833). Secret | 3 |
+| `SES_REGION`, `SES_ACCESS_KEY_ID`, `SES_SECRET_ACCESS_KEY`, `SES_FROM_ADDRESS` | Amazon SES, once its domain is verified. Secret | Later |
 | `APPLE_BUNDLE_ID` | `com.hautecorner.app`, the expected audience of Apple tokens. Set locally and in both Vercel environments | 3 |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name, `dxnevfcm`. Sent to the app, which builds image addresses from it | 1 |
 | `CLOUDINARY_URL` | `cloudinary://<api key>:<api secret>@<cloud name>`. Secret. Used by the seed script, and to sign uploads from Phase 4 | 2 |
@@ -221,6 +235,16 @@ Android needs a SHA-1 for each key that signs the app: your local debug key, the
 | Google Play app signing | In Play Console, under Test and release, App integrity |
 
 Then set `GOOGLE_WEB_CLIENT_ID` in Vercel, both `EXPO_PUBLIC_GOOGLE_*` values in `HauteCorner/.env.local`, and the iOS client's reversed ID as `iosUrlScheme` in `app.json`, and rebuild the app.
+
+Done on 3 November 2026 for Google Cloud project `hautecorner`: web client `…0uhrq269…`, iOS client `…b05r525p…` and Android client `…kqrc36fk…`. The client files are in `HauteCorner/credentials/`, which git ignores. Check that the Android client lists the SHA-1 of every key that signs the app, including the debug key above, or Android sign-in fails with `DEVELOPER_ERROR`. EAS builds also need the two `EXPO_PUBLIC_GOOGLE_*` values as EAS environment variables.
+
+### Email (Phase 3)
+
+Development and, for now, production send through Gmail ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple)). Gmail needs 2-Step Verification on the account, and an app password in `GMAIL_APP_PASSWORD`. Gmail sends from the account's own address, with `EMAIL_FROM` as the display name.
+
+To test locally without sending, start the API with `EMAIL_TRANSPORT=log`, which prints each email, code included, to the server log. `.maestro/email-sign-up.yaml` and `email-verify.yaml` use this.
+
+For Amazon SES later: verify the sending domain, ask AWS for production access, create keys limited to sending, then set the `SES_*` variables and `EMAIL_TRANSPORT=ses` in Vercel.
 
 See the [library's Expo guide](https://react-native-google-signin.github.io/docs/setting-up/expo).
 

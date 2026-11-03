@@ -2,10 +2,10 @@
 import { OAuth2Client } from 'google-auth-library';
 import { createRemoteJWKSet, errors, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import { ApiError } from '@/lib/http';
-import type { UserAttributes } from '@/models/User';
+import type { Identity } from '@/models/User';
 
 export type VerifiedIdentity = {
-  provider: UserAttributes['provider'];
+  provider: Identity['provider'];
   providerId: string;
   email?: string;
   name?: string;
@@ -46,7 +46,7 @@ export async function verifyGoogleIdToken(idToken: string): Promise<VerifiedIden
   return {
     provider: 'google',
     providerId: payload.sub,
-    email: payload.email_verified ? payload.email : undefined,
+    email: payload.email_verified && payload.email ? payload.email.toLowerCase() : undefined,
     name: payload.name,
     avatarUrl: payload.picture,
   };
@@ -78,6 +78,11 @@ export async function verifyAppleIdentityToken(
   return {
     provider: 'apple',
     providerId: payload.sub,
-    email: typeof payload.email === 'string' ? payload.email : undefined,
+    // Apple sends email_verified as true or "true". Only a verified address is
+    // used, because a matching address links accounts.
+    email:
+      typeof payload.email === 'string' && String(payload.email_verified) === 'true'
+        ? payload.email.toLowerCase()
+        : undefined,
   };
 }

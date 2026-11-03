@@ -33,16 +33,21 @@ erDiagram
 
 ```ts
 type User = {
-  provider: 'google' | 'apple';
-  providerId: string;        // The token's stable `sub` claim
-  email?: string;            // May be an Apple private relay address
+  email?: string;            // Always verified: by Google or Apple, or by an emailed code. May be an Apple relay address
+  passwordHash?: string;     // scrypt, once the user sets a password for email sign-in
+  identities: Identity[];    // Linked Google and Apple accounts
   name?: string;
   avatarUrl?: string;
   phone?: string;
   deliveryAddress?: Address;
   role: 'customer' | 'admin'; // Being a seller is a Seller document, not a role
-  wishlist: ObjectId[];      // Product IDs; capped at 200
+  wishlist: ObjectId[];      // Product IDs, newest first; capped at 200
   deletedAt?: Date;
+};
+
+type Identity = {
+  provider: 'google' | 'apple';
+  providerId: string;        // The token's stable `sub` claim
 };
 
 type Address = {
@@ -55,9 +60,12 @@ type Address = {
 
 | Index | Purpose |
 | --- | --- |
-| `{ provider: 1, providerId: 1 }`, unique | Find the user at sign-in |
+| `{ 'identities.provider': 1, 'identities.providerId': 1 }`, unique where present | Find the user at Google or Apple sign-in |
+| `{ email: 1 }`, unique where present | One account per verified address, and email sign-in |
 
-**Deleted accounts** *(recommended, R-18)* keep only `_id`, `provider`, `role`, `deletedAt` and timestamps, so orders can still refer to them. `providerId` becomes `deleted:<_id>`, so signing in again with the same Google or Apple account creates a new, empty account.
+Accounts with the same verified email are one account ([ADR-037](DECISIONS.md#adr-037-one-account-per-verified-email)). `scripts/migrate-user-identities.ts` moved the earlier `provider` and `providerId` fields into `identities`.
+
+**Deleted accounts** *(recommended, R-18)* keep only `_id`, `role`, an empty `identities`, `deletedAt` and timestamps, so orders can still refer to them. With the email and identities gone, signing in again with the same Google, Apple or email account creates a new, empty account.
 
 `phone` is stored as `+254` followed by nine digits *(recommended, R-19)*.
 
@@ -81,6 +89,45 @@ type Session = {
 | `{ expiresAt: 1 }`, TTL with `expireAfterSeconds: 0` | Remove expired sessions automatically |
 
 Signing out or detected reuse sets `revokedAt`, and the session stays until it expires. Deleting the account removes all its sessions at once.
+
+## EmailCode
+
+A code emailed to confirm an address at sign-up, or to reset a password. A pending sign-up keeps its name and password hash here, so no account exists until the address is confirmed.
+
+```ts
+type EmailCode = {
+  email: string;
+  purpose: 'signup' | 'reset';
+  codeHash: string;          // HMAC-SHA256 with a server secret; the code is never stored
+  codeExpiresAt: Date;       // 10 minutes after sending
+  attempts: number;          // Up to 5
+  sentAt: Date;              // A new code may be sent a minute later
+  name?: string;             // Sign-up only
+  passwordHash?: string;     // Sign-up only
+  expiresAt: Date;           // The record goes after a day
+};
+```
+
+| Index | Purpose |
+| --- | --- |
+| `{ email: 1, purpose: 1 }`, unique | One live code per address and purpose |
+| `{ expiresAt: 1 }`, TTL | Remove old records automatically |
+
+## RateLimit
+
+A request counter for one key in one fixed window ([ADR-039](DECISIONS.md#adr-039-rate-limiting-with-counters-in-mongodb)).
+
+```ts
+type RateLimit = {
+  _id: string;               // bucket:hash of the key:window start. Email addresses are hashed
+  count: number;
+  expiresAt: Date;           // The end of the window
+};
+```
+
+| Index | Purpose |
+| --- | --- |
+| `{ expiresAt: 1 }`, TTL | Remove finished windows automatically |
 
 ## PushToken
 

@@ -76,18 +76,24 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 
 **Goal:** People can sign in, stay signed in, and delete their account.
 
-- [ ] Create Google OAuth clients, set `GOOGLE_WEB_CLIENT_ID` and the app's client IDs, and replace the `iosUrlScheme` placeholder in `app.json`
+- [x] Create Google OAuth clients, set `GOOGLE_WEB_CLIENT_ID` and the app's client IDs, and replace the `iosUrlScheme` placeholder in `app.json` (3 November 2026)
+- [ ] Add the SHA-1 of the debug key and the EAS signing key to the Android OAuth client, and the two `EXPO_PUBLIC_GOOGLE_*` values to EAS
 - [x] Install `expo-secure-store` and `expo-apple-authentication`, and turn on `usesAppleSignIn`
 - [ ] Enable Sign in with Apple for `com.hautecorner.app` in the Apple Developer account
 - [x] Add User and Session models and auth endpoints, with tests for rotation and reuse
 - [x] Set `JWT_SECRET` and `APPLE_BUNDLE_ID` locally and in both Vercel environments
-- [ ] Add rate limiting to auth endpoints
-- [x] Build sign-in, required only for checkout, wish list, orders and selling
-- [x] Build the Profile screen: details, address, sign out, delete account
+- [x] Add rate limiting to auth endpoints ([ADR-039](DECISIONS.md#adr-039-rate-limiting-with-counters-in-mongodb))
+- [x] Add email sign-up with emailed codes, welcome emails and password reset, sent through Gmail ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple))
+- [x] Link accounts that share a verified email ([ADR-037](DECISIONS.md#adr-037-one-account-per-verified-email))
+- [x] Build sign-in, required only for checkout, orders and selling
+- [x] Build the Profile screen: details, address, sign-in methods, password, sign out, delete account
+- [x] Build the Wish List: likes kept on the device, and synced to the account once signed in ([ADR-038](DECISIONS.md#adr-038-likes-without-an-account-synced-once-signed-in))
+- [x] Show skeletons while screens load ([ADR-040](DECISIONS.md#adr-040-skeletons-while-loading))
 - [ ] Revoke Sign in with Apple tokens when an account is deleted
 - [ ] Make `/delete-account` on the website functional
+- [ ] Run the sign-in, email and wish list flows on the Android phone
 
-**Exit:** Google sign-in works on real iOS and Android devices, Apple sign-in works on iOS, expired sessions refresh silently, and deleted accounts lose access with their data removed.
+**Exit:** Google sign-in works on real iOS and Android devices, Apple sign-in works on iOS, email sign-up and password reset work, expired sessions refresh silently, and deleted accounts lose access with their data removed.
 
 ## Phase 4: Sellers and listings
 
@@ -117,7 +123,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Integrate Paystack in test mode, with the hosted page and verified webhooks
 - [ ] Add the reservation expiry and payment reconciliation jobs
 - [ ] Build checkout with delivery details, per-seller fees and payment choice
-- [ ] Build the real Wish List tab, and remove the mock payment screen and its logos
+- [x] Build the real Wish List tab, and remove the mock payment screen and its logos (done early, in Phase 3)
 - [ ] Remove `@reduxjs/toolkit`, `react-redux`, `redux`, `redux-persist`, `axios` and AsyncStorage
 
 **Exit:** A multi-seller purchase works with both payment methods in test modes. Tests prove clients cannot set prices, duplicate webhooks have no effect, and the ledger matches every payment. No Redux code remains.
@@ -167,6 +173,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Onboard the first sellers
 - [ ] Run the [release checklist](DEPLOYMENT.md#release-checklist)
 - [ ] Prepare store listings, screenshots, Play Data Safety and Apple App Privacy answers
+- [ ] Move email from Gmail to Amazon SES, and test it ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple))
 - [ ] Release to TestFlight and Play internal testing, then production
 
 **Exit:** The app is approved in both stores, and a real order has gone from payment through delivery to a seller payout.

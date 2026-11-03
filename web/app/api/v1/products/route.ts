@@ -16,13 +16,16 @@ export const GET = route(async (request) => {
   if (query.seller) filter.sellerId = query.seller;
   if (query.q) filter.$text = { $search: query.q };
   if (query.cursor) filter._id = { $lt: query.cursor };
+  // A list of IDs comes back whole, without pages.
+  const limit = query.ids ? query.ids.length : query.limit;
+  if (query.ids) filter._id = { $in: query.ids };
 
   const found = await Product.find(filter)
     .sort({ _id: -1 })
-    .limit(query.limit + 1)
+    .limit(limit + 1)
     .lean();
-  const page = found.slice(0, query.limit);
-  const nextCursor = found.length > query.limit ? String(page[page.length - 1]._id) : null;
+  const page = found.slice(0, limit);
+  const nextCursor = found.length > limit ? String(page[page.length - 1]._id) : null;
 
   const sellers = await Seller.find({
     _id: { $in: page.map((product) => product.sellerId) },

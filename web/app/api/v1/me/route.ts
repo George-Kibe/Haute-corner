@@ -37,6 +37,6 @@ export const PATCH = route(async (request) => {
 export const DELETE = route(async (request) => {
   await dbConnect();
   const user = await requireUser(request);
-  await deleteAccount(user._id);
+  await deleteAccount(user);
   return noContent();
 });

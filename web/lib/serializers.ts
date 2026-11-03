@@ -54,6 +54,11 @@ export function serializeUser(user: WithId<UserAttributes>, seller: WithId<Selle
       ? { line1: address.line1, area: address.area ?? null, city: address.city, notes: address.notes ?? null }
       : null,
     role: user.role,
+    // How this person can sign in: google, apple and email.
+    signInMethods: [
+      ...new Set(user.identities.map((identity) => identity.provider)),
+      ...(user.passwordHash ? ['email'] : []),
+    ],
     seller: seller ? { id: String(seller._id), status: seller.status } : null,
   };
 }

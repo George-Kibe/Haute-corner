@@ -9,6 +9,7 @@ export class ApiError extends Error {
     readonly code: string,
     message: string,
     readonly details?: Record<string, string>,
+    readonly headers?: Record<string, string>,
   ) {
     super(message);
   }
@@ -29,10 +30,24 @@ export function ok(data: unknown, { meta, status = 200, cache = 'no-store' }: Ok
   });
 }
 
-export function fail(status: number, code: string, message: string, details?: Record<string, string>) {
+export function fail(
+  status: number,
+  code: string,
+  message: string,
+  details?: Record<string, string>,
+  headers: Record<string, string> = {},
+) {
   return Response.json(
     { error: details ? { code, message, details } : { code, message } },
-    { status, headers: { 'Cache-Control': 'no-store' } },
+    { status, headers: { ...headers, 'Cache-Control': 'no-store' } },
+  );
+}
+
+// Vercel sets x-real-ip to the address that connected. Many Kenyan mobile users
+// share one address through their carrier, so limits per address stay generous.
+export function clientIp(request: Request) {
+  return (
+    request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   );
 }
 
@@ -51,7 +66,7 @@ export function route<Context = unknown>(
     } catch (error) {
       unstable_rethrow(error);
       if (error instanceof ApiError) {
-        return fail(error.status, error.code, error.message, error.details);
+        return fail(error.status, error.code, error.message, error.details, error.headers);
       }
       console.error('Unhandled API error', error);
       return fail(500, 'internal_error', 'Something went wrong');

@@ -115,6 +115,8 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **What follows:** Requires `expo-apple-authentication`, added in Phase 3. Both stores also require account deletion: in the app on both, and through a web link for [Google Play](https://support.google.com/googleplay/android-developer/answer/13327111).
 
+**Updated 3 November 2026:** Email sign-up was added alongside Google and Apple ([ADR-036](#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple)), and the wish list no longer needs an account ([ADR-038](#adr-038-likes-without-an-account-synced-once-signed-in)).
+
 ### ADR-016: Our own short-lived tokens
 
 **Decided:** The API verifies the Google or Apple token, then issues a 15-minute JWT and a rotating 30-day refresh token, stored hashed in MongoDB.
@@ -234,6 +236,36 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **What follows:** Grid columns come from the window width, content respects side safe areas, and the product page puts the image beside the details in wide windows. Every new screen must work in portrait and landscape, and `.maestro/orientation.yaml` checks this.
 
+### ADR-036: Email sign-up with emailed codes, alongside Google and Apple
+
+**Decided 3 November 2026:** People can also create an account with an email address and password. A one-time code sent by email confirms the address at sign-up, and resets a forgotten password. New accounts get a welcome email. Gmail SMTP sends in development, and Amazon SES in production. Until SES has a verified domain and production access, production also sends through Gmail.
+
+**What follows:** Extends [ADR-015](#adr-015-google-and-apple-sign-in-with-browsing-left-open). Gmail allows roughly 500 messages a day from one account, which suits testing but not launch. Moving to SES means setting `EMAIL_TRANSPORT=ses`, `SES_REGION`, `SES_FROM_ADDRESS` and the SES keys in Vercel. The SES path is written but untested until then.
+
+### ADR-037: One account per verified email
+
+**Decided 3 November 2026:** When someone signs in with Google or Apple using an address that already has an account, or signs up by email with an address that already has Google or Apple, it is the same account, as long as both sides have verified the address.
+
+**What follows:** Orders, likes and seller status stay together whichever way someone signs in. Apple's private relay addresses never match another account. Only verified addresses are stored, so the email field is unique.
+
+### ADR-038: Likes without an account, synced once signed in
+
+**Decided 3 November 2026:** The Wish List tab lists the products a shopper has liked. Liking needs no account: likes are kept on the device. Signing in adds them to the account, which keeps them in sync across devices. Signing out clears them from the device, and they come back on the next sign-in.
+
+**What follows:** Replaces the mock payment screen that stood in the Wish List tab. Changes the earlier plan for sign-in to be required for the wish list ([ADR-015](#adr-015-google-and-apple-sign-in-with-browsing-left-open)).
+
+### ADR-039: Rate limiting with counters in MongoDB
+
+**Decided 3 November 2026:** Auth endpoints are rate limited with fixed-window counters in our Atlas database, which expire automatically. No new service is added.
+
+**What follows:** Each limited request costs one database write. Limits per network address stay generous, because Kenyan carriers put many phones behind one address. The values are in `web/lib/rate-limit.ts` and can be tuned.
+
+### ADR-040: Skeletons while loading
+
+**Decided 3 November 2026:** Screens show skeletons shaped like their content while loading, rather than spinners.
+
+**What follows:** Native forms on iOS use SwiftUI's own placeholder (`redacted`). Product grids, product pages and Android forms have no native equivalent, so they use a small custom `Skeleton` that pulses, and stays still when the system asks for reduced motion.
+
 ## Recommended
 
 These are technical suggestions the other documents assume. You were not asked about them individually, so approve or change them when you review the documents.
@@ -251,6 +283,9 @@ These are technical suggestions the other documents assume. You were not asked a
 | R-18 | A deleted account keeps an empty record with only its ID, provider and role, and signing in again creates a new account | Orders and the ledger can still point to it, without keeping personal details | Remove the user document entirely, leaving orders pointing at nothing |
 | R-19 | Store phone numbers as `+254` and nine digits, accepting the usual local ways of writing them | M-Pesa and sellers need one format, and people type numbers differently | Store what was typed |
 | R-20 | The access token stays in memory only, and the refresh token in secure storage | Nothing long-lived sits in plain storage, and a restart costs one refresh | Store both in secure storage |
+| R-21 | Passwords need 8 to 128 characters, with no other rules, and are hashed with scrypt | NIST recommends length over character rules, and scrypt is built into Node, so nothing native is needed on Vercel | Argon2id through a native package |
+| R-22 | Codes have 6 digits, work for 10 minutes, 5 tries and once only, with a minute between emails, and are stored as an HMAC | Short enough to type, too few tries to guess, and a copied database alone does not reveal them | Longer codes, or magic links |
+| R-23 | Sign-up says when an address already has a password, while password reset never says whether an account exists | Telling people to sign in instead is clearer, and a reset is the usual way to find out who has an account | Never say, and email the account owner instead |
 
 ## Open items
 
@@ -270,7 +305,6 @@ These are technical suggestions the other documents assume. You were not asked a
 | Domain name | Before Phase 8 | Store listings and legal pages should use the final domain |
 | Atlas tier at launch | Before Phase 8 | The free tier has 0.5 GB and limited backups, which may not suit a financial ledger |
 | Tax treatment of commission | Before Phase 8 | Ask an accountant about VAT and income tax on commission |
-| Rate limiting tool | Before Phase 3 ends | Candidates: counters in MongoDB, Upstash Redis, or Vercel Firewall rules. Not yet chosen |
 | Error reporting tool | Before Phase 8 | Not yet compared |
 | How the website handles account deletion | Before Phase 3 ends | The page explains in-app deletion and email requests. Choose whether to add web sign-in, or a way for admins to act on emailed requests |
 | Revoking Sign in with Apple tokens on deletion | Before App Store submission | Needs a Sign in with Apple key from the Apple Developer account. Either keep Apple's refresh token from sign-in, or ask the user to sign in with Apple again when deleting |

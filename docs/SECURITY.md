@@ -101,6 +101,11 @@ Holding funds for sellers has [an open legal question](DECISIONS.md#open-items).
 - The app keeps the refresh token in the Keychain or Keystore through `expo-secure-store`, and the access token only in memory. It sends one refresh at a time, because two at once would look like reuse.
 - Google and Apple tokens are checked for signature, issuer, audience and expiry. Google's audience is the web client ID, and Apple's is the bundle ID.
 - Access tokens are checked without reading the database. Routes that act on the account load the user and refuse deleted accounts, so deletion takes effect at once there, and everywhere else within 15 minutes.
+- Passwords are hashed with scrypt (N=2^15, r=8, p=3, a random salt each), and checked in constant time. A sign-in for an address with no password takes as long as a real check, and gives the same answer as a wrong password.
+- Emailed codes are 6 digits, stored only as an HMAC keyed with `JWT_SECRET`, and work for 10 minutes, 5 tries and once only. A password reset signs out every device and emails a notice.
+- Accounts link by email only when the address is verified: by Google (`email_verified`), by Apple (`email_verified`), or by an emailed code. An unverified address is never stored.
+- Auth endpoints are rate limited per email address and per network address, with counters in MongoDB. Rate limit keys are hashed, so the counters hold no email addresses.
+- `GMAIL_APP_PASSWORD` and the SES keys are secrets, stored only in `web/.env.local` and Vercel.
 - Sign-in does not use a nonce yet. One would stop a stolen provider token being replayed within its few minutes of validity.
 - Before App Store submission, account deletion must also revoke Sign in with Apple tokens through Apple's REST API. This needs a Sign in with Apple key.
 
