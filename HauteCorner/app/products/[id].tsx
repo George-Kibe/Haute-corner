@@ -26,13 +26,16 @@ function ProductDetails({ product }: { product: Product }) {
   const colors = useColors();
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const { data: config } = useAppConfig();
   const [selectedOption, setSelectedOption] = useState(product.options[0]);
   const [liked, setLiked] = useState(false);
 
   const images = product.media.filter((item) => item.kind === 'image');
   const soldOut = product.stock === 0;
+  // In landscape-shaped windows the image sits beside the details, so it never fills the screen.
+  const wide = width > height;
+  const imageSize = wide ? Math.min((width - insets.left - insets.right) / 2, height * 0.75) : width;
 
   const addToCart = () => {
     const image = firstImage(product);
@@ -72,49 +75,51 @@ function ProductDetails({ product }: { product: Product }) {
         />
       </HeaderActions>
 
-      <PagerView initialPage={0} style={{ width, height: width }}>
-        {images.map((item) => (
-          <View key={item.publicId} collapsable={false}>
-            <ProductImage
-              accessibilityLabel={product.title}
-              layoutWidth={width}
-              publicId={item.publicId}
-              style={{ width, height: width }}
-            />
-          </View>
-        ))}
-      </PagerView>
+      <View style={wide ? [styles.wide, { paddingLeft: insets.left, paddingRight: insets.right }] : undefined}>
+        <PagerView initialPage={0} style={{ width: imageSize, height: imageSize }}>
+          {images.map((item) => (
+            <View key={item.publicId} collapsable={false}>
+              <ProductImage
+                accessibilityLabel={product.title}
+                layoutWidth={imageSize}
+                publicId={item.publicId}
+                style={[{ width: imageSize, height: imageSize }, wide && styles.wideImage]}
+              />
+            </View>
+          ))}
+        </PagerView>
 
-      <View style={styles.body}>
-        <AppText style={styles.title}>{product.title}</AppText>
-        <AppText style={[styles.price, { color: colors.primary }]}>{formatPrice(product.price)}</AppText>
-        <AppText style={[styles.meta, { color: colors.muted }]}>
-          Sold by {product.seller.name} · Delivery {formatPrice(product.seller.deliveryFee)}
-        </AppText>
-        {soldOut ? <AppText style={[styles.stock, { color: colors.danger }]}>Sold out</AppText> : null}
+        <View style={[styles.body, wide && styles.wideBody]}>
+          <AppText style={styles.title}>{product.title}</AppText>
+          <AppText style={[styles.price, { color: colors.primary }]}>{formatPrice(product.price)}</AppText>
+          <AppText style={[styles.meta, { color: colors.muted }]}>
+            Sold by {product.seller.name} · Delivery {formatPrice(product.seller.deliveryFee)}
+          </AppText>
+          {soldOut ? <AppText style={[styles.stock, { color: colors.danger }]}>Sold out</AppText> : null}
 
-        {product.options.length > 0 ? (
-          <View style={[styles.options, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <AppText style={styles.optionsLabel}>Size</AppText>
-            <Host matchContents>
-              <Picker<string>
-                appearance="menu"
-                enabled={!soldOut}
-                onValueChange={setSelectedOption}
-                selectedValue={selectedOption}
-                testID="size-picker">
-                {product.options.map((option) => (
-                  <Picker.Item key={option} label={option} value={option} />
-                ))}
-              </Picker>
-            </Host>
-          </View>
-        ) : null}
+          {product.options.length > 0 ? (
+            <View style={[styles.options, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <AppText style={styles.optionsLabel}>Size</AppText>
+              <Host matchContents>
+                <Picker<string>
+                  appearance="menu"
+                  enabled={!soldOut}
+                  onValueChange={setSelectedOption}
+                  selectedValue={selectedOption}
+                  testID="size-picker">
+                  {product.options.map((option) => (
+                    <Picker.Item key={option} label={option} value={option} />
+                  ))}
+                </Picker>
+              </Host>
+            </View>
+          ) : null}
 
-        <Button disabled={soldOut} label={soldOut ? 'Sold out' : 'Add to cart'} onPress={addToCart} />
+          <Button disabled={soldOut} label={soldOut ? 'Sold out' : 'Add to cart'} onPress={addToCart} />
 
-        <AppText style={styles.heading}>About this product</AppText>
-        <AppText style={[styles.description, { color: colors.muted }]}>{product.description}</AppText>
+          <AppText style={styles.heading}>About this product</AppText>
+          <AppText style={[styles.description, { color: colors.muted }]}>{product.description}</AppText>
+        </View>
       </View>
     </ScrollView>
   );
@@ -159,6 +164,19 @@ const styles = StyleSheet.create({
   body: {
     padding: 16,
     gap: 12,
+  },
+  wide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    padding: 16,
+  },
+  wideImage: {
+    borderRadius: 20,
+  },
+  wideBody: {
+    flex: 1,
+    paddingTop: 0,
   },
   title: {
     fontSize: 24,

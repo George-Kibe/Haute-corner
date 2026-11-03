@@ -3,7 +3,7 @@
     "name": "HauteCorner",
     "slug": "HauteCorner",
     "version": "1.0.4",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "hautecorner",
     "userInterfaceStyle": "automatic",

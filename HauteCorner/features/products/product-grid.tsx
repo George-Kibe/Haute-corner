@@ -1,12 +1,16 @@
 import { FlashList } from '@shopify/flash-list';
 import { useMemo, type ReactElement } from 'react';
 import { ActivityIndicator, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StateMessage } from '@/components/state-message';
 import { ProductCard } from '@/features/products/product-card';
 import { useProducts } from '@/features/products/queries';
 import type { ProductFilters } from '@/features/products/types';
 import { useColors } from '@/hooks/use-colors';
+
+const MIN_CARD_WIDTH = 180;
+const MAX_COLUMNS = 5;
 
 type ProductGridProps = {
   filters: ProductFilters;
@@ -21,6 +25,10 @@ type ProductGridProps = {
 export function ProductGrid({ filters, emptyTitle, emptyMessage, header }: ProductGridProps) {
   const colors = useColors();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // Windows can be any size on iOS 27 and on iPad, so columns follow the width.
+  const usableWidth = width - insets.left - insets.right;
+  const columns = Math.min(MAX_COLUMNS, Math.max(2, Math.floor(usableWidth / MIN_CARD_WIDTH)));
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isRefetching, refetch } =
     useProducts(filters);
 
@@ -43,7 +51,7 @@ export function ProductGrid({ filters, emptyTitle, emptyMessage, header }: Produ
 
   return (
     <FlashList
-      contentContainerStyle={styles.content}
+      contentContainerStyle={{ ...styles.content, paddingLeft: 8 + insets.left, paddingRight: 8 + insets.right }}
       contentInsetAdjustmentBehavior="automatic"
       data={products}
       keyExtractor={(product) => product.id}
@@ -52,14 +60,15 @@ export function ProductGrid({ filters, emptyTitle, emptyMessage, header }: Produ
         isFetchingNextPage ? <ActivityIndicator color={colors.primary} style={styles.footer} /> : null
       }
       ListHeaderComponent={header}
-      numColumns={width >= 700 ? 3 : 2}
+      key={columns}
+      numColumns={columns}
       onEndReached={() => {
         if (hasNextPage && !isFetchingNextPage) fetchNextPage();
       }}
       onEndReachedThreshold={0.5}
       onRefresh={() => refetch()}
       refreshing={isRefetching && !isFetchingNextPage}
-      renderItem={({ item }) => <ProductCard product={item} />}
+      renderItem={({ item }) => <ProductCard imageWidth={usableWidth / columns} product={item} />}
       showsVerticalScrollIndicator={false}
     />
   );
@@ -72,7 +81,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    paddingHorizontal: 8,
     paddingBottom: 16,
   },
   footer: {

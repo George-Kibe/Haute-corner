@@ -1,0 +1,44 @@
+# The app has no orientation lock, because iOS 27 can resize or rotate apps anyway.
+# Checks that Home and product details still work in landscape.
+# Run with: maestro --device <id> test .maestro/orientation.yaml
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 30000
+- takeScreenshot: orientation-1-portrait
+
+- setOrientation: LANDSCAPE_LEFT
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 10000
+- takeScreenshot: orientation-2-landscape-home
+
+- tapOn: Graphic tee and joggers set.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- scrollUntilVisible:
+    element: Add to cart
+    direction: DOWN
+- takeScreenshot: orientation-3-landscape-product
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+
+- setOrientation: PORTRAIT
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 10000

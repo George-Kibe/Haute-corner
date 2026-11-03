@@ -103,6 +103,7 @@ HauteCorner/
 ### Conventions
 
 - **Native components come first** ([ADR-032](DECISIONS.md#adr-032-native-components-first)). Use Expo UI and native navigation before writing a custom component. Product cards and the grid are custom only because no native equivalent exists.
+- **Screens fit any window size and orientation** ([ADR-035](DECISIONS.md#adr-035-adapt-to-any-window-size-with-no-orientation-lock)). Size layouts from `useWindowDimensions`, respect left and right safe areas, and never assume portrait.
 - Remote images use `expo-image`, requested through `lib/media.ts`, never React Native's `Image`.
 - User feedback uses `react-native-toast-message`.
 - Configuration comes from `EXPO_PUBLIC_*` variables, which are compiled into the app and must never hold secrets.

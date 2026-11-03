@@ -35,8 +35,7 @@ These problems are known and left in place on purpose, because a later phase rep
 
 | Area | Note |
 | --- | --- |
-| iOS 27 | iPhone apps can be resized, and `orientation: portrait` may not lock the layout. Check layouts at different sizes |
 | Android release builds | R8 is on by default since SDK 58. Always test a release build before shipping, as reflection-based code can fail only there |
-| Tablets | `orientation: portrait` letterboxes the app on an Android tablet in landscape |
+| iOS 27 layouts | Apple's forums report an iOS 27 bug where tab search ignores side safe areas in landscape. The app passes on iPhone, iPad and the iPhone Duo simulator, but keep checking landscape after each iOS update |
 | Native tabs | Tabs must be static; changing them at runtime resets navigation state. Keep this in mind for showing the Add Product tab only to sellers in Phase 4 |
 | Cloudinary demo images | Sample data points at Cloudinary's public `demo` cloud, which could change. Move to your own account in Phase 4 |

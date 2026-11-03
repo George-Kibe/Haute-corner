@@ -224,6 +224,14 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **Decided 2 November 2026:** UI flows use [Maestro](https://maestro.dev/), and live in `HauteCorner/.maestro/`. Every UI test runs on at least two iOS simulators of different sizes and the owner's Android phone, never an Android emulator.
 
+### ADR-035: Adapt to any window size, with no orientation lock
+
+**Decided 3 November 2026:** Remove the portrait lock, and make every screen fit the window it is given, in either orientation.
+
+**Why:** On iOS 27, an orientation lock is only a preference: the system can resize or rotate the app anyway, and Expo recommends that apps "adapt to the space available to them instead of relying on a fixed orientation" ([Expo](https://docs.expo.dev/versions/v58.0.0/sdk/screen-orientation/#orientation-locks-on-ios-27-and-later)). On the iPhone Duo simulator, the locked layout put products under a side tab bar.
+
+**What follows:** Grid columns come from the window width, content respects side safe areas, and the product page puts the image beside the details in wide windows. Every new screen must work in portrait and landscape, and `.maestro/orientation.yaml` checks this.
+
 ## Recommended
 
 These are technical suggestions the other documents assume. You were not asked about them individually, so approve or change them when you review the documents.

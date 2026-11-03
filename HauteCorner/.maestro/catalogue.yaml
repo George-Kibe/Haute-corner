@@ -13,14 +13,15 @@ appId: com.hautecorner.app
 - takeScreenshot: 01-home
 
 # Search finds a product, and an unknown word shows the empty state.
+# Phones show a search field. iPad and Android show a search button first.
 - runFlow:
     when:
-      platform: iOS
+      visible: Search shoes and clothing
     commands:
       - tapOn: Search shoes and clothing
 - runFlow:
     when:
-      platform: Android
+      notVisible: Search shoes and clothing
     commands:
       - tapOn: Search
 - inputText: sneakers
@@ -35,19 +36,32 @@ appId: com.hautecorner.app
     visible: Nothing found for "umbrella"
     timeout: 15000
 - eraseText: 10
-# The search bar's close button has no reliable label, so tap where it sits.
 - runFlow:
     when:
       platform: iOS
     commands:
-      - tapOn:
-          point: 90%,9%
+      - runFlow:
+          when:
+            visible: Close
+          commands:
+            - tapOn: Close
+      - runFlow:
+          when:
+            visible: Cancel
+          commands:
+            - tapOn: Cancel
 - runFlow:
     when:
       platform: Android
     commands:
       - back
       - back
+# On iPad, search replaces the tab bar until the keyboard is dismissed.
+- runFlow:
+    when:
+      notVisible: Categories
+    commands:
+      - hideKeyboard
 - runFlow: dismiss-dev-menu.yaml
 # Let the keyboard finish closing, or the tab bar moves away from under the next tap.
 - waitForAnimationToEnd:
@@ -91,6 +105,12 @@ appId: com.hautecorner.app
 - extendedWaitUntil:
     visible: Added to cart
     timeout: 5000
+# On iPad, header buttons that do not fit move into a More menu.
+- runFlow:
+    when:
+      notVisible: My cart
+    commands:
+      - tapOn: More
 - tapOn: My cart
 - extendedWaitUntil:
     visible: Graphic tee and joggers set.*

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { ProductImage } from '@/features/products/product-image';
@@ -7,9 +7,8 @@ import { firstImage, type Product } from '@/features/products/types';
 import { useColors } from '@/hooks/use-colors';
 import { formatPrice } from '@/lib/format';
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, imageWidth }: { product: Product; imageWidth: number }) {
   const colors = useColors();
-  const { width } = useWindowDimensions();
 
   return (
     <Pressable
@@ -18,7 +17,7 @@ export function ProductCard({ product }: { product: Product }) {
       onPress={() => router.push({ pathname: '/products/[id]', params: { id: product.id } })}
       style={styles.card}>
       <View>
-        <ProductImage publicId={firstImage(product)?.publicId} layoutWidth={width / 2} style={styles.image} />
+        <ProductImage publicId={firstImage(product)?.publicId} layoutWidth={imageWidth} style={styles.image} />
         {product.stock === 0 ? (
           <View style={[styles.badge, { backgroundColor: colors.background }]}>
             <AppText style={styles.badgeText}>Sold out</AppText>

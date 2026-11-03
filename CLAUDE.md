@@ -50,6 +50,7 @@ Run native builds from a scratch copy rather than `android/` or `ios/` if the ow
 ## Mobile rules
 
 - **Use native components first.** Check `@expo/ui` (universal, `swift-ui`, `jetpack-compose`, `community/*`) and native navigation options such as `NativeTabs`, `Stack.Toolbar` and `Stack.SearchBar` before writing a custom TypeScript component. Build custom only when nothing native fits, and say why.
+- Screens must work at any window size and in both orientations. There is no orientation lock, because iOS 27 can ignore it.
 - Expo Go does not work; use development builds.
 - `android/` and `ios/` are generated and git-ignored. Change native settings through `app.json` or a plugin in `plugins/`.
 - The app may be running or building while you work. Check before running `expo prebuild --clean` or removing those folders.

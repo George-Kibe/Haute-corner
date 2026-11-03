@@ -91,7 +91,10 @@ UI flows use [Maestro](https://maestro.dev/) and live in `HauteCorner/.maestro/`
 ```bash
 xcrun simctl list devices booted            # simulator IDs
 maestro --device <id> test .maestro/catalogue.yaml
+maestro --device <id> test .maestro/orientation.yaml
 ```
+
+The app has no orientation lock, so also check new screens on an iPad and the iPhone Duo simulator (iOS 27.1). Simulator screenshots taken in landscape come out rotated, which is expected.
 
 **The Android phone** runs a development build through Metro, because Android blocks plain HTTP to `localhost` in Release builds:
 

@@ -66,7 +66,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [x] Replace deprecated `@expo/vector-icons`
 - [x] Apply the brand colours and Nunito, fix the `Colors` theme mismatch and remaining TypeScript errors, then make `tsc` a required CI check
 - [x] Review screens on iOS 26+
-- [ ] Check layout when an iPhone app is resized on iOS 27
+- [x] Make layouts adapt to any window size and orientation, checked on two iPhones in both orientations, an iPad and the iPhone Duo ([ADR-035](DECISIONS.md#adr-035-adapt-to-any-window-size-with-no-orientation-lock))
 - [ ] Run the catalogue flow on the Android phone
 - [ ] Add real app screenshots to the marketing page, once they can show real product photos rather than Cloudinary's demo images
 
