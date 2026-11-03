@@ -1,5 +1,6 @@
 import { StyleSheet, View, Image, TextInput, TouchableOpacity } from 'react-native'
 import { AppText as Text } from '@/components/app-text';
+import { SignInRequired } from '@/features/auth/sign-in-required';
 import React, { useState } from 'react'
 import { images } from '@/constants';
 
@@ -39,7 +40,14 @@ const SavedItemsScreen = () => {
   )
 }
 
-export default SavedItemsScreen
+// Replaced in a later phase; until then it is only shown to signed-in users.
+export default function SavedItemsScreenGate() {
+  return (
+    <SignInRequired title="Your wish list" message="Sign in to save items and find them again on any device.">
+      <SavedItemsScreen />
+    </SignInRequired>
+  );
+}
 
 const styles = StyleSheet.create({
     mainContainer: {

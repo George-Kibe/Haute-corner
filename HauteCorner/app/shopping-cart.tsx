@@ -1,4 +1,6 @@
 import {FlatList, StyleSheet, View, Pressable, ActivityIndicator, Alert} from 'react-native';
+import { useSession } from '@/features/auth/session';
+import { openSignIn } from '@/features/auth/sign-in-required';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText as Text } from '@/components/app-text';
 import { formatPrice } from '@/lib/format';
@@ -48,6 +50,10 @@ const ShoppingCartScreen = () => {
   const [createOrder, {data, isLoading, error}] = useCreateOrderMutation();
   // console.log(data, isLoading, error)
   const onCheckoutClick = async() => {
+    if (useSession.getState().status !== 'signedIn') {
+      openSignIn();
+      return;
+    }
     const result = await createOrder({
       items: cartItems,
       subtotal,

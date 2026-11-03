@@ -19,6 +19,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { restoreSession } from '@/features/auth/session';
 import { queryClient } from '@/lib/query-client';
 import { persistor, store } from '@/store';
 
@@ -42,6 +43,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
+
+  useEffect(() => {
+    restoreSession();
+  }, []);
 
   if (!ready) return null;
 
@@ -74,6 +79,20 @@ export default function RootLayout() {
               <Stack.Screen name="products/[id]" options={{ title: 'Product Details' }} />
               <Stack.Screen name="shopping-cart" options={{ title: 'My Cart', headerTransparent: false }} />
               <Stack.Screen name="track-order" options={{ title: 'Track Order', headerTransparent: false }} />
+              <Stack.Screen
+                name="sign-in"
+                options={{
+                  title: 'Sign In',
+                  headerShown: false,
+                  presentation: 'formSheet',
+                  sheetAllowedDetents: 'fitToContents',
+                  sheetGrabberVisible: true,
+                }}
+              />
+              <Stack.Screen
+                name="edit-profile"
+                options={{ title: 'Edit Profile', presentation: 'modal', headerTransparent: false }}
+              />
             </Stack>
             <Toast bottomOffset={110} position="bottom" />
           </PersistGate>

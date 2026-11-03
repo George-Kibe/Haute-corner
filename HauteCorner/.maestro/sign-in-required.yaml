@@ -1,0 +1,79 @@
+# Phase 3: browsing needs no account, but the profile, wish list, selling and
+# checkout ask the shopper to sign in.
+# Needs the API running with seed data. It does not press the sign-in buttons,
+# because a real sign-in needs a Google or Apple account.
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+
+# The profile asks to sign in, and opens the sign-in sheet.
+- tapOn: Profile
+- extendedWaitUntil:
+    visible: Your profile
+    timeout: 10000
+- tapOn: Sign in
+- extendedWaitUntil:
+    visible: Sign in to HauteCorner
+    timeout: 10000
+- assertVisible: Sign in with Google
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: Sign in with Apple
+- takeScreenshot: 01-sign-in
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - swipe:
+          start: 50%,30%
+          end: 50%,95%
+          duration: 400
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- extendedWaitUntil:
+    visible: Your profile
+    timeout: 10000
+
+# The wish list and selling ask too.
+- tapOn: Wish List
+- extendedWaitUntil:
+    visible: Your wish list
+    timeout: 10000
+- tapOn: Add Product
+- extendedWaitUntil:
+    visible: Sell on HauteCorner
+    timeout: 10000
+- takeScreenshot: 02-sell
+
+# Checkout opens sign-in, while adding to the cart does not need it.
+- tapOn: Home
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 30000
+- tapOn: Graphic tee and joggers set.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- scrollUntilVisible:
+    element: Add to cart
+    direction: DOWN
+- tapOn: Add to cart
+- runFlow:
+    when:
+      notVisible: My cart
+    commands:
+      - tapOn: More
+- tapOn: My cart
+- extendedWaitUntil:
+    visible: Checkout
+    timeout: 10000
+- tapOn: Checkout
+- extendedWaitUntil:
+    visible: Sign in to HauteCorner
+    timeout: 10000
+- takeScreenshot: 03-checkout-sign-in

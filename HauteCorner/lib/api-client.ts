@@ -15,12 +15,15 @@ export type ApiResponse<T> = {
   meta?: { nextCursor?: string | null };
 };
 
-type GetOptions = {
+type RequestOptions = {
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   query?: Record<string, string | number | undefined>;
+  body?: unknown;
+  accessToken?: string;
   signal?: AbortSignal;
 };
 
-function buildUrl(path: string, query: GetOptions['query'] = {}) {
+function buildUrl(path: string, query: RequestOptions['query'] = {}) {
   const baseUrl = process.env.EXPO_PUBLIC_API_URL;
   if (!baseUrl) throw new ApiError(0, 'not_configured', 'The app is not set up to reach the server');
 
@@ -32,26 +35,44 @@ function buildUrl(path: string, query: GetOptions['query'] = {}) {
   return `${baseUrl.replace(/\/+$/, '')}${path}${queryString ? `?${queryString}` : ''}`;
 }
 
-export async function apiGet<T>(path: string, { query, signal }: GetOptions = {}): Promise<ApiResponse<T>> {
+// Sends a request and returns the response body, or null for 204 No Content.
+export async function apiRequest<T>(
+  path: string,
+  { method = 'GET', query, body, accessToken, signal }: RequestOptions = {},
+): Promise<ApiResponse<T>> {
   const url = buildUrl(path, query);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   let response: Response;
   try {
-    response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
+    response = await fetch(url, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal,
+    });
   } catch (error) {
     if (signal?.aborted) throw error;
     throw new ApiError(0, 'network_error', 'Check your connection and try again');
   }
 
-  const body = await response.json().catch(() => null);
+  if (response.status === 204) return null as unknown as ApiResponse<T>;
+
+  const json = await response.json().catch(() => null);
   if (!response.ok) {
     throw new ApiError(
       response.status,
-      body?.error?.code ?? 'unknown_error',
-      body?.error?.message ?? 'Something went wrong. Please try again',
-      body?.error?.details,
+      json?.error?.code ?? 'unknown_error',
+      json?.error?.message ?? 'Something went wrong. Please try again',
+      json?.error?.details,
     );
   }
-  if (!body) throw new ApiError(response.status, 'invalid_response', 'Something went wrong. Please try again');
-  return body;
+  if (!json) throw new ApiError(response.status, 'invalid_response', 'Something went wrong. Please try again');
+  return json;
+}
+
+export function apiGet<T>(path: string, options: Pick<RequestOptions, 'query' | 'signal'> = {}) {
+  return apiRequest<T>(path, options);
 }

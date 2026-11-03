@@ -3,6 +3,7 @@ import {StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Pressable, Im
 import { Host, Picker } from '@expo/ui';
 import { Ionicons } from '@react-native-vector-icons/ionicons/static';
 import { AppText as Text } from '@/components/app-text';
+import { SignInRequired } from '@/features/auth/sign-in-required';
 import Toast from 'react-native-toast-message';
 import axios from "axios"
 axios.defaults.baseURL = "https://buenas-admin.vercel.app/";
@@ -136,7 +137,14 @@ const AddProductScreen = () => {
   )
 }
 
-export default AddProductScreen
+// Replaced in a later phase; until then it is only shown to signed-in users.
+export default function AddProductScreenGate() {
+  return (
+    <SignInRequired title="Sell on HauteCorner" message="Sign in to apply as a seller and list your products.">
+      <AddProductScreen />
+    </SignInRequired>
+  );
+}
 
 const styles = StyleSheet.create({
     mainContainer: {

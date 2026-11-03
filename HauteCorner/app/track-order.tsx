@@ -1,6 +1,7 @@
 import { StyleSheet, TextInput, ScrollView, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppText as Text } from '@/components/app-text'
+import { SignInRequired } from '@/features/auth/sign-in-required';
 import React, {useState} from 'react'
 import { useGetOrderQuery } from '@/store/apiSlice'
 
@@ -34,7 +35,14 @@ const TrackOrderScreen = () => {
   )
 }
 
-export default TrackOrderScreen;
+// Replaced in a later phase; until then it is only shown to signed-in users.
+export default function TrackOrderScreenGate() {
+  return (
+    <SignInRequired title="Track your orders" message="Sign in to see your orders and where they are.">
+      <TrackOrderScreen />
+    </SignInRequired>
+  );
+};
 
 const styles = StyleSheet.create({
   root: {
