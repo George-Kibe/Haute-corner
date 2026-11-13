@@ -265,6 +265,15 @@ All email goes through Amazon SES in `eu-west-1` ([ADR-036](DECISIONS.md#adr-036
 
 In Vercel, set `EMAIL_TRANSPORT=ses`, `SES_REGION`, `AWS_SES_ACCESS_KEY_ID` and `AWS_SES_SECRET_ACCESS_KEY` for both Production and Preview. The old `GMAIL_*` variables are no longer read and can be deleted.
 
+Enter Vercel values without quotes: unlike `.env.local`, Vercel keeps them as part of the value. Production once sent no email at all because `EMAIL_TRANSPORT` held `"ses"`. To set it from the CLI, which does not add a newline with `printf`:
+
+```bash
+cd web
+vercel env rm EMAIL_TRANSPORT production --yes
+printf 'ses' | vercel env add EMAIL_TRANSPORT production
+vercel redeploy hautecorner.vercel.app   # env changes apply only to new deployments
+```
+
 The custom MAIL FROM domain shows as failed in SES. Mail still delivers and passes DMARC through DKIM; fixing it means adding the MX and SPF records SES shows for the MAIL FROM subdomain.
 
 To test locally without sending, start the API with `EMAIL_TRANSPORT=log`, which prints each email, code included, to the server log. `.maestro/email-sign-up.yaml` and `email-verify.yaml` use this. Do not send test mail to made-up addresses through SES: bounces count against the account.

@@ -83,7 +83,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [x] Add User and Session models and auth endpoints, with tests for rotation and reuse
 - [x] Set `JWT_SECRET` and `APPLE_BUNDLE_ID` locally and in both Vercel environments
 - [x] Add rate limiting to auth endpoints ([ADR-039](DECISIONS.md#adr-039-rate-limiting-with-counters-in-mongodb))
-- [x] Add email sign-up with emailed codes, welcome emails and password reset, sent through Gmail ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple))
+- [x] Add email sign-up with emailed codes, welcome emails and password reset ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple)), first through Gmail and now through Amazon SES ([ADR-041](DECISIONS.md#adr-041-all-email-through-amazon-ses))
 - [x] Link accounts that share a verified email ([ADR-037](DECISIONS.md#adr-037-one-account-per-verified-email))
 - [x] Build sign-in, required only for checkout, orders and selling
 - [x] Build the Profile screen: details, address, sign-in methods, password, sign out, delete account
@@ -131,9 +131,10 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [x] Build checkout with delivery details, per-seller fees and payment choice, and a My Orders screen in place of Track Order
 - [x] Check a two-seller M-Pesa checkout, with simulated payments, on two iOS simulators (13 November 2026)
 - [ ] Run checkout on the Android phone
+- [x] Stop the keyboard covering form fields on Android, with `react-native-keyboard-controller` and a shared `FormHost` used by all 11 forms. Checked on the Android phone with checkout, Edit Profile and New Listing (13 November 2026)
 - [x] Build the real Wish List tab, and remove the mock payment screen and its logos (done early, in Phase 3)
 - [x] Remove `@reduxjs/toolkit`, `react-redux`, `redux`, `redux-persist`, `axios` and AsyncStorage
-- [ ] Before deploying this to production, set the SES variables in Vercel and run `sync-indexes` on the production database, which has `autoIndex` off ([how](SETUP.md#running-a-script-against-production))
+- [ ] Before deploying this to production, set the SES variables in Vercel and run `sync-indexes` on the production database, which has `autoIndex` off ([how](SETUP.md#running-a-script-against-production)). This is deployed, and the SES variables are in Production, but its `EMAIL_TRANSPORT` value is not read as `ses`, so no email sends there yet ([known issue](KNOWN_ISSUES.md)). `sync-indexes` is not confirmed
 
 **Exit:** A multi-seller purchase works with both payment methods in test modes. Tests prove clients cannot set prices, duplicate webhooks have no effect, and the ledger matches every payment. No Redux code remains.
 
@@ -184,7 +185,7 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Prepare store listings, screenshots, Play Data Safety and Apple App Privacy answers
 - [ ] Declare trader status in Play Console, and fill in the trader address and phone in `web/lib/site.ts` to match ([ADR-044](DECISIONS.md#adr-044-realhive-consultants-is-the-trader))
 - [x] Move email from Gmail to Amazon SES, and test it (done early, 13 November 2026, [ADR-041](DECISIONS.md#adr-041-all-email-through-amazon-ses))
-- [ ] Set `EMAIL_TRANSPORT=ses`, `SES_REGION` and the `AWS_SES_*` keys in both Vercel environments
+- [ ] Set `EMAIL_TRANSPORT=ses`, `SES_REGION` and the `AWS_SES_*` keys in both Vercel environments. Production has all four, with `EMAIL_TRANSPORT` to be re-entered; Preview has only `EMAIL_TRANSPORT` and `EMAIL_FROM`
 - [ ] Release to TestFlight and Play internal testing, then production
 
 **Exit:** The app is approved in both stores, and a real order has gone from payment through delivery to a seller payout.

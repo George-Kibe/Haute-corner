@@ -13,22 +13,34 @@ const TRANSPORTS: TransportName[] = ['ses', 'log', 'memory'];
 
 export const sentEmails: Email[] = [];
 
+// Reads a setting without the quotes or trailing newline a value can pick up
+// when pasted into a hosting dashboard or piped into a CLI. Production once
+// stopped sending all mail because EMAIL_TRANSPORT held "ses" with its quotes.
+export function envValue(name: string) {
+  const value = process.env[name]?.trim().replace(/^(["'])(.*)\1$/, '$2').trim();
+  return value || undefined;
+}
+
 function requiredEnv(name: string) {
-  const value = process.env[name];
+  const value = envValue(name);
   if (!value) throw new Error(`${name} is not set`);
   return value;
 }
 
-function transportName(): TransportName {
-  const configured = (process.env.EMAIL_TRANSPORT ?? 'ses') as TransportName;
-  if (!TRANSPORTS.includes(configured)) throw new Error(`EMAIL_TRANSPORT must be one of ${TRANSPORTS.join(', ')}`);
-  return configured;
+export function transportName(): TransportName {
+  const configured = (envValue('EMAIL_TRANSPORT') ?? 'ses').toLowerCase();
+  if (!TRANSPORTS.includes(configured as TransportName)) {
+    throw new Error(
+      `EMAIL_TRANSPORT must be one of ${TRANSPORTS.join(', ')}, but is ${JSON.stringify(process.env.EMAIL_TRANSPORT)}`,
+    );
+  }
+  return configured as TransportName;
 }
 
 // Automated mail comes from the no-reply address, and replies go to the
 // public contact. Both are on the domain verified in SES, which signs with DKIM.
 export function sender() {
-  const name = (process.env.EMAIL_FROM ?? site.name).replace(/"/g, '');
+  const name = (envValue('EMAIL_FROM') ?? site.name).replace(/"/g, '');
   return `"${name}" <${site.noReplyEmail}>`;
 }
 
