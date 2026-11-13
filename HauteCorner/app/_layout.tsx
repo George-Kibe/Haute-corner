@@ -12,6 +12,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-naviga
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
 
@@ -67,31 +68,35 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={theme}>
-      <QueryClientProvider client={queryClient}>
-        <Stack
-          screenOptions={{
-            headerBackButtonDisplayMode: 'minimal',
-            headerTitleStyle: { fontFamily: Fonts.extrabold },
-          }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="products/[id]" options={{ title: 'Product Details' }} />
-          <Stack.Screen name="shopping-cart" options={{ title: 'My Cart', headerTransparent: false }} />
-          <Stack.Screen name="checkout" options={{ title: 'Checkout', headerTransparent: false }} />
-          <Stack.Screen name="purchase/[ref]" options={{ title: 'Payment', headerTransparent: false }} />
-          <Stack.Screen name="orders/index" options={{ title: 'My Orders', headerTransparent: false }} />
-          <Stack.Screen name="orders/[ref]" options={{ title: 'Order', headerTransparent: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="seller" options={{ headerShown: false, presentation: 'modal' }} />
-          <Stack.Screen name="report/[id]" options={{ title: 'Report Listing', presentation: 'modal', headerTransparent: false }} />
-          <Stack.Screen
-            name="edit-profile"
-            options={{ title: 'Edit Profile', presentation: 'modal', headerTransparent: false }}
-          />
-        </Stack>
-        <Toast bottomOffset={110} position="bottom" />
-      </QueryClientProvider>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    // The provider sees that Android is edge-to-edge and leaves the system
+    // bars to the screens. FormHost uses its keyboard events.
+    <KeyboardProvider>
+      <ThemeProvider value={theme}>
+        <QueryClientProvider client={queryClient}>
+          <Stack
+            screenOptions={{
+              headerBackButtonDisplayMode: 'minimal',
+              headerTitleStyle: { fontFamily: Fonts.extrabold },
+            }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="products/[id]" options={{ title: 'Product Details' }} />
+            <Stack.Screen name="shopping-cart" options={{ title: 'My Cart', headerTransparent: false }} />
+            <Stack.Screen name="checkout" options={{ title: 'Checkout', headerTransparent: false }} />
+            <Stack.Screen name="purchase/[ref]" options={{ title: 'Payment', headerTransparent: false }} />
+            <Stack.Screen name="orders/index" options={{ title: 'My Orders', headerTransparent: false }} />
+            <Stack.Screen name="orders/[ref]" options={{ title: 'Order', headerTransparent: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
+            <Stack.Screen name="seller" options={{ headerShown: false, presentation: 'modal' }} />
+            <Stack.Screen name="report/[id]" options={{ title: 'Report Listing', presentation: 'modal', headerTransparent: false }} />
+            <Stack.Screen
+              name="edit-profile"
+              options={{ title: 'Edit Profile', presentation: 'modal', headerTransparent: false }}
+            />
+          </Stack>
+          <Toast bottomOffset={110} position="bottom" />
+        </QueryClientProvider>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </KeyboardProvider>
   );
 }

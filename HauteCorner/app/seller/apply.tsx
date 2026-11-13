@@ -1,12 +1,13 @@
 import CloseIcon from '@expo/material-symbols/close.xml';
-import { FieldGroup, Host, Picker, RNHostView, Text, TextInput } from '@expo/ui';
+import { FieldGroup, Picker, RNHostView, Text, TextInput } from '@expo/ui';
 import { router, Stack } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useRef, useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { SITE_URL } from '@/constants/site';
 import { ErrorText, toFormErrors, type FormErrors } from '@/features/auth/auth-form';
 import { useMe } from '@/features/auth/queries';
@@ -89,7 +90,7 @@ export default function ApplyScreen() {
           <Stack.Toolbar.Label>Cancel</Stack.Toolbar.Label>
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
-      <Host style={styles.fill}>
+      <FormHost>
         <FieldGroup>
           <FieldGroup.Section title="Your shop">
             <TextInput
@@ -209,13 +210,7 @@ export default function ApplyScreen() {
             </FieldGroup.SectionFooter>
           </FieldGroup.Section>
         </FieldGroup>
-      </Host>
+      </FormHost>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

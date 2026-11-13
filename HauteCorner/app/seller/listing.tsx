@@ -1,12 +1,13 @@
 import CheckIcon from '@expo/material-symbols/check.xml';
 import CloseIcon from '@expo/material-symbols/close.xml';
-import { FieldGroup, Host, Picker, RNHostView, Text, TextInput } from '@expo/ui';
+import { FieldGroup, Picker, RNHostView, Text, TextInput } from '@expo/ui';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Alert, Keyboard, StyleSheet } from 'react-native';
+import { Alert, Keyboard } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { ErrorText, toFormErrors, type FormErrors } from '@/features/auth/auth-form';
 import { ProfileSkeleton } from '@/features/auth/profile-skeleton';
 import { useAppConfig } from '@/features/config/use-app-config';
@@ -170,7 +171,7 @@ function ListingForm({ product }: { product?: OwnProduct }) {
           </Stack.Toolbar.Button>
         </Stack.Toolbar>
       )}
-      <Host style={styles.fill}>
+      <FormHost>
         <FieldGroup>
           {product ? (
             <FieldGroup.Section title="Status">
@@ -294,13 +295,7 @@ function ListingForm({ product }: { product?: OwnProduct }) {
             </FieldGroup.Section>
           ) : null}
         </FieldGroup>
-      </Host>
+      </FormHost>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

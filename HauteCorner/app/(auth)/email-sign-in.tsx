@@ -1,9 +1,10 @@
-import { FieldGroup, Host, TextInput } from '@expo/ui';
+import { FieldGroup, TextInput } from '@expo/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { ErrorText, signedInToast, toFormErrors, useCloseAuth, type FormErrors } from '@/features/auth/auth-form';
 import { signInWithEmail } from '@/features/auth/providers';
 
@@ -34,7 +35,7 @@ export default function EmailSignInScreen() {
   }
 
   return (
-    <Host style={styles.fill}>
+    <FormHost>
       <FieldGroup>
         <FieldGroup.Section title="Email">
           <TextInput
@@ -77,12 +78,6 @@ export default function EmailSignInScreen() {
           <FormButton label="Create an account" variant="link" onPress={() => router.push('/sign-up')} />
         </FieldGroup.Section>
       </FieldGroup>
-    </Host>
+    </FormHost>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

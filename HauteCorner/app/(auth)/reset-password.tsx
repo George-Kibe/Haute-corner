@@ -1,10 +1,11 @@
-import { FieldGroup, Host, Text, TextInput } from '@expo/ui';
+import { FieldGroup, Text, TextInput } from '@expo/ui';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { ErrorText, toFormErrors, useCloseAuth, useCountdown, type FormErrors } from '@/features/auth/auth-form';
 import { requestPasswordReset, resetPassword } from '@/features/auth/providers';
 import { useColors } from '@/hooks/use-colors';
@@ -52,7 +53,7 @@ export default function ResetPasswordScreen() {
   const codeError = errors.fields.code ?? (errors.fields.password ? undefined : errors.message);
 
   return (
-    <Host style={styles.fill}>
+    <FormHost>
       <FieldGroup>
         <FieldGroup.Section title={`Code sent to ${email}`}>
           <TextInput
@@ -103,12 +104,6 @@ export default function ResetPasswordScreen() {
           />
         </FieldGroup.Section>
       </FieldGroup>
-    </Host>
+    </FormHost>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

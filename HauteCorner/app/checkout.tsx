@@ -1,9 +1,10 @@
-import { FieldGroup, Host, ListItem, Picker, Text, TextInput } from '@expo/ui';
+import { FieldGroup, ListItem, Picker, Text, TextInput } from '@expo/ui';
 import { Redirect, router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { ErrorText, toFormErrors, type FormErrors } from '@/features/auth/auth-form';
 import { ProfileSkeleton } from '@/features/auth/profile-skeleton';
 import { useMe } from '@/features/auth/queries';
@@ -82,7 +83,7 @@ function CheckoutForm({ user }: { user: User }) {
   if (lines.length === 0) return <Redirect href="/shopping-cart" />;
 
   return (
-    <Host style={styles.fill}>
+    <FormHost>
       <FieldGroup>
         <FieldGroup.Section title="Your order">
           {quote.data ? (
@@ -199,12 +200,6 @@ function CheckoutForm({ user }: { user: User }) {
           </FieldGroup.SectionFooter>
         </FieldGroup.Section>
       </FieldGroup>
-    </Host>
+    </FormHost>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

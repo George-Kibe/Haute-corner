@@ -1,7 +1,7 @@
-import { FieldGroup, Host, Text, TextInput } from '@expo/ui';
+import { FieldGroup, Text, TextInput } from '@expo/ui';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 
 import {
   ErrorText,
@@ -12,6 +12,7 @@ import {
   type FormErrors,
 } from '@/features/auth/auth-form';
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { resendCode, verifyEmail } from '@/features/auth/providers';
 import { useColors } from '@/hooks/use-colors';
 
@@ -56,7 +57,7 @@ export default function VerifyEmailScreen() {
   }
 
   return (
-    <Host style={styles.fill}>
+    <FormHost>
       <FieldGroup>
         <FieldGroup.Section title={`Code sent to ${email}`}>
           <TextInput
@@ -92,12 +93,6 @@ export default function VerifyEmailScreen() {
           />
         </FieldGroup.Section>
       </FieldGroup>
-    </Host>
+    </FormHost>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

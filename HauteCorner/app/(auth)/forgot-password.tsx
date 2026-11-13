@@ -1,9 +1,10 @@
-import { FieldGroup, Host, Text, TextInput } from '@expo/ui';
+import { FieldGroup, Text, TextInput } from '@expo/ui';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { ErrorText, toFormErrors, type FormErrors } from '@/features/auth/auth-form';
 import { requestPasswordReset } from '@/features/auth/providers';
 import { useColors } from '@/hooks/use-colors';
@@ -38,7 +39,7 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <Host style={styles.fill}>
+    <FormHost>
       <Stack.Screen options={{ title: changing ? 'Change Password' : 'Reset Password' }} />
       <FieldGroup>
         <FieldGroup.Section title="Email">
@@ -70,12 +71,6 @@ export default function ForgotPasswordScreen() {
           <FormButton disabled={busy} label={busy ? 'Sending code…' : 'Send code'} onPress={submit} />
         </FieldGroup.Section>
       </FieldGroup>
-    </Host>
+    </FormHost>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

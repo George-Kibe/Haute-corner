@@ -1,11 +1,12 @@
 import CheckIcon from '@expo/material-symbols/check.xml';
 import CloseIcon from '@expo/material-symbols/close.xml';
-import { FieldGroup, Host, Text, TextInput } from '@expo/ui';
+import { FieldGroup, Text, TextInput } from '@expo/ui';
 import { router, Stack } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+import { FormHost } from '@/components/form-host';
 import { ProfileSkeleton } from '@/features/auth/profile-skeleton';
 import { useMe, useUpdateMe } from '@/features/auth/queries';
 import type { ProfileChanges, User } from '@/features/auth/types';
@@ -82,7 +83,7 @@ function EditProfileForm({ user }: { user: User }) {
           <Stack.Toolbar.Label>Save</Stack.Toolbar.Label>
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
-      <Host style={styles.fill}>
+      <FormHost>
         <FieldGroup>
           <FieldGroup.Section title="Name">
             <TextInput
@@ -142,13 +143,7 @@ function EditProfileForm({ user }: { user: User }) {
             </FieldGroup.SectionFooter>
           </FieldGroup.Section>
         </FieldGroup>
-      </Host>
+      </FormHost>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});

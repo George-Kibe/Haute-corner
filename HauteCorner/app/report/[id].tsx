@@ -1,12 +1,13 @@
 import CloseIcon from '@expo/material-symbols/close.xml';
-import { FieldGroup, Host, Picker, Text, TextInput } from '@expo/ui';
+import { FieldGroup, Picker, Text, TextInput } from '@expo/ui';
 import { useMutation } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { Keyboard } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { FormButton } from '@/components/form-button';
+import { FormHost } from '@/components/form-host';
 import { ErrorText, toFormErrors, type FormErrors } from '@/features/auth/auth-form';
 import { authRequest } from '@/features/auth/session';
 import { SignInRequired } from '@/features/auth/sign-in-required';
@@ -63,7 +64,7 @@ function ReportForm() {
   }
 
   return (
-    <Host style={styles.fill}>
+    <FormHost>
       <FieldGroup>
         <FieldGroup.Section title="What is wrong?">
           <Picker<Reason> selectedValue={reason} onValueChange={setReason} testID="report-reason">
@@ -89,12 +90,6 @@ function ReportForm() {
           <FormButton disabled={send.isPending} label={send.isPending ? 'Sending…' : 'Send report'} onPress={submit} />
         </FieldGroup.Section>
       </FieldGroup>
-    </Host>
+    </FormHost>
   );
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-});
