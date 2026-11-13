@@ -58,7 +58,10 @@ Mistakes here lose real money, so these are not optional.
 
 **M-Pesa**
 
-- Daraja's callback format and security must be confirmed against Safaricom's documentation in Phase 5. Until then, treat callbacks as untrusted, and confirm results with a status query.
+- Daraja callbacks are not signed. The callback address carries `DARAJA_CALLBACK_TOKEN`, and every result is confirmed with an STK status query before anything is marked paid ([R-32](DECISIONS.md#recommended)).
+- Admin dashboard sessions are `HttpOnly`, `SameSite=Lax` cookies lasting 8 hours. The admin role is checked in the database on every page and action, and every action writes an audit entry.
+- Identity documents are private Cloudinary files, opened only through signed links that expire after 10 minutes.
+- `PAYMENTS_SIMULATED` only works on a database ending in `_dev` or `_test`, and never on Vercel production.
 - Keep sandbox and production certificates and credentials strictly separate.
 
 **All providers**
@@ -105,7 +108,7 @@ Holding funds for sellers has [an open legal question](DECISIONS.md#open-items).
 - Emailed codes are 6 digits, stored only as an HMAC keyed with `JWT_SECRET`, and work for 10 minutes, 5 tries and once only. A password reset signs out every device and emails a notice.
 - Accounts link by email only when the address is verified: by Google (`email_verified`), by Apple (`email_verified`), or by an emailed code. An unverified address is never stored.
 - Auth endpoints are rate limited per email address and per network address, with counters in MongoDB. Rate limit keys are hashed, so the counters hold no email addresses.
-- `GMAIL_APP_PASSWORD` and the SES keys are secrets, stored only in `web/.env.local` and Vercel.
+- The SES keys (`AWS_SES_*`), `PAYSTACK_SECRET_KEY`, the Daraja keys and `DARAJA_CALLBACK_TOKEN`, and `CRON_SECRET` are secrets, stored only in `web/.env.local` and Vercel.
 - Sign-in does not use a nonce yet. One would stop a stolen provider token being replayed within its few minutes of validity.
 - Before App Store submission, account deletion must also revoke Sign in with Apple tokens through Apple's REST API. This needs a Sign in with Apple key.
 

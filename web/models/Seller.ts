@@ -2,6 +2,11 @@ import { model, models, Schema, type Model, type Types } from 'mongoose';
 
 export const SELLER_STATUSES = ['applied', 'approved', 'rejected', 'suspended'] as const;
 
+export const DOCUMENT_KINDS = ['national_id', 'passport', 'business_registration', 'kra_pin', 'other'] as const;
+
+// A private Cloudinary image or PDF, viewable only through short-lived links.
+export type SellerDocument = { kind: (typeof DOCUMENT_KINDS)[number]; publicId: string; format: string };
+
 export type SellerAttributes = {
   userId: Types.ObjectId;
   status: (typeof SELLER_STATUSES)[number];
@@ -12,7 +17,7 @@ export type SellerAttributes = {
   deliveryFee: number;
   deliveryAreas: string;
   returnsNote?: string;
-  documents: { kind: string; publicId: string }[];
+  documents: SellerDocument[];
   review?: { by: Types.ObjectId; at: Date; reason?: string };
   createdAt: Date;
   updatedAt: Date;
@@ -30,7 +35,14 @@ const sellerSchema = new Schema<SellerAttributes>(
     deliveryAreas: { type: String, required: true, trim: true },
     returnsNote: { type: String, trim: true },
     documents: {
-      type: [{ _id: false, kind: { type: String, required: true }, publicId: { type: String, required: true } }],
+      type: [
+        {
+          _id: false,
+          kind: { type: String, required: true },
+          publicId: { type: String, required: true },
+          format: { type: String, required: true, default: 'jpg' },
+        },
+      ],
       default: [],
     },
     review: {

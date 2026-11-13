@@ -5,6 +5,10 @@ import { apiGet } from '@/lib/api-client';
 export type AppConfig = {
   minimumAppVersion: string;
   cloudinaryCloudName: string;
+  maxVideoSeconds: number;
+  maxVideoBytes: number;
+  maxImagesPerProduct: number;
+  maxImageBytes: number;
 };
 
 export function useAppConfig() {

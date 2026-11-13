@@ -1,212 +1,204 @@
-import React, {useState} from 'react';
-import {StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Pressable, Image} from 'react-native';
-import { Host, Picker } from '@expo/ui';
-import { Ionicons } from '@react-native-vector-icons/ionicons/static';
-import { AppText as Text } from '@/components/app-text';
+import AddIcon from '@expo/material-symbols/add.xml';
+import StoreIcon from '@expo/material-symbols/storefront.xml';
+import { FieldGroup, Host, ListItem, Text } from '@expo/ui';
+import { Image } from 'expo-image';
+import { router, Stack, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { StateMessage } from '@/components/state-message';
+import { ProfileSkeleton } from '@/features/auth/profile-skeleton';
 import { SignInRequired } from '@/features/auth/sign-in-required';
-import Toast from 'react-native-toast-message';
-import axios from "axios"
-axios.defaults.baseURL = "https://buenas-admin.vercel.app/";
+import { useAppConfig } from '@/features/config/use-app-config';
+import { firstImage } from '@/features/products/types';
+import { useOwnProducts, useOwnSeller } from '@/features/seller/queries';
+import type { OwnProduct, OwnSeller } from '@/features/seller/types';
+import { useColors } from '@/hooks/use-colors';
+import { formatPrice } from '@/lib/format';
+import { imageUrl } from '@/lib/media';
 
-const AddProductScreen = () => {
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
-  const [images, setImages] = useState<string[]>([]);
-  const [options, setOptions] = useState<string[]>([]);
-  const [price, setPrice] = useState<number>(0);
+const isIOS = process.env.EXPO_OS === 'ios';
 
-  const imageOptions = {
-    saveToPhotos: true,
-    mediaType: "photo",
-    selectionLimit: 10,
-  }
+const STATUS_LABELS: Record<OwnProduct['status'], string> = {
+  active: 'On sale',
+  archived: 'Archived',
+  hidden: 'Hidden',
+  removed: 'Removed by HauteCorner',
+};
 
-  const goSetOptions = (text:string) => {
-    const options = text.split(",");
-    setOptions(options)
-  } 
-  const makeFavorite = () => {
-
-  }
-  const deleteImage = (image:string) => {
-    setImages(images.filter(img => img != image))
-    Toast.show({
-      type: 'success',
-      text1: 'Image Removed',
-      text2: 'Image Removed from product Images😃'
-    }); 
-  }
-  // console.log(images)
-  const saveProduct = async() => {
-    if (!title|| !description || !category || !images.length || !price){
-      //toast message
-      Toast.show({
-        type: 'error',
-        text1: 'Missing Product Details. Fill Before you can Proceed!',
-        text2: 'Some details are Missing. Correct and proceed'
-      }); 
-      return;
-    }
-    const data = {title, description, category, image:images[0], images, price}
-    // console.log(data);
-    //call saving to database API
-    try {
-      const response =await axios.post("products/new", data)
-      console.log(response.data)
-      console.log(response.status)
-      if(response.status === 201){
-        setTitle(""); setDescription(""); setImages([]); setOptions([]); setCategory(""); setPrice(0)
-        Toast.show({
-          type: 'success',
-          text1: 'Product successfully Added',
-          text2: 'You can nowview it under the products screen😃'
-        }); 
-      }
-    } catch (error:any) {
-      console.log(error)
-      Toast.show({
-        type: 'error',
-        text1: `Sorry, some error occured! ${error.message}`,
-        text2: 'Please try Again!'
-      }); 
-    }
-  }  
-
+export default function SellScreen() {
   return (
-    <ScrollView style={styles.mainContainer}>
-      <Text style={styles.title}> Add Product Details</Text>
-      <View style={styles.inputView}>
-        <Text style={styles.text}>Title:</Text>
-        <TextInput value={title} onChangeText={setTitle} style={styles.input} placeholder='Title here' />
-      </View>
-      <View style={styles.inputView}>
-        <Text style={styles.text}>Description:</Text>
-        <TextInput	multiline={true} style={styles.input} 
-          numberOfLines={3}
-          onChangeText={(text) => setDescription(text)}
-          placeholder='Product Description' 
-          value={description}
-        />
-        <Text style={styles.text}>Category:</Text>
-        <Host matchContents>
-          <Picker<string>
-            appearance="menu"
-            selectedValue={category}
-            onValueChange={currentcategory => setCategory(currentcategory)}>
-            <Picker.Item label="Choose a category" value="" />
-            <Picker.Item label="Shoes" value="Shoes" />
-            <Picker.Item label="Clothes" value="Clothes" />
-            <Picker.Item label="Men" value="For Men" />
-            <Picker.Item label="Women" value="For Women" />
-            <Picker.Item label="Children" value="For Children" />
-          </Picker>
-        </Host>
-        <Text>Selected: {category? category: "None"}</Text>
-      </View>
-      <View style={styles.inputView}>
-        <Text style={styles.text}>Price:</Text>
-        <TextInput value={price.toString()} onChangeText={(num) => setPrice(Number(num)|| 0)} keyboardType="number-pad" style={styles.input} placeholder='Price' />
-      </View>
-      <View style={styles.inputView}>
-        <Text style={styles.text}>Options:</Text>
-        <TextInput onChangeText={(text) => goSetOptions(text)} style={styles.input} placeholder='Options Separate Options with ,' />
-      </View>
-      <View style={styles.inputView}>
-        <Text style={styles.text}>Add Images:</Text>
-      </View>
-      <View>
-        <ScrollView style={styles.imagesContainer} horizontal>
-        {
-          images.length > 0 && images.map((image, index) => (
-            <View style={{position: "relative"}} key={index} >
-              <Image style={styles.image} source={{uri: image}}  />
-              <Ionicons onPress={() => deleteImage(image)} style={styles.imageIconRight} name='trash' size={20} color="black" />
-              <Ionicons  onPress={makeFavorite} style={styles.imageIconLeft} name='star' size={20} color={index===0? "red":"gray"} />
-            </View>            
-          ))
-        }
-        </ScrollView>         
-       
-        <Pressable onPress={() =>{}}><Ionicons name='cloud-upload' size={35} /></Pressable>
-      </View>      
-      <TouchableOpacity style={styles.saveButton} onPress={saveProduct} >
-        <Text style={styles.saveText}>Save Product</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  )
-}
-
-// Replaced in a later phase; until then it is only shown to signed-in users.
-export default function AddProductScreenGate() {
-  return (
-    <SignInRequired title="Sell on HauteCorner" message="Sign in to apply as a seller and list your products.">
-      <AddProductScreen />
+    <SignInRequired
+      title="Sell on HauteCorner"
+      message="Sign in to apply for a shop, then list your shoes and clothing with photos and a short video.">
+      <Sell />
     </SignInRequired>
   );
 }
 
-const styles = StyleSheet.create({
-    mainContainer: {
-      padding: "5%",
-    },
-    title: {
-      color: "black",
-      fontWeight: "bold",
-      fontSize: 20,
-      alignSelf: "center",
-      letterSpacing: 1
-    },
-    text: {
-        color: "#000",
-        fontWeight: "600"
-    },
-    inputView: {
-      width: "100%",
-      marginTop: 5
-    },
-    input: {
-      backgroundColor: "#e5e7eb",
-      color: "#000",
-      marginTop: 10,
-      borderRadius: 10,
-      padding: 10,
-      fontSize: 15,
-    },
-    imagesContainer: {
-      display: "flex",
-      flexDirection: "row",
-      width: "100%"
-    },
-    saveButton: {
-      marginTop: 10,
-      width: "100%",
-      backgroundColor: "#0E4BB4",
-      height: 40,
-      borderRadius: 20,
-      alignItems: "center",
-      justifyContent: "center"
-    },
-    saveText: {
-      color: "#fff",
-      fontWeight: "bold",
-      fontSize: 18
-    },
-    image: {
-      width: 100,
-      margin: 2,
-      height: 100,
-      borderRadius: 5
-    },
-    imageIconRight: {
-      position: "absolute",
-      right: 5,
-      bottom: 5,
-    },
-    imageIconLeft: {
-      position: "absolute",
-      left: 5,
-      bottom: 5,
-    }
+function Centered({ children }: { children: React.ReactNode }) {
+  const colors = useColors();
+  return <View style={[styles.centered, { backgroundColor: colors.background }]}>{children}</View>;
+}
 
-})
+function Sell() {
+  const { data: seller, error, isPending, refetch } = useOwnSeller();
+
+  // Approval happens on the web, so check again whenever the tab is opened.
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
+
+  if (isPending) return <ProfileSkeleton />;
+  if (error) {
+    return (
+      <Centered>
+        <StateMessage title="Could not load your shop" message={error.message} actionLabel="Try again" onAction={() => refetch()} />
+      </Centered>
+    );
+  }
+
+  const apply = () => router.push('/seller/apply');
+  if (!seller) {
+    return (
+      <Centered>
+        <StateMessage
+          title="Sell on HauteCorner"
+          message="Apply with your business and M-Pesa details and a photo of your ID. Our team reviews each application before you can list."
+          actionLabel="Apply to sell"
+          onAction={apply}
+        />
+      </Centered>
+    );
+  }
+  switch (seller.status) {
+    case 'applied':
+      return (
+        <Centered>
+          <StateMessage
+            title="Your application is being reviewed"
+            message={`We will email you once ${seller.businessName} is approved. You can list products straight after.`}
+          />
+        </Centered>
+      );
+    case 'rejected':
+      return (
+        <Centered>
+          <StateMessage
+            title="We could not approve your shop yet"
+            message={seller.reviewReason ? `Reason: ${seller.reviewReason}` : undefined}
+            actionLabel="Apply again"
+            onAction={apply}
+          />
+        </Centered>
+      );
+    case 'suspended':
+      return (
+        <Centered>
+          <StateMessage
+            title="Your shop is suspended"
+            message={`Your listings are hidden.${seller.reviewReason ? ` Reason: ${seller.reviewReason}.` : ''} Email us if you think this is a mistake.`}
+          />
+        </Centered>
+      );
+    default:
+      return <Listings seller={seller} />;
+  }
+}
+
+function Listings({ seller }: { seller: OwnSeller }) {
+  const colors = useColors();
+  const { data: config } = useAppConfig();
+  const { data: products, error, isPending, refetch } = useOwnProducts(true);
+  const muted = (text: string) => <Text textStyle={{ color: colors.muted }}>{text}</Text>;
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
+
+  const newListing = () => router.push('/seller/listing');
+
+  return (
+    <>
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          accessibilityLabel="Shop settings"
+          icon={isIOS ? 'storefront' : StoreIcon}
+          onPress={() => router.push('/seller/shop')}
+        />
+        <Stack.Toolbar.Button accessibilityLabel="New listing" icon={isIOS ? 'plus' : AddIcon} onPress={newListing} />
+      </Stack.Toolbar>
+      {isPending ? (
+        <ProfileSkeleton />
+      ) : error ? (
+        <Centered>
+          <StateMessage title="Could not load your listings" message={error.message} actionLabel="Try again" onAction={() => refetch()} />
+        </Centered>
+      ) : products.length === 0 ? (
+        <Centered>
+          <StateMessage
+            title={`${seller.businessName} is ready`}
+            message="Add your first listing with photos, sizes and a short video."
+            actionLabel="New listing"
+            onAction={newListing}
+          />
+        </Centered>
+      ) : (
+        <Host style={styles.fill}>
+          <FieldGroup>
+            {seller.payoutNumberUnderReview ? (
+              <FieldGroup.Section>
+                {muted('Payouts are paused while we confirm your new M-Pesa number.')}
+              </FieldGroup.Section>
+            ) : null}
+            <FieldGroup.Section title={`${seller.businessName} · ${products.length} ${products.length === 1 ? 'listing' : 'listings'}`}>
+              {products.map((product) => {
+                const image = firstImage(product);
+                return (
+                  <ListItem
+                    key={product.id}
+                    leading={
+                      image && config ? (
+                        <Image
+                          contentFit="cover"
+                          source={imageUrl(config.cloudinaryCloudName, image.publicId, 200)}
+                          style={styles.thumbnail}
+                        />
+                      ) : undefined
+                    }
+                    supportingText={muted(
+                      `${formatPrice(product.price)} · ${product.stock} in stock · ${STATUS_LABELS[product.status]}`,
+                    )}
+                    testID={`listing-${product.id}`}
+                    onPress={() => router.push({ pathname: '/seller/listing', params: { id: product.id } })}>
+                    {product.title}
+                  </ListItem>
+                );
+              })}
+            </FieldGroup.Section>
+          </FieldGroup>
+        </Host>
+      )}
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+  },
+});

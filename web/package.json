@@ -13,7 +13,8 @@
     "remove-samples": "tsx --env-file-if-exists=.env.local scripts/remove-samples.ts",
     "sync-indexes": "tsx --env-file-if-exists=.env.local scripts/sync-indexes.ts",
     "migrate-user-identities": "tsx --env-file-if-exists=.env.local scripts/migrate-user-identities.ts",
-    "check-transactions": "tsx --env-file-if-exists=.env.local scripts/check-transactions.ts"
+    "check-transactions": "tsx --env-file-if-exists=.env.local scripts/check-transactions.ts",
+    "make-admin": "tsx --env-file-if-exists=.env.local scripts/make-admin.ts"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.1161.0",
@@ -22,7 +23,6 @@
     "jose": "^6.2.15",
     "mongoose": "^9.11.4",
     "next": "16.4.4",
-    "nodemailer": "^10.3.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.7"
@@ -30,7 +30,6 @@
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
-    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

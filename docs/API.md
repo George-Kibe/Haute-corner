@@ -2,7 +2,7 @@
 
 This is the contract between the mobile app, admin dashboard and Next.js API. Change this document in the same pull request as any endpoint change.
 
-Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-and-2). Daraja details need confirming against Safaricom's documentation when Phase 5 starts.
+Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-and-2). The Daraja integration follows Safaricom's published M-Pesa Express format and has been tested against a fake, not yet the sandbox.
 
 **Base URL:** `https://<production-domain>/api/v1`
 
@@ -47,6 +47,7 @@ Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-an
 | 409 | `conflict` | For example, insufficient stock or an invalid status change |
 | 409 | `account_exists` | Sign-up for an address that already has a password |
 | 409 | `wishlist_full` | The wish list already holds 200 products |
+| 502 | `payment_failed` | Daraja or Paystack refused to start a payment |
 | 429 | `rate_limited` | Too many requests. `Retry-After` gives the seconds to wait |
 | 500 | `internal_error` | Unexpected failure. Details are logged, never returned |
 | 503 | `service_unavailable` | A dependency such as the database is not reachable |
@@ -70,12 +71,16 @@ Approved in [ADR-023](DECISIONS.md#adr-023-technical-foundations-for-phases-1-an
 {
   "data": {
     "minimumAppVersion": "1.0.0",
-    "cloudinaryCloudName": "dxnevfcm"
+    "cloudinaryCloudName": "dxnevfcm",
+    "maxVideoSeconds": 30,
+    "maxVideoBytes": 100000000,
+    "maxImagesPerProduct": 10,
+    "maxImageBytes": 20000000
   }
 }
 ```
 
-Video limits and the dispute window join this response once they are decided ([open items](DECISIONS.md#open-items)).
+Media limits follow [ADR-042](DECISIONS.md#adr-042-product-videos-one-per-listing-up-to-30-seconds-and-100-mb). The dispute window joins this response once it is decided.
 
 ## Authentication
 
@@ -171,7 +176,7 @@ The wish list holds up to 200 products ([ADR-038](DECISIONS.md#adr-038-likes-wit
 - `deliveryAddress` needs `line1` and `city`. `area` and `notes` are optional.
 - Any other field, such as `role`, is refused with 400. It returns the updated profile.
 
-`DELETE /me` returns 204. It removes sessions, push tokens, pending codes, the wish list, the password, linked Google and Apple identities, and the profile. Past orders and ledger entries are kept for business and legal records, with personal details replaced. It is refused with 409 while the user has open orders, disputes or an unpaid seller balance; those checks are added with orders in Phases 5 and 6. The privacy policy must state this.
+`DELETE /me` returns 204. It removes sessions, push tokens, pending codes, the wish list, the password, linked Google and Apple identities, and the profile. Past orders and ledger entries are kept for business and legal records, with personal details replaced. It is refused with 409 while the user has orders in progress, as buyer or seller (paid, confirmed, dispatched, delivered or disputed); the unpaid seller balance check comes with payouts in Phase 6. Past orders and purchases lose their buyer link, contact and address. A seller's shop is suspended and its listings hidden ([R-28](DECISIONS.md#recommended)). The privacy policy must state this.
 
 ## Products
 
@@ -180,6 +185,7 @@ The wish list holds up to 200 products ([ADR-038](DECISIONS.md#adr-038-likes-wit
 | `GET /products` | Public | List active products from approved sellers |
 | `GET /products/{id}` | Public | Product details |
 | `GET /sellers/{id}` | Public | Public seller profile: `id`, `name`, `deliveryFee`, `deliveryAreas`, `returnsNote` |
+| `POST /products/{id}/reports` | User | Report a listing for admins to review |
 
 `GET /products` filters: `type` (`shoes`, `clothing`), `audience` (`men`, `women`, `children`, `unisex`), `seller`, `q` (text search), plus pagination. `ids` takes up to 200 comma-separated IDs and returns those for sale in one page, as for a wish list. Results are newest first. Only active products from approved sellers appear, and a seller's phone, payout number and documents are never returned.
 
@@ -204,7 +210,9 @@ The wish list holds up to 200 products ([ADR-038](DECISIONS.md#adr-038-likes-wit
 }
 ```
 
-The API returns `publicId`, and the app builds optimized Cloudinary URLs itself, so that sizes can change without an API change.
+The API returns `publicId`, and the app builds optimized Cloudinary URLs itself, so that sizes can change without an API change. A video streams from `/video/upload/sp_auto:maxres_720p/<publicId>.m3u8`, with its first frame at `/video/upload/so_0,c_scale,w_<width>/q_auto/f_jpg/<publicId>.jpg` as the poster.
+
+`POST /products/{id}/reports` takes `{ "reason": "counterfeit" | "prohibited" | "misleading" | "offensive" | "scam" | "other", "details": "..." }`, with `details` optional and up to 1,000 characters. It returns 202. Reporting the same listing again while the first report is open changes nothing. Sellers cannot report their own listings (409), and each user can send 20 reports a day.
 
 ## Uploads
 
@@ -212,54 +220,94 @@ The API returns `publicId`, and the app builds optimized Cloudinary URLs itself,
 | --- | --- | --- |
 | `POST /uploads/sign` | Seller, or User for application documents | Get signed parameters for a direct Cloudinary upload |
 
-Request: `{ "kind": "image" }`, `{ "kind": "video" }` or `{ "kind": "document" }`.
+Request: `{ "kind": "image" }`, `{ "kind": "video" }` or `{ "kind": "document" }`. Images and videos need an approved seller. Documents need only a signed-in user, for applying.
 
 ```json
 {
   "data": {
     "uploadUrl": "https://api.cloudinary.com/v1_1/<cloud>/video/upload",
     "apiKey": "...",
-    "timestamp": 1793620800,
     "signature": "...",
-    "folder": "sellers/6731aa/products",
-    "eager": "sp_auto:maxres_720p"
+    "params": {
+      "timestamp": 1793620800,
+      "public_id": "hautecorner/sellers/6731aa/products/4f1c...",
+      "asset_folder": "hautecorner/sellers/6731aa/products",
+      "allowed_formats": "mp4,mov,m4v,webm,3gp",
+      "eager": "sp_auto:maxres_720p/m3u8",
+      "eager_async": "true"
+    }
   }
 }
 ```
 
-The API secret stays on the server. Identity documents upload as private assets.
+The app posts a multipart form to `uploadUrl` with every `params` entry unchanged, plus `api_key`, `signature` and `file`, and keeps the `public_id` Cloudinary returns. The server chooses the file's folder and name, so a signature cannot put a file anywhere else ([R-24](DECISIONS.md#recommended)). Documents are signed with `type: private` and go to `hautecorner/applications/<user ID>/`. The API secret stays on the server. Each user can get 300 signatures an hour.
 
 ## Seller: application and profile
 
 | Method and path | Access | Purpose |
 | --- | --- | --- |
-| `POST /seller/application` | User | Apply to sell |
-| `GET /seller/application` | User | Check application status |
+| `POST /seller/application` | User | Apply to sell, or apply again after a rejection |
+| `GET /seller/application` | User | The user's shop in any status, or 404 before applying |
 | `GET /seller/profile` | Seller | Business and delivery settings |
-| `PATCH /seller/profile` | Seller | Update settings. Changing the payout number returns the seller to review |
+| `PATCH /seller/profile` | Seller | Update settings. A new payout number pauses payouts until an admin confirms it |
+
+`POST /seller/application` takes:
 
 ```json
 {
   "businessName": "Nairobi Soles",
-  "phone": "+2547XXXXXXXX",
-  "payoutMpesaNumber": "+2547XXXXXXXX",
+  "phone": "0712 345 678",
+  "payoutMpesaNumber": "0712 345 678",
   "deliveryFee": 250,
   "deliveryAreas": "Nairobi and Kiambu",
   "returnsNote": "Unworn items within 7 days",
-  "documents": [{ "kind": "id", "publicId": "applications/u1/id" }]
+  "documents": [{ "kind": "national_id", "publicId": "hautecorner/applications/<user ID>/..." }]
 }
 ```
+
+- Phone numbers are normalised as for `PATCH /me`. `deliveryFee` is whole shillings, 0 to 10,000. `returnsNote` is optional.
+- `documents` holds 1 to 5 private uploads from the user's own application folder. `kind` is `national_id`, `passport`, `business_registration`, `kra_pin` or `other`. The app asks for an ID photo and, optionally, a business registration certificate ([R-25](DECISIONS.md#recommended)).
+- It returns 201 with the shop. A user who is applying, approved or suspended gets 409. A rejected user can apply again, which replaces the application.
+
+The shop, from `GET /seller/application` and both profile endpoints:
+
+```json
+{
+  "id": "6731aa...",
+  "status": "applied",
+  "businessName": "Nairobi Soles",
+  "phone": "+254712345678",
+  "payoutMpesaNumber": "+254712345678",
+  "payoutNumberUnderReview": false,
+  "deliveryFee": 250,
+  "deliveryAreas": "Nairobi and Kiambu",
+  "returnsNote": "Unworn items within 7 days",
+  "documents": [{ "kind": "national_id" }],
+  "reviewReason": null,
+  "createdAt": "2026-11-13T09:00:00.000Z"
+}
+```
+
+`status` is `applied`, `approved`, `rejected` or `suspended`. `reviewReason` is the admin's reason when rejected or suspended. Document IDs are never returned. `PATCH /seller/profile` takes any of the application's fields except `documents`, and `returnsNote: null` clears the note.
 
 ## Seller: listings
 
 | Method and path | Access | Purpose |
 | --- | --- | --- |
-| `GET /seller/products` | Seller | The seller's own products, including archived |
-| `POST /seller/products` | Seller | Create a product |
-| `PATCH /seller/products/{id}` | Seller | Update the seller's own product |
+| `GET /seller/products` | Seller | The seller's own products in every status, filterable by `status`, with pagination |
+| `GET /seller/products/{id}` | Seller | One of the seller's products |
+| `POST /seller/products` | Seller | Create a product, on sale at once ([R-26](DECISIONS.md#recommended)) |
+| `PATCH /seller/products/{id}` | Seller | Update the seller's own product, or set `status` to `archived` or `active` |
 | `DELETE /seller/products/{id}` | Seller | Archive it; past orders keep their snapshot |
 
-Media must be in the seller's own Cloudinary folder. Video length and size are checked against the configured limits.
+`POST /seller/products` takes `title` (3 to 120 characters), `description` (10 to 3,000), `type`, `audience`, `price` (whole shillings, 1 to 1,000,000), `stock` (0 to 10,000), `options` (up to 30 sizes, optional) and `media`, a list of `{ "kind": "image" | "video", "publicId": "..." }`. `PATCH` takes any of these.
+
+- `media` needs at least one image, and allows up to 10 images and 1 video. The first image is the cover.
+- Each new file must be in the seller's own folder. Its dimensions, size and length come from Cloudinary, and a video over 30 seconds or 100 MB, or an image over 20 MB, is refused with 400 and `details.media`. Files already on the product are not checked again.
+- `status`, `sellerId` and any other field are refused with 400. A product an admin removed cannot be changed (409).
+- Another seller's product is 404, never 403.
+
+Products here include `removedReason`, which only the seller and admins see.
 
 ## Seller: orders and earnings
 
@@ -279,9 +327,11 @@ Media must be in the seller's own Cloudinary folder. Video length and size are c
 | Method and path | Access | Purpose |
 | --- | --- | --- |
 | `POST /checkout/quote` | User | Prices, delivery fees and totals for a cart, with no side effects |
-| `POST /checkout` | User | Create the purchase and orders, and start payment. Requires `Idempotency-Key` |
+| `POST /checkout` | User | Create the purchase and orders, reserve stock, and start payment. Requires `Idempotency-Key` |
 | `GET /purchases/{ref}` | User | Payment status and the purchase's orders |
-| `POST /purchases/{ref}/pay` | User | Retry payment for an unpaid purchase |
+| `POST /purchases/{ref}/pay` | User | Try payment again, optionally with another method or number |
+
+`POST /checkout/quote` takes `{ "items": [...] }`, the same items as below, and returns `subtotal`, `deliveryTotal`, `total` and one entry per seller with its items, `subtotal`, `deliveryFee` and `total`. A product no longer for sale, or more than is in stock, is 409, and a size the product does not have is 400; `details` names the cart line, such as `"items.1": "Only 2 left"`. The same product and size on two lines count as one.
 
 `POST /checkout`
 
@@ -299,47 +349,66 @@ Media must be in the seller's own Cloudinary folder. Video length and size are c
 
 For cards, send `"payment": { "method": "card" }`.
 
-Response (201):
+Response (201, or 200 when the `Idempotency-Key` was seen before):
 
 ```json
 {
   "data": {
     "ref": "P7K4M2QX",
     "total": 11250,
+    "currency": "KES",
     "payment": {
       "method": "card",
       "status": "pending",
-      "authorizationUrl": "https://checkout.paystack.com/..."
+      "phone": null,
+      "authorizationUrl": "https://checkout.paystack.com/...",
+      "failureReason": null,
+      "receipt": null,
+      "paidAt": null
     },
+    "reservedUntil": "2026-11-13T09:15:00.000Z",
     "orders": [
       {
         "ref": "K7P4M2QX",
+        "status": "awaiting_payment",
         "seller": { "id": "6731aa...", "name": "Nairobi Soles" },
+        "items": [{ "productId": "...", "title": "Leather ankle boots", "image": "<publicId>", "option": "39", "unitPrice": 4800, "quantity": 1, "lineTotal": 4800 }],
         "subtotal": 4800,
         "deliveryFee": 250,
         "total": 5050,
-        "status": "awaiting_payment"
+        "contact": { "name": "Asha Otieno", "phone": "+254712345678" },
+        "deliveryAddress": { "line1": "Ngong Road", "area": "Kilimani", "city": "Nairobi", "notes": "Gate B" },
+        "statusHistory": [{ "status": "awaiting_payment", "at": "...", "note": null }],
+        "createdAt": "..."
       }
-    ]
+    ],
+    "createdAt": "..."
   }
 }
 ```
 
+`payment.status` is `pending`, `paid`, `failed` (try again with `/pay`) or `expired` (the items were released). `authorizationUrl` is set only while a card payment is pending. `receipt` is the M-Pesa receipt number once paid.
+
 Rules:
 
-- The server ignores any price, fee or total from the client.
-- Repeating a request with the same `Idempotency-Key` returns the original purchase and creates nothing new.
-- If stock runs out, the response is 409, and `details` lists the affected products. Nothing is reserved.
-- Items from a seller who is no longer approved, or from an archived product, are rejected.
-- Reservations expire if payment does not complete.
-- The app polls `GET /purchases/{ref}` at a gentle interval after an STK Push or hosted card page, until the status settles or a timeout passes.
+- Any price, fee or total in the request is refused with 400. Every amount comes from the database.
+- `Idempotency-Key` must be 8 to 100 characters. Repeating a request with the same key returns the original purchase, and creates, reserves and charges nothing new.
+- Stock for every item is reserved in one transaction, or none is. If anything has run out, the response is 409.
+- Items from a seller who is no longer approved, or from a product not on sale, are refused.
+- Stock is held for 15 minutes ([R-11](DECISIONS.md#recommended)). A purchase not paid by then expires, its orders are cancelled and its stock returns. The provider is asked first, so a payment that did arrive is kept.
+- If M-Pesa or Paystack cannot start the payment, the purchase is still created, with `payment.status` `failed` and a `failureReason`, so the app can offer to try again.
+- The app polls `GET /purchases/{ref}` every 3 seconds while payment is pending. Each poll may ask the provider for the outcome, at most every 10 seconds, so a lost callback does not leave the buyer waiting.
+- `POST /purchases/{ref}/pay` takes `{}` to try the same method again, or `{ "payment": { ... } }` to switch. It works while the purchase is `pending` or `failed` and its stock is still held; otherwise 409.
+- Each user can start 30 checkouts in 10 minutes.
+
+After the Paystack page, the browser goes to `/pay/return?ref=<ref>` on the website, which opens `hautecorner://purchase/<ref>` in the app. Reaching it confirms nothing.
 
 ## Orders (buyer)
 
 | Method and path | Access | Purpose |
 | --- | --- | --- |
-| `GET /orders` | User | The caller's orders, newest first |
-| `GET /orders/{ref}` | User | One order. Returns 404 if it is not theirs |
+| `GET /orders` | User | The caller's orders, newest first, with pagination. Orders still waiting for payment are left out |
+| `GET /orders/{ref}` | User | One order, in the shape shown under checkout. Returns 404 if it is not theirs |
 | `POST /orders/{ref}/cancel` | User | Cancel before dispatch; refunds the buyer |
 | `POST /orders/{ref}/confirm-delivery` | User | Confirm receipt, which releases the seller's money |
 
@@ -357,17 +426,34 @@ Rules:
 
 ## Admin
 
-Used by the dashboard, with a secure cookie session *(recommended)*, and always checked for the admin role.
+The dashboard at `/admin` is server-rendered, and changes data through Server Actions rather than API routes ([R-27](DECISIONS.md#recommended)). Admins sign in with Google ([R-8](DECISIONS.md#recommended)):
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /admin/sellers` | Applications and sellers, filterable by status |
-| `GET /admin/sellers/{id}` | Details, with short-lived links to documents |
-| `POST /admin/sellers/{id}/approve` | Approve |
-| `POST /admin/sellers/{id}/reject` | Reject, with a reason |
-| `POST /admin/sellers/{id}/suspend` | Suspend and hide listings |
-| `GET /admin/products` | All listings |
-| `POST /admin/products/{id}/remove` | Remove a listing, with a reason |
+| `POST /api/admin/session` | Takes `{ "credential": "<Google ID token>" }` from Google's sign-in button. For an existing account with the admin role, sets an `HttpOnly` cookie for 8 hours and returns 204; otherwise 403 |
+| `DELETE /api/admin/session` | Signs out |
+
+These paths are outside `/api/v1`. Both refuse requests from another origin. Every page and action checks the admin role in the database, so removing the role takes effect at once.
+
+Built in Phase 4, each writing an audit entry:
+
+| Action | Rules |
+| --- | --- |
+| Approve a seller | From `applied`. Hidden listings go back on sale. Emails the seller |
+| Reject a seller | From `applied`, with a reason the seller sees. Emails the seller |
+| Suspend a seller | From `approved`, with a reason. Hides their listings. Emails the seller |
+| Reinstate a seller | From `suspended`. Listings go back on sale. Emails the seller |
+| Confirm a payout number | Clears the pause after a seller changes their M-Pesa number |
+| Remove a listing | With a reason the seller sees. Closes the listing's open reports. Emails the seller |
+| Restore a listing | On sale again if its seller is approved, hidden otherwise |
+| Dismiss a report | With an optional note for admins |
+
+A move from the wrong status is refused, so two admins acting on stale pages cannot both succeed. Identity documents open through signed links that work for 10 minutes.
+
+Later phases, as originally planned:
+
+| Method and path | Purpose |
+| --- | --- |
 | `GET /admin/orders` | All orders |
 | `GET /admin/disputes` | Escalated disputes |
 | `POST /admin/disputes/{id}/resolve` | Decide for the buyer or seller, moving the money |
@@ -384,21 +470,23 @@ These are public but must verify the sender and ignore duplicates.
 
 | Method and path | Sender | Verification |
 | --- | --- | --- |
-| `POST /webhooks/paystack` | Paystack | HMAC SHA512 of the raw body, compared with `x-paystack-signature` |
-| `POST /webhooks/daraja/stk` | Safaricom | To be confirmed; treat as untrusted, and confirm with a status query |
+| `POST /webhooks/paystack` | Paystack | HMAC SHA512 of the raw body with the secret key, compared with `x-paystack-signature`. Then a verify call checks status, amount and currency |
+| `POST /webhooks/daraja/stk?token=<DARAJA_CALLBACK_TOKEN>` | Safaricom | Not signed. The token in the address must match, and the outcome is always confirmed with an STK status query ([R-32](DECISIONS.md#recommended)) |
 | `POST /webhooks/daraja/b2c-result` | Safaricom | To be confirmed |
 | `POST /webhooks/daraja/b2c-timeout` | Safaricom | To be confirmed |
 
-Paystack events used: `charge.success`, `refund.processed`, `refund.failed`. It [retries](https://paystack.com/docs/payments/webhooks/) if it does not get a 200, so acknowledge quickly. Check that the amount and currency match the purchase before marking anything as paid.
+Paystack events used: `charge.success` now, and `refund.processed` and `refund.failed` in Phase 6. It [retries](https://paystack.com/docs/payments/webhooks/) if it does not get a 200, so acknowledge quickly. The amount and currency must match the purchase before anything is marked paid.
+
+Each delivery is recorded as a `WebhookEvent`, so a repeat returns 200 and does nothing. The Daraja callback always answers `{ "ResultCode": 0, "ResultDesc": "Accepted" }`.
 
 ## Scheduled jobs
 
-Called by Vercel Cron, requiring `Authorization: Bearer <CRON_SECRET>`. See [Architecture](ARCHITECTURE.md#scheduled-jobs).
+Called by Vercel Cron, requiring `Authorization: Bearer <CRON_SECRET>`. See [Architecture](ARCHITECTURE.md#scheduled-jobs). Not scheduled until Vercel Pro, as Hobby runs jobs only daily; until then checkout and payment checks do the same work as they go ([Setup](SETUP.md#scheduled-jobs-phase-5)).
 
 | Method and path | Purpose |
 | --- | --- |
-| `GET /cron/expire-reservations` | Return stock from unpaid checkouts |
-| `GET /cron/reconcile-payments` | Check payments with no callback |
+| `GET /cron/expire-reservations` | Return stock from unpaid checkouts. Returns `{ "expired": n }`. Built in Phase 5 |
+| `GET /cron/reconcile-payments` | Check pending payments older than a minute with their provider. Returns `{ "checked": n, "settled": n }`. Built in Phase 5 |
 | `GET /cron/release-funds` | Complete orders past the buyer's window |
 | `GET /cron/send-payouts` | Send released balances, retry failures |
 | `GET /cron/push-receipts` | Check Expo receipts, remove dead tokens |

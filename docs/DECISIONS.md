@@ -194,6 +194,8 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **Decided 2 November 2026:** HauteCorner, with `buenasconsultants@gmail.com` as the public contact on the website and legal pages.
 
+**Updated 13 November 2026:** The public contact is now `info@realhiveconsultants.com`, and Realhive Consultants is named as the business that runs HauteCorner ([ADR-044](#adr-044-realhive-consultants-is-the-trader)).
+
 ### ADR-028: Cloudinary's demo cloud for sample data until Phase 4
 
 **Decided 2 November 2026:** Sample products use Cloudinary's public demo images. The app reads the cloud name from `GET /config`, so moving to your own account in Phase 4 means changing one setting and reseeding.
@@ -242,6 +244,8 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **What follows:** Extends [ADR-015](#adr-015-google-and-apple-sign-in-with-browsing-left-open). Gmail allows roughly 500 messages a day from one account, which suits testing but not launch. Moving to SES means setting `EMAIL_TRANSPORT=ses`, `SES_REGION`, `SES_FROM_ADDRESS` and the SES keys in Vercel. The SES path is written but untested until then.
 
+**Updated 13 November 2026:** All email now goes through Amazon SES, from `no-reply@realhiveconsultants.com` with replies to `info@realhiveconsultants.com` ([ADR-041](#adr-041-all-email-through-amazon-ses)). Gmail is no longer used.
+
 ### ADR-037: One account per verified email
 
 **Decided 3 November 2026:** When someone signs in with Google or Apple using an address that already has an account, or signs up by email with an address that already has Google or Apple, it is the same account, as long as both sides have verified the address.
@@ -266,6 +270,36 @@ To change a decision, add a dated note to its entry and update the documents aff
 
 **What follows:** Native forms on iOS use SwiftUI's own placeholder (`redacted`). Product grids, product pages and Android forms have no native equivalent, so they use a small custom `Skeleton` that pulses, and stays still when the system asks for reduced motion.
 
+### ADR-041: All email through Amazon SES
+
+**Decided 13 November 2026:** Every email, in development and production, goes through Amazon SES. Automated mail comes from `no-reply@realhiveconsultants.com`, and replies go to `info@realhiveconsultants.com`.
+
+**What follows:** Replaces Gmail in [ADR-036](#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple). The SES account in `eu-west-1` has production access (50,000 messages a day), and `realhiveconsultants.com` is verified with DKIM. Vercel needs `EMAIL_TRANSPORT=ses`, `SES_REGION` and the two `AWS_SES_*` keys. Local testing uses `EMAIL_TRANSPORT=log`, so test addresses do not bounce.
+
+### ADR-042: Product videos: one per listing, up to 30 seconds and 100 MB
+
+**Decided 13 November 2026:** Each listing can have one video, at most 30 seconds long and 100 MB. It is streamed at up to 720p.
+
+**What follows:** 100 MB is the Free plan's limit per video, so uploads need no chunking. The API checks length and size with Cloudinary before saving a listing, and the app checks them before uploading. The values are in `web/lib/settings.ts` and sent to the app through `GET /config`.
+
+### ADR-043: Videos come from the library; no microphone permission
+
+**Decided 13 November 2026:** Sellers record videos with their camera app and pick them from the library. The app does not ask for the microphone, and its camera is used only for photos.
+
+**What follows:** No audio disclosure is needed in either store. Settles the microphone open item.
+
+### ADR-044: Realhive Consultants is the trader
+
+**Decided 13 November 2026:** Realhive Consultants runs HauteCorner and is named as the trader for Google Play's trader status, on the Terms of Service and in the website footer, with `info@realhiveconsultants.com` as the contact.
+
+**What follows:** Google Play shows a trader's address, phone number and email on the store listing, and they must match what Play Console has verified. The Terms page lists them from `trader` in `web/lib/site.ts`, where the address and phone are still to be filled in.
+
+### ADR-045: Android launcher icon keeps the wordmark
+
+**Decided 13 November 2026:** The Android adaptive icon shows the whole logo, the H mark with the HAUTECORNER wordmark, scaled to fit inside Android's safe zone on the brand's pale background.
+
+**What follows:** The logo now fits every launcher mask instead of being cut off. The themed (monochrome) icon is a white silhouette. Notifications use the H mark alone, because a wordmark cannot be read at notification size, tinted in the brand blue. The iOS icon is unchanged.
+
 ## Recommended
 
 These are technical suggestions the other documents assume. You were not asked about them individually, so approve or change them when you review the documents.
@@ -286,6 +320,15 @@ These are technical suggestions the other documents assume. You were not asked a
 | R-21 | Passwords need 8 to 128 characters, with no other rules, and are hashed with scrypt | NIST recommends length over character rules, and scrypt is built into Node, so nothing native is needed on Vercel | Argon2id through a native package |
 | R-22 | Codes have 6 digits, work for 10 minutes, 5 tries and once only, with a minute between emails, and are stored as an HMAC | Short enough to type, too few tries to guess, and a copied database alone does not reveal them | Longer codes, or magic links |
 | R-23 | Sign-up says when an address already has a password, while password reset never says whether an account exists | Telling people to sign in instead is clearer, and a reset is the usual way to find out who has an account | Never say, and email the account owner instead |
+| R-24 | The API chooses each upload's Cloudinary folder and name, and reads a file's size and length from Cloudinary before it is saved to a listing or application | A seller cannot attach another seller's files, and limits cannot be bypassed by editing the app | Trust the details the app sends |
+| R-25 | A seller application needs a photo of a national ID or passport, and can add a business registration certificate | Admins need to know who they are approving, and many small sellers are not registered businesses | Require registration, or ask for nothing |
+| R-26 | Listings from approved sellers go on sale straight away. Shoppers can report a listing, and admins can remove it with a reason the seller sees | Approving every listing by hand would slow sellers down; reports and removal cover problems | Review every listing before it is shown |
+| R-27 | The dashboard changes data through Next.js Server Actions rather than the `/admin` API routes listed earlier | Each action still checks the admin role and writes an audit entry, with less code and built-in protection against cross-site requests | Separate admin API routes |
+| R-28 | Deleting an account suspends that person's shop and hides its listings, and is refused while they have orders in progress | Listings must not stay on sale with no seller behind them | Delete the shop entirely |
+| R-29 | The Add Product tab becomes **Sell**, showing the application, its review, or the seller's listings | One place for everything a seller does; tabs cannot change at runtime | Separate tabs for sellers |
+| R-30 | Until the commission rate is decided, orders record a rate of 0, worked out on the products and not the delivery fee | Checkout needs a rate to store on each order; 0 changes nothing until you choose | Block checkout until decided |
+| R-31 | Without Daraja or Paystack keys, a development API can simulate payments (`PAYMENTS_SIMULATED`) | Lets the whole checkout be tested on devices now; it cannot run on production | Wait for keys before testing checkout |
+| R-32 | M-Pesa callbacks carry a secret token in their address, and each one is confirmed with an STK status query before anything is marked paid | Safaricom does not sign callbacks | Accept callbacks from Safaricom's published addresses only |
 
 ## Open items
 
@@ -295,12 +338,11 @@ These are technical suggestions the other documents assume. You were not asked a
 | Register a business, and get a Paybill or Till number and Daraja production access | Before Phase 5 goes live | Long lead time, so start early. Confirm with Safaricom whether one shortcode can both receive and send, as I only found this in third-party guides |
 | Paystack merchant account for Kenya | Before Phase 5 goes live | Confirm current fees |
 | How to fund card-based seller payouts | Before Phase 6 | See R-7. Card money settles through Paystack, while Daraja B2C draws on a separate M-Pesa balance |
-| Commission rate | Before Phase 6 | Must cover payment fees |
+| Commission rate | Before Phase 6 | Must cover payment fees. Also decide whether it applies to the delivery fee. Orders record 0 until then (R-30) |
+| Trader address and phone | Before the Play listing | For Google Play's trader status and the Terms page. Fill in `trader` in `web/lib/site.ts` to match Play Console |
 | Days until automatic release | Before Phase 6 | How long after "delivered" the money releases if the buyer does nothing |
 | Dispute window | Before Phase 6 | How long a buyer can raise a problem |
 | Returns policy | Before Phase 6 | Published in the terms |
-| Video limits | Before Phase 4 | Maximum length and file size per product |
-| Microphone permission | Before Phase 4 | It is off, so sellers cannot record video with sound in the app. Either allow only videos from the library, or turn it on |
 | Who handles disputes and seller reviews day to day | Before Phase 8 | Admins need to be available |
 | Domain name | Before Phase 8 | Store listings and legal pages should use the final domain |
 | Atlas tier at launch | Before Phase 8 | The free tier has 0.5 GB and limited backups, which may not suit a financial ledger |

@@ -115,13 +115,16 @@ appId: com.hautecorner.app
 - extendedWaitUntil:
     visible: Graphic tee and joggers set.*
     timeout: 10000
-- assertVisible: Subtotal.*
+- assertVisible: From Westlands Denim Co.*
+- assertVisible: To pay
 - takeScreenshot: 05-cart
 
-# Remove it again so the flow can be rerun, and return using the native back button.
-- tapOn: Remove from cart
+# Remove it again with the quantity menu, so the flow can be rerun, and return
+# using the native back button.
+- tapOn: "Quantity: 1"
+- tapOn: Remove
 - extendedWaitUntil:
-    visible: Your Cart is Empty
+    visible: Your cart is empty
     timeout: 5000
 - runFlow:
     when:

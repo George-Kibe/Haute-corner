@@ -204,7 +204,7 @@ Likes live in a Zustand store saved to MMKV, so they work signed out. `features/
 
 1. A signed-in user submits an application: business details, payout M-Pesa number, and any identity documents required.
 2. Documents go to Cloudinary as private assets *(recommended)*, viewable only through short-lived signed URLs from the admin dashboard.
-3. An admin approves or rejects. Approval changes the seller's status and sends a push.
+3. An admin approves or rejects in the dashboard, with a reason for a rejection. Each decision emails the seller now, and will also send a push from Phase 7.
 4. Seller screens appear in the app, and the seller can create listings.
 5. Changing a payout number returns the seller to review *(recommended)*, since this is a common fraud route.
 
@@ -351,8 +351,8 @@ JavaScript and asset changes are published with `eas update` to a channel. A bui
 
 | Job | Purpose | On Hobby (daily) | On Pro |
 | --- | --- | --- | --- |
-| Expire reservations | Return stock from unpaid checkouts | Too slow for real use; run by hand when testing | Every few minutes |
-| Reconcile payments | Check payments with no callback | Run by hand when testing | Every few minutes |
+| Expire reservations | Return stock from unpaid checkouts | Too slow for real use. Checkout expires up to 20 old reservations before taking stock, and a purchase's own page expires it when due | Every few minutes |
+| Reconcile payments | Check payments with no callback | Too slow for real use. The app's payment checks ask the provider at most every 10 seconds | Every few minutes |
 | Release funds | Complete orders past the buyer's window | Daily | Hourly |
 | Send payouts | Pay released balances, retry failures | Daily | Hourly or daily |
 | Push receipts | Remove dead tokens | Daily | Daily |
@@ -405,6 +405,6 @@ Permissions, pricing, the ledger and payouts must have tests, because mistakes t
 
 ## Current state
 
-- **Mobile:** Home, Categories and product details are rebuilt on the new API with native components. Sign-in with Google and Apple, and the Profile screen with editing and account deletion, are built. Google sign-in waits for its OAuth clients. The cart, order tracking, Add Product and Wish List screens are still the old ones, restyled, and now ask the shopper to sign in.
-- **Server:** The API has health, config, products, sellers, auth and `/me` routes, connected to Atlas. The website and draft legal pages are live. Both the production and dev databases hold the same sample catalogue, with photos in our Cloudinary account.
-- **Details:** [Known issues](KNOWN_ISSUES.md) lists the defects to fix along the way.
+- **Mobile:** Browsing, sign-in (Google, Apple and email), Profile, the Wish List, selling and buying are built on the new API with native components. The Sell tab takes a shopper through applying, review and their listings, with photos and a video uploaded straight to Cloudinary. The cart lives in Zustand and MMKV, checkout pays by M-Pesa or card, and My Orders replaces Track Order. Redux, axios and AsyncStorage are gone.
+- **Server:** Phases 4 and 5 add uploads, seller applications, listings, reports, checkout, purchases, orders, the ledger, Paystack and Daraja webhooks, and two jobs. The admin dashboard at `/admin` reviews sellers and moderates listings. Payments are tested against fakes, and can be simulated on the dev database, until sandbox keys exist. All email goes through Amazon SES.
+- **Details:** [Known issues](KNOWN_ISSUES.md) lists what is still to check or fix.

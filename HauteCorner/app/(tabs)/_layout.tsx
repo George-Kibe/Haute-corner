@@ -26,8 +26,8 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Label>Categories</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="add-product">
-        <NativeTabs.Trigger.Icon sf={{ default: 'plus.circle', selected: 'plus.circle.fill' }} md="add_circle" />
-        <NativeTabs.Trigger.Label>Add Product</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: "storefront", selected: "storefront.fill" }} md="storefront" />
+        <NativeTabs.Trigger.Label>Sell</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="saved-items">
         <NativeTabs.Trigger.Icon sf={{ default: 'star', selected: 'star.fill' }} md="star" />

@@ -4,13 +4,13 @@ A fashion marketplace for Kenya. Independent sellers list shoes and clothing, an
 
 ## Status
 
-The revamp is working through Phases 1 and 2 of the [roadmap](docs/ROADMAP.md).
+The revamp has built Phases 1 to 5 of the [roadmap](docs/ROADMAP.md). Payments run on a simulator until Daraja and Paystack test keys are added, and Phase 6 (fulfilment and payouts) is next.
 
 | Part | State |
 | --- | --- |
-| Mobile app | On Expo SDK 58 with native tabs. Home, Categories and product details are rebuilt on the new API. The cart, order tracking, Add Product and Wish List screens come in later phases |
-| API and website | Live at [hautecorner.vercel.app](https://hautecorner.vercel.app), connected to MongoDB Atlas. The production catalogue is empty until sellers can list in Phase 4 |
-| Admin dashboard | Starts in Phase 4 |
+| Mobile app | On Expo SDK 58 with native tabs. Browsing, accounts, the wish list, selling (apply, list with photos and video), the cart, checkout and My Orders are built on the new API. Redux is gone. Seller order handling comes in Phase 6 |
+| API and website | Live at [hautecorner.vercel.app](https://hautecorner.vercel.app), connected to MongoDB Atlas. Production runs the Phase 3 API until this work is deployed |
+| Admin dashboard | At `/admin`: seller review, listing moderation, reports and an audit log |
 
 ## Stack
 
@@ -20,7 +20,8 @@ The revamp is working through Phases 1 and 2 of the [roadmap](docs/ROADMAP.md).
 | Server and website | Next.js on Vercel, MongoDB Atlas with Mongoose |
 | Images and video | Cloudinary |
 | Payments | M-Pesa through Safaricom Daraja, cards through Paystack |
-| Sign-in | Google, and Sign in with Apple on iOS |
+| Sign-in | Google, Sign in with Apple on iOS, and email |
+| Email | Amazon SES |
 | Push and updates | `expo-notifications`, `expo-updates` with EAS Update |
 
 ## Repository

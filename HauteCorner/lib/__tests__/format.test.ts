@@ -10,3 +10,11 @@ describe('formatPrice', () => {
     expect(formatPrice(amount)).toBe(expected);
   });
 });
+
+describe('countItems', () => {
+  it('uses the singular for one', () => {
+    const { countItems } = jest.requireActual<typeof import('@/lib/format')>('@/lib/format');
+    expect(countItems(1)).toBe('1 item');
+    expect(countItems(3)).toBe('3 items');
+  });
+});

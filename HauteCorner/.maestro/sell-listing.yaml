@@ -1,0 +1,93 @@
+# Phase 4, part 2 of 2: an approved seller lists a product with a photo and a
+# video from the library, and it goes on sale. Put a photo and a short video in
+# the simulator's library first (xcrun simctl addmedia), newest first.
+#   maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/sell-listing.yaml
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+- runFlow: email-sign-in.yaml
+- tapOn: Sell
+- extendedWaitUntil:
+    visible: .* is ready
+    timeout: 15000
+- takeScreenshot: 01-ready
+- tapOn: New listing
+- extendedWaitUntil:
+    visible: Add photos
+    timeout: 10000
+
+# The system picker is tapped by position: the newest photo, then Done (✓).
+# The first time, iOS shows a "Private Access to Photos" banner above the grid;
+# close it by hand once on each simulator before running this flow.
+- tapOn: Add photos
+- tapOn: Choose from library
+- waitForAnimationToEnd:
+    timeout: 8000
+- tapOn:
+    point: 16%,28%
+- tapOn:
+    point: 90%,15%
+- extendedWaitUntil:
+    visible: Add more photos
+    timeout: 15000
+
+# One video; a single pick closes the picker.
+- tapOn: Add a video
+- waitForAnimationToEnd:
+    timeout: 8000
+- tapOn:
+    point: 16%,28%
+- extendedWaitUntil:
+    notVisible: Add a video
+    timeout: 30000
+
+- scrollUntilVisible:
+    element: Title, such as Leather ankle boots
+    centerElement: true
+- tapOn: Title, such as Leather ankle boots
+- inputText: Maestro canvas sneakers
+- scrollUntilVisible:
+    element: Material, fit, condition.*
+    centerElement: true
+- tapOn: Material, fit, condition.*
+- inputText: Canvas upper with a rubber sole, listed by a test.
+- scrollUntilVisible:
+    element: Price in KES
+    centerElement: true
+- tapOn: Price in KES
+- inputText: "2750"
+- scrollUntilVisible:
+    element: Separate with commas.*
+    centerElement: true
+- tapOn: Separate with commas.*
+- inputText: 40, 41, 42
+# Wait for both uploads before saving.
+- extendedWaitUntil:
+    notVisible: "\\d+%"
+    timeout: 120000
+- takeScreenshot: 02-listing-form
+- tapOn: Save
+- extendedWaitUntil:
+    visible: .*in stock · On sale
+    timeout: 30000
+- assertVisible: Maestro canvas sneakers
+- takeScreenshot: 03-listings
+
+# Shoppers see it, with the video.
+- tapOn: Home
+- extendedWaitUntil:
+    visible: Maestro canvas sneakers.*
+    timeout: 30000
+- tapOn: Maestro canvas sneakers.*
+- extendedWaitUntil:
+    visible: Sold by Kilimani Kicks.*
+    timeout: 15000
+- scrollUntilVisible:
+    element: Play the product video
+    direction: DOWN
+    centerElement: true
+- takeScreenshot: 04-product-video
+- tapOn: Play the product video
+- waitForAnimationToEnd:
+    timeout: 8000
+- takeScreenshot: 05-playing

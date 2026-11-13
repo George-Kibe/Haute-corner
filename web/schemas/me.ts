@@ -27,16 +27,16 @@ export const kenyanPhone = z
   });
 
 export const address = z.strictObject({
-  line1: z.string().trim().min(1).max(200),
+  line1: z.string().trim().min(1, 'Enter the street and building').max(200),
   area: optionalText(100),
-  city: z.string().trim().min(1).max(100),
+  city: z.string().trim().min(1, 'Enter the town or city').max(100),
   notes: optionalText(300),
 });
 
 // null clears a field. Anything else, such as role, is refused.
 export const updateMeBody = z
   .strictObject({
-    name: z.string().trim().min(1).max(100).optional(),
+    name: z.string().trim().min(1, 'Enter your name').max(100).optional(),
     phone: kenyanPhone.nullable().optional(),
     deliveryAddress: address.nullable().optional(),
   })

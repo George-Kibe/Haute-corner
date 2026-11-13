@@ -32,8 +32,8 @@ export const PATCH = route(async (request) => {
   return ok(await profile(updated));
 });
 
-// Open orders, disputes and seller balances will block deletion with 409 once
-// they exist, from Phases 5 and 6.
+// Refused with 409 while the person has orders in progress, as buyer or seller.
+// An unpaid seller balance will also block it once payouts exist in Phase 6.
 export const DELETE = route(async (request) => {
   await dbConnect();
   const user = await requireUser(request);

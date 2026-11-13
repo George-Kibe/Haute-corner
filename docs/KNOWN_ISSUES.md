@@ -1,35 +1,36 @@
 # Known issues
 
-These problems are known and left in place on purpose, because a later phase replaces the code they are in. Line numbers refer to the code as of Phase 2. Remove each entry when it is fixed.
+These problems are known and left in place on purpose, because a later phase replaces the code they are in, or because they depend on someone outside the code. Remove each entry when it is fixed.
 
 ## Security and data
 
 | Location | Problem | Fixed in |
 | --- | --- | --- |
-| `HauteCorner/app/shopping-cart.tsx` | Totals come from the client, and checkout sends a hard-coded customer with personal details to the old API | Phase 5 |
-| `HauteCorner/store/apiSlice.js:4` | Orders still use the old `buenas-admin.vercel.app` API, which returns 401, so checkout and order tracking do not work | Phases 5 and 6 |
-| `HauteCorner/app/(tabs)/add-product/index.tsx` | The form posts to the old API with no authentication, and it is shown to everyone | Phase 4 |
 | `web/lib/users.ts` | Deleting an account does not yet revoke Sign in with Apple tokens, which App Store review expects | Phase 3 |
 | Android Google sign-in | Works on the local debug build (checked on 4 November 2026). Release and EAS builds fail with `DEVELOPER_ERROR` until the Android OAuth client also lists the SHA-1 of the key that signed them ([how](SETUP.md#google-sign-in-phase-3)) | Phase 3 |
+| Order cancelled after a late payment | If a payment arrives after its reservation expired and the stock has sold, the order stays cancelled with the note "Refund due", but nothing refunds it yet | Phase 6 |
 
-## Functional bugs
+## Not yet tested against the real service
+
+| Area | Problem | Fixed in |
+| --- | --- | --- |
+| Daraja M-Pesa Express | Built to Safaricom's published format and tested against a fake. Needs sandbox keys to try for real ([how](SETUP.md#safaricom-daraja-phase-5)) | Phase 5 |
+| Paystack cards | Built to Paystack's documentation and tested against a fake. Needs a test secret key ([how](SETUP.md#paystack-phase-5)) | Phase 5 |
+| Admin sign-in | Google's button needs the site's addresses in the web OAuth client's Authorized JavaScript origins. Tested only with a signed cookie so far ([how](SETUP.md#admin-dashboard-phase-4)) | Phase 4 |
+| Android | Phases 4 and 5 screens were checked on iOS simulators only, as no Android phone was connected | Phase 5 |
+
+## Functional gaps
 
 | Location | Problem | Fixed in |
 | --- | --- | --- |
-| `HauteCorner/app/(tabs)/add-product/index.tsx` | The upload button does nothing, so a product can never pass the image check | Phase 4 |
-| `HauteCorner/app/products/[id].tsx` | The selected size never reaches the cart | Phase 5 |
-| `HauteCorner/app/shopping-cart.tsx` | `result.data.data.ref` crashes when the order fails, which it currently always does | Phase 5 |
-| `HauteCorner/app/track-order.tsx` | Queries with an empty reference on open, shows "Order Not Found" before anything is typed, and shows the order as raw JSON | Phase 6 |
-| `HauteCorner/store/cartSlice.js:30` | `changeQuantity` crashes if the item is not found | Phase 5 |
+| Orders | Buyers see their orders, but sellers cannot act on them yet: no accept, dispatch or delivered | Phase 6 |
+| Scheduled jobs | Expiry and reconciliation are not scheduled, as Vercel Hobby runs jobs only daily. Checkout and the app's payment checks do the work meanwhile | Phase 8 (Vercel Pro) |
 
 ## Code quality
 
 | Location | Problem | Fixed in |
 | --- | --- | --- |
-| `HauteCorner/` | 6 ESLint warnings in the older screens, mostly unused variables | Phases 4 to 6 |
-| `HauteCorner/store/` | Redux stays only for the cart and orders until they are rebuilt | Phase 5 |
-| `HauteCorner/components/CartListItem/` | The old cart uses custom icon buttons and Ionicons. Replace with native components when the cart is rebuilt | Phase 5 |
-| Installed, unused | `expo-image-picker`, `expo-notifications`, `expo-updates`. Each has a roadmap phase | Phases 4 to 7 |
+| Installed, unused | `expo-notifications`, `expo-updates`. Each has a roadmap phase | Phase 7 |
 
 ## Things to watch
 
@@ -37,10 +38,12 @@ These problems are known and left in place on purpose, because a later phase rep
 | --- | --- |
 | Android release builds | R8 is on by default since SDK 58. Always test a release build before shipping, as reflection-based code can fail only there |
 | iOS 27 layouts | Apple's forums report an iOS 27 bug where tab search ignores side safe areas in landscape. The app passes on iPhone, iPad and the iPhone Duo simulator, but keep checking landscape after each iOS update |
-| Native tabs | Tabs must be static; changing them at runtime resets navigation state. Keep this in mind for showing the Add Product tab only to sellers in Phase 4 |
-| Email | Gmail sends about 500 messages a day from one account, so it suits testing only. The Amazon SES path is written but untested until its domain is verified ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple)) |
-| Welcome email | It mentions paying with M-Pesa or card and tracking orders, which arrive in Phases 5 and 6. Check the wording in `web/lib/email-templates.ts` before launch |
-| iOS forms | Changing a SwiftUI form while one of its fields has focus can crash UIKit. Auth screens close the keyboard before submitting; do the same in new forms |
+| Native tabs | Tabs must be static; changing them at runtime resets navigation state. That is why the Sell tab shows every seller state itself ([R-29](DECISIONS.md#recommended)) |
+| Email | All mail goes through Amazon SES. Its custom MAIL FROM domain shows as failed; mail still passes DMARC through DKIM ([how to fix](SETUP.md#email-phase-3)). Never send test mail to made-up addresses, as bounces count against the account |
+| Welcome email | It mentions paying with M-Pesa or card and tracking orders. Order tracking by status exists now; check the wording in `web/lib/email-templates.ts` before launch |
+| iOS forms | Changing a SwiftUI form while one of its fields has focus can crash UIKit. Forms close the keyboard before submitting; do the same in new forms |
 | Android header buttons | `Stack.Toolbar.Button` draws only icons on Android, and silently drops a button that has only a label. Give every header button an Android icon from `@expo/material-symbols` and an `accessibilityLabel`, and keep the label for iOS |
-| Android form colours | Expo UI forms on Android take Material You colours from the wallpaper, so Profile and the email sign-in screens can look brown or green beside the navy header. A `seedColor` or `colorOverrides` on their `Host` would fix this, but the look has not been chosen |
+| Android form colours | Expo UI forms on Android take Material You colours from the wallpaper, so Profile, the seller forms and checkout can look brown or green beside the navy header. A `seedColor` or `colorOverrides` on their `Host` would fix this, but the look has not been chosen |
 | Sample data in production | Production holds 21 sample products from 4 sellers that are not real businesses. Remove them before launch with `remove-samples` ([how](SETUP.md#sample-data)) |
+| Trader details | The Terms page names Realhive Consultants, but its address and phone are still empty in `web/lib/site.ts`. Google Play needs them for trader status ([ADR-044](DECISIONS.md#adr-044-realhive-consultants-is-the-trader)) |
+| Admin pages in development | Setting `instant = false` on the dashboard layout made the dev server reload its pages in a loop. Leave it off; the pages already stream behind Suspense |

@@ -99,16 +99,20 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 
 **Goal:** Approved sellers can list products with photos and short videos.
 
-- [ ] Decide video limits and the microphone setting
+- [x] Decide video limits and the microphone setting: 30 seconds and 100 MB, from the library only (13 November 2026, [ADR-042](DECISIONS.md#adr-042-product-videos-one-per-listing-up-to-30-seconds-and-100-mb), [ADR-043](DECISIONS.md#adr-043-videos-come-from-the-library-no-microphone-permission))
 - [x] Create the Cloudinary account (cloud `dxnevfcm`, 3 November 2026)
-- [ ] Check Cloudinary's terms, set folders and upload rules, and add `CLOUDINARY_URL` to Vercel Preview
-- [ ] Add `POST /uploads/sign` for images, video and private documents
-- [ ] Build the seller application in the app
-- [ ] Build the admin dashboard base: Google sign-in, role check, audit log
-- [ ] Build seller review in the dashboard: documents, approve, reject, suspend
-- [ ] Build listing management in the app with `expo-image-picker`: create, edit, archive
-- [ ] Install `expo-video`, and add video playback with a poster on product details
-- [ ] Add listing moderation and a way for users to report a listing
+- [x] Set folders and upload rules: signed by the API, which chooses each file's folder and name
+- [ ] Check Cloudinary's terms, and add `CLOUDINARY_URL` to Vercel Preview
+- [x] Add `POST /uploads/sign` for images, video and private documents, tested against the real Cloudinary account
+- [x] Build the seller application in the app, in the Sell tab
+- [x] Build the admin dashboard base: Google sign-in, role check, audit log
+- [ ] Add the site's addresses to the web OAuth client's Authorized JavaScript origins, and give your account the admin role ([how](SETUP.md#admin-dashboard-phase-4))
+- [x] Build seller review in the dashboard: documents, approve, reject, suspend
+- [x] Build listing management in the app with `expo-image-picker`: create, edit, archive
+- [x] Install `expo-video`, and add video playback with a poster on product details
+- [x] Add listing moderation and a way for users to report a listing
+- [x] Check apply, approve, list with photo and video, and report on two iOS simulators (13 November 2026)
+- [ ] Run the seller flows on the Android phone
 
 **Exit:** A new user can apply, get approved, and list a product with photos and video from a phone. Products from others cannot be edited, and the admin can remove a listing.
 
@@ -116,15 +120,20 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 
 **Goal:** A customer can buy from several sellers with M-Pesa or a card, in sandbox and test modes.
 
-- [ ] Move the cart to Zustand and MMKV, grouped by seller
-- [ ] Add Purchase, Order, LedgerEntry and WebhookEvent models
-- [ ] Add `POST /checkout/quote` and `POST /checkout`, with server pricing, idempotency and stock reservation
-- [ ] Integrate Daraja M-Pesa Express in the sandbox, after confirming its callback format and security
-- [ ] Integrate Paystack in test mode, with the hosted page and verified webhooks
-- [ ] Add the reservation expiry and payment reconciliation jobs
-- [ ] Build checkout with delivery details, per-seller fees and payment choice
+- [x] Move the cart to Zustand and MMKV, grouped by seller
+- [x] Add Purchase, Order, LedgerEntry and WebhookEvent models
+- [x] Add `POST /checkout/quote` and `POST /checkout`, with server pricing, idempotency and stock reservation
+- [x] Build Daraja M-Pesa Express, with callbacks confirmed by a status query ([R-32](DECISIONS.md#recommended))
+- [ ] Try it in the Daraja sandbox, once you have sandbox keys ([how](SETUP.md#safaricom-daraja-phase-5))
+- [x] Build Paystack cards, with the hosted page and verified webhooks
+- [ ] Try it in Paystack test mode, once you have a test key ([how](SETUP.md#paystack-phase-5))
+- [x] Add the reservation expiry and payment reconciliation jobs (scheduled once on Vercel Pro)
+- [x] Build checkout with delivery details, per-seller fees and payment choice, and a My Orders screen in place of Track Order
+- [x] Check a two-seller M-Pesa checkout, with simulated payments, on two iOS simulators (13 November 2026)
+- [ ] Run checkout on the Android phone
 - [x] Build the real Wish List tab, and remove the mock payment screen and its logos (done early, in Phase 3)
-- [ ] Remove `@reduxjs/toolkit`, `react-redux`, `redux`, `redux-persist`, `axios` and AsyncStorage
+- [x] Remove `@reduxjs/toolkit`, `react-redux`, `redux`, `redux-persist`, `axios` and AsyncStorage
+- [ ] Before deploying this to production, set the SES variables in Vercel and run `sync-indexes` on the production database, which has `autoIndex` off ([how](SETUP.md#running-a-script-against-production))
 
 **Exit:** A multi-seller purchase works with both payment methods in test modes. Tests prove clients cannot set prices, duplicate webhooks have no effect, and the ledger matches every payment. No Redux code remains.
 
@@ -173,7 +182,9 @@ These depend on other people and take time, so start them during Phase 0 or 1:
 - [ ] Onboard the first sellers
 - [ ] Run the [release checklist](DEPLOYMENT.md#release-checklist)
 - [ ] Prepare store listings, screenshots, Play Data Safety and Apple App Privacy answers
-- [ ] Move email from Gmail to Amazon SES, and test it ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple))
+- [ ] Declare trader status in Play Console, and fill in the trader address and phone in `web/lib/site.ts` to match ([ADR-044](DECISIONS.md#adr-044-realhive-consultants-is-the-trader))
+- [x] Move email from Gmail to Amazon SES, and test it (done early, 13 November 2026, [ADR-041](DECISIONS.md#adr-041-all-email-through-amazon-ses))
+- [ ] Set `EMAIL_TRANSPORT=ses`, `SES_REGION` and the `AWS_SES_*` keys in both Vercel environments
 - [ ] Release to TestFlight and Play internal testing, then production
 
 **Exit:** The app is approved in both stores, and a real order has gone from payment through delivery to a seller payout.

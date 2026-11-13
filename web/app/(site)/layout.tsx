@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { site } from '@/lib/site';
+import { site, trader } from '@/lib/site';
 import logoMark from '@/public/logo-mark.png';
 import wordmark from '@/public/wordmark.png';
 
@@ -14,7 +14,7 @@ const navigation = [
 const footerLinks = [
   { href: '/support', label: 'Support' },
   { href: '/privacy', label: 'Privacy policy' },
-  { href: '/terms', label: 'Terms' },
+  { href: '/terms', label: 'Terms of Service' },
   { href: '/seller-terms', label: 'Seller terms' },
   { href: '/delete-account', label: 'Delete your account' },
 ];
@@ -72,7 +72,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           </nav>
         </div>
         <p className="mx-auto max-w-6xl px-4 pb-8 text-xs text-muted sm:px-6">
-          © {site.name}. All rights reserved.
+          © {site.name}, operated by {trader.legalName}. All rights reserved.
         </p>
       </footer>
     </>

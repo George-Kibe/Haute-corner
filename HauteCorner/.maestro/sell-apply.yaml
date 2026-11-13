@@ -1,0 +1,72 @@
+# Phase 4, part 1 of 2: apply to sell with an ID photo from the library.
+# Use an account that has not applied. Put a photo in the simulator's library
+# first: xcrun simctl addmedia <id> photo.jpg
+#   maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/sell-apply.yaml
+# Then approve the shop in the dashboard, and run sell-listing.yaml.
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+- runFlow: email-sign-in.yaml
+- tapOn: Sell
+- extendedWaitUntil:
+    visible: Apply to sell
+    timeout: 15000
+- takeScreenshot: 01-sell
+- tapOn: Apply to sell
+- extendedWaitUntil:
+    visible: Business name
+    timeout: 10000
+- scrollUntilVisible:
+    element: Business name
+    centerElement: true
+- tapOn: Business name
+- inputText: Kilimani Kicks
+- scrollUntilVisible:
+    element: Business phone.*
+    centerElement: true
+- tapOn: Business phone.*
+- inputText: "0722000111"
+- scrollUntilVisible:
+    element: M-Pesa number
+    centerElement: true
+- tapOn: M-Pesa number
+- inputText: "0722000111"
+- scrollUntilVisible:
+    element: Delivery fee in KES.*
+    centerElement: true
+- tapOn: Delivery fee in KES.*
+- inputText: "250"
+- scrollUntilVisible:
+    element: Where you deliver.*
+    centerElement: true
+- tapOn: Where you deliver.*
+- inputText: Nairobi and Kiambu
+- scrollUntilVisible:
+    element: Add a photo of your ID
+    centerElement: true
+- tapOn: Add a photo of your ID
+- tapOn: Choose from library
+# The system picker runs in its own process, which Maestro cannot see during
+# a test, so it is tapped by position: the newest photo first, then Done (✓).
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    point: 16%,28%
+- tapOn:
+    point: 90%,15%
+- extendedWaitUntil:
+    visible: Add another photo
+    timeout: 10000
+# Wait for the upload, then send.
+- extendedWaitUntil:
+    notVisible: "\\d+%"
+    timeout: 60000
+- takeScreenshot: 02-application
+- scrollUntilVisible:
+    element: Send application
+    centerElement: true
+- tapOn: Send application
+- extendedWaitUntil:
+    visible: Your application is being reviewed
+    timeout: 20000
+- takeScreenshot: 03-under-review

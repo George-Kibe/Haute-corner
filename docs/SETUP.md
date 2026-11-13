@@ -69,7 +69,7 @@ bun run dev
 
 | Command | What it does |
 | --- | --- |
-| `bun run test` | API tests, on an in-memory MongoDB |
+| `bun run test` | API tests, on an in-memory MongoDB replica set, which transactions need |
 | `bun run typecheck` | Generates route types, then runs TypeScript |
 | `bun run lint` | ESLint |
 | `bun run build` | Production build. Check that API routes are listed as `ƒ` |
@@ -78,6 +78,7 @@ bun run dev
 | `bun run seed` | Adds the sample catalogue. See [Sample data](#sample-data) |
 | `bun run remove-samples` | Removes the sample catalogue, and with `--media` its photos |
 | `bun run migrate-user-identities` | One-off: moves users to linked identities. Run `sync-indexes` after it |
+| `bun run make-admin --email=<address>` | Gives an existing account the admin role, for the dashboard at `/admin`. `--revoke` takes it away. A database not ending in `_dev` also needs `--confirm=<name>` |
 
 bun installs packages, but the scripts run on Node through `tsx`, because bun's runtime cannot load MongoDB's `bson` library. Vercel runs on Node too.
 
@@ -128,7 +129,19 @@ maestro --device <id> test .maestro/sign-in-required.yaml
 maestro --device <id> test .maestro/wishlist.yaml
 ```
 
-`sign-in-required.yaml` checks that browsing and liking need no account, and that the profile, selling and checkout ask for one. It does not press the Google or Apple buttons, so test real Google and Apple sign-in by hand on a device.
+`sign-in-required.yaml` checks that browsing and liking need no account, and that the profile, selling and checkout ask for one.
+
+Phases 4 and 5 add flows that sign in with an existing email account (`email-sign-in.yaml`). Start the API with `PAYMENTS_SIMULATED=true EMAIL_TRANSPORT=log`, and point the app at it:
+
+```bash
+maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/checkout.yaml      # two sellers, M-Pesa, My Orders
+maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/report.yaml        # report a listing
+maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/sell-apply.yaml    # needs a photo in the library
+# approve the shop at /admin, then:
+maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/sell-listing.yaml  # needs a photo and a video
+```
+
+Add test media with `xcrun simctl addmedia <id> photo.jpg video.mp4`. The system photo picker runs in its own process, which Maestro cannot see during a test, so the seller flows tap it by position; close iOS's one-time "Private Access to Photos" banner by hand first. Create test accounts through the API rather than the app's sign-up screen if the simulator's password suggestions get in the way. It does not press the Google or Apple buttons, so test real Google and Apple sign-in by hand on a device.
 
 Email sign-up runs in two parts, because the code has to be read from the API log in between. Start the API with `EMAIL_TRANSPORT=log` and use a new address each time. On each iOS simulator, first turn off **Settings > General > AutoFill & Passwords > Suggest Strong Passwords**, or its sheet covers the password field and Maestro cannot see it:
 
@@ -164,23 +177,26 @@ In a development build, the `.env` files are read into the bundle and override v
 | `MONGODB_URI` | Atlas connection string for this environment | 1 |
 | `JWT_SECRET` | At least 32 random characters, for signing access tokens. Different in each environment. Create one with `openssl rand -base64 48`. Set locally and in both Vercel environments | 3 |
 | `GOOGLE_WEB_CLIENT_ID` | Expected audience of Google ID tokens: the web client. Set locally and in both Vercel environments | 3 |
-| `EMAIL_TRANSPORT` | `gmail`, `ses`, `log` (prints emails, for local testing) or `memory` (tests). `gmail` in both Vercel environments until SES is ready | 3 |
-| `EMAIL_FROM` | The sender's display name, such as `HauteCorner Lifestyle` | 3 |
-| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | The Gmail account and its [app password](https://support.google.com/accounts/answer/185833). Secret | 3 |
-| `SES_REGION`, `SES_ACCESS_KEY_ID`, `SES_SECRET_ACCESS_KEY`, `SES_FROM_ADDRESS` | Amazon SES, once its domain is verified. Secret | Later |
+| `EMAIL_TRANSPORT` | `ses` (the default, and the value in both Vercel environments), `log` (prints emails, for local testing) or `memory` (tests) | 3 |
+| `EMAIL_FROM` | The sender's display name, such as `HauteCorner Lifestyle`. Mail always comes from `no-reply@realhiveconsultants.com`, with replies to `info@realhiveconsultants.com` (`web/lib/site.ts`) | 3 |
+| `SES_REGION` | `eu-west-1`, where the `realhiveconsultants.com` identity is verified | 3 |
+| `AWS_SES_ACCESS_KEY_ID`, `AWS_SES_SECRET_ACCESS_KEY` | Keys for an IAM user that can only send through SES. Secret | 3 |
 | `APPLE_BUNDLE_ID` | `com.hautecorner.app`, the expected audience of Apple tokens. Set locally and in both Vercel environments | 3 |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name, `dxnevfcm`. Sent to the app, which builds image addresses from it | 1 |
 | `CLOUDINARY_URL` | `cloudinary://<api key>:<api secret>@<cloud name>`. Secret. Used by the seed script, and to sign uploads from Phase 4 | 2 |
 | `NEXT_PUBLIC_SITE_URL` | Optional. Public address of the website | 1 |
-| `PAYSTACK_SECRET_KEY` | Separate test and live values | 5 |
-| `MPESA_ENV` | `sandbox` or `production` | 5 |
-| `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET` | Daraja app credentials | 5 |
-| `MPESA_SHORTCODE`, `MPESA_PASSKEY` | M-Pesa Express | 5 |
-| `MPESA_B2C_SHORTCODE`, `MPESA_INITIATOR_NAME`, `MPESA_SECURITY_CREDENTIAL` | Seller payouts | 6 |
-| `CRON_SECRET` | Protects scheduled job routes | 5 |
+| `PAYSTACK_SECRET_KEY` | `sk_test_…` in Preview, `sk_live_…` at launch. Also checks webhook signatures. Secret | 5 |
+| `DARAJA_ENV` | `sandbox` (the default) or `production` | 5 |
+| `DARAJA_CONSUMER_KEY`, `DARAJA_CONSUMER_SECRET` | The Daraja app's credentials. Secret | 5 |
+| `DARAJA_SHORTCODE`, `DARAJA_PASSKEY` | M-Pesa Express. The sandbox uses shortcode `174379` and the passkey shown on the Daraja portal. Secret | 5 |
+| `DARAJA_TRANSACTION_TYPE` | `CustomerPayBillOnline` (the default) for a Paybill, or `CustomerBuyGoodsOnline` for a Till | 5 |
+| `DARAJA_CALLBACK_TOKEN` | Random text added to the callback address, because Safaricom does not sign callbacks: `openssl rand -hex 24`. Secret | 5 |
+| `MPESA_B2C_SHORTCODE`, `MPESA_INITIATOR_NAME`, `MPESA_SECURITY_CREDENTIAL` | Seller payouts. Names to be confirmed | 6 |
+| `CRON_SECRET` | Protects the `/api/v1/cron/*` routes. Vercel sends it to scheduled jobs. Secret | 5 |
+| `PAYMENTS_SIMULATED` | `true` lets checkout pay without Daraja or Paystack keys, for trying the app. Ignored on Vercel production and on any database not ending in `_dev` or `_test`. An M-Pesa number ending in `0000` is declined | 5 |
 | `EXPO_ACCESS_TOKEN` | Enhanced push security, if enabled | 7 |
 
-Daraja names are placeholders until confirmed against Safaricom's documentation.
+
 
 ### `HauteCorner/`
 
@@ -245,11 +261,13 @@ Done on 3 November 2026 for Google Cloud project `hautecorner`: web client `…0
 
 ### Email (Phase 3)
 
-Development and, for now, production send through Gmail ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple)). Gmail needs 2-Step Verification on the account, and an app password in `GMAIL_APP_PASSWORD`. Gmail sends from the account's own address, with `EMAIL_FROM` as the display name.
+All email goes through Amazon SES in `eu-west-1` ([ADR-036](DECISIONS.md#adr-036-email-sign-up-with-emailed-codes-alongside-google-and-apple)). The account has production access, and the domain `realhiveconsultants.com` is verified with DKIM, so mail from `no-reply@realhiveconsultants.com` is signed. Replies go to `info@realhiveconsultants.com`.
 
-To test locally without sending, start the API with `EMAIL_TRANSPORT=log`, which prints each email, code included, to the server log. `.maestro/email-sign-up.yaml` and `email-verify.yaml` use this.
+In Vercel, set `EMAIL_TRANSPORT=ses`, `SES_REGION`, `AWS_SES_ACCESS_KEY_ID` and `AWS_SES_SECRET_ACCESS_KEY` for both Production and Preview. The old `GMAIL_*` variables are no longer read and can be deleted.
 
-For Amazon SES later: verify the sending domain, ask AWS for production access, create keys limited to sending, then set the `SES_*` variables and `EMAIL_TRANSPORT=ses` in Vercel.
+The custom MAIL FROM domain shows as failed in SES. Mail still delivers and passes DMARC through DKIM; fixing it means adding the MX and SPF records SES shows for the MAIL FROM subdomain.
+
+To test locally without sending, start the API with `EMAIL_TRANSPORT=log`, which prints each email, code included, to the server log. `.maestro/email-sign-up.yaml` and `email-verify.yaml` use this. Do not send test mail to made-up addresses through SES: bounces count against the account.
 
 See the [library's Expo guide](https://react-native-google-signin.github.io/docs/setting-up/expo).
 
@@ -263,23 +281,48 @@ Revoking Apple tokens when an account is deleted also needs a Sign in with Apple
 
 The account exists: cloud `dxnevfcm`, on the Free plan. `CLOUDINARY_URL` is in `web/.env.local` and Vercel Production, and `CLOUDINARY_CLOUD_NAME` in both Vercel environments.
 
-Before Phase 4:
+Uploads are signed by the API, which chooses each file's folder and name and the formats allowed, so the app cannot upload anywhere else. Product media goes to `hautecorner/sellers/<seller ID>/products/`, and application documents to `hautecorner/applications/<user ID>/` as private files. Videos get a 720p adaptive stream prepared at upload.
+
+Still to do:
 
 1. Check that Cloudinary's terms permit the planned use.
-2. Set allowed upload types, and restrict uploads to signed requests.
-3. Add `CLOUDINARY_URL` to Vercel Preview.
+2. Add `CLOUDINARY_URL` to Vercel Preview, or uploads fail there.
+3. In **Settings > Upload**, leave unsigned uploading off. No upload preset is needed.
+
+### Admin dashboard (Phase 4)
+
+The dashboard is at `/admin`, and admins sign in with Google ([R-8](DECISIONS.md#recommended)).
+
+1. In Google Cloud Console, open the **web** OAuth client and add **Authorized JavaScript origins**: `http://localhost:3000` and `https://hautecorner.vercel.app` (and the final domain later). Without these, Google's button shows an error.
+2. Sign in to the app once with the Google account, so the account exists.
+3. Give it the admin role: `bun run make-admin --email=<address>`. For production, use a [temporary database user](#running-a-script-against-production) and add `--confirm=hautecorner_prod`.
+
+A dashboard session lasts 8 hours. The admin role is checked on every request, so `--revoke` takes effect at once.
 
 ### Safaricom Daraja (Phase 5)
 
-1. Create an app on the [Daraja portal](https://developer.safaricom.co.ke/), and start in the sandbox.
-2. For production, you need a registered business Paybill or Till number and go-live approval.
-3. For payouts, confirm with Safaricom what B2C needs. Third-party guides describe a verified shortcode, an initiator, and an encrypted security credential.
+1. Create an app on the [Daraja portal](https://developer.safaricom.co.ke/) with M-Pesa Express (Lipa na M-Pesa Online) enabled, and start in the sandbox.
+2. Set `DARAJA_CONSUMER_KEY`, `DARAJA_CONSUMER_SECRET`, `DARAJA_SHORTCODE=174379`, the sandbox `DARAJA_PASSKEY` and a random `DARAJA_CALLBACK_TOKEN` in Vercel Preview, or locally.
+3. Safaricom must reach the callback, `https://<site>/api/v1/webhooks/daraja/stk?token=…`, so test callbacks on a Vercel Preview deployment, or locally through a tunnel with `NEXT_PUBLIC_SITE_URL` set to the tunnel address. Without the callback, the app's status checks and the reconciliation job still settle the payment through the status query.
+4. For production, you need a registered business Paybill or Till number and go-live approval.
+5. For payouts, confirm with Safaricom what B2C needs. Third-party guides describe a verified shortcode, an initiator, and an encrypted security credential.
 
 ### Paystack (Phase 5)
 
 1. Create a [Paystack](https://paystack.com/) account for Kenya, and complete business verification for live mode.
-2. Use test keys first.
-3. Set the webhook URL to `https://<domain>/api/v1/webhooks/paystack`.
+2. Set the test secret key as `PAYSTACK_SECRET_KEY` in Vercel Preview, or locally.
+3. In the dashboard, set the test webhook URL to `https://<preview or production domain>/api/v1/webhooks/paystack`.
+4. Paystack sends the buyer back to `/pay/return`, which opens the app. That return proves nothing; payment is confirmed only by the webhook or a verify call, with the amount checked.
+
+### Trying checkout without payment keys
+
+Start the API with `PAYMENTS_SIMULATED=true` on the dev database. M-Pesa then pays about 4 seconds after the prompt, unless the number ends in `0000`, and a card payment returns to the app at once and pays. Stock, orders and the ledger behave as for real payments.
+
+### Scheduled jobs (Phase 5)
+
+`GET /api/v1/cron/expire-reservations` returns stock from unpaid checkouts, and `GET /api/v1/cron/reconcile-payments` settles payments whose callback never came. Both need `Authorization: Bearer <CRON_SECRET>`.
+
+They are not scheduled yet: Vercel Hobby allows only daily jobs, and both need to run every few minutes, which needs Pro ([ADR-005](DECISIONS.md#adr-005-real-store-hobby-while-building-pro-before-launch)). Until then the API does the same work as it goes: checkout first frees expired reservations, and the app's payment checks ask the provider.
 
 ### Firebase (Phase 7)
 

@@ -1,16 +1,15 @@
 import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
 import { after } from 'next/server';
-import nodemailer, { type Transporter } from 'nodemailer';
+import { site } from '@/lib/site';
 
 export type Email = { to: string; subject: string; html: string; text: string };
 
 // EMAIL_TRANSPORT chooses how mail leaves:
-// - gmail: Gmail SMTP, for development, and production until SES is ready
-// - ses: Amazon SES, for production once its domain is verified
+// - ses: Amazon SES, in every deployed environment
 // - log: printed to the server log, for local testing without sending
 // - memory: kept in sentEmails, for automated tests
-type TransportName = 'gmail' | 'ses' | 'log' | 'memory';
-const TRANSPORTS: TransportName[] = ['gmail', 'ses', 'log', 'memory'];
+type TransportName = 'ses' | 'log' | 'memory';
+const TRANSPORTS: TransportName[] = ['ses', 'log', 'memory'];
 
 export const sentEmails: Email[] = [];
 
@@ -21,54 +20,33 @@ function requiredEnv(name: string) {
 }
 
 function transportName(): TransportName {
-  const configured = process.env.EMAIL_TRANSPORT as TransportName | undefined;
-  if (configured) {
-    if (!TRANSPORTS.includes(configured)) throw new Error(`EMAIL_TRANSPORT must be one of ${TRANSPORTS.join(', ')}`);
-    return configured;
-  }
-  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) return 'gmail';
-  throw new Error('EMAIL_TRANSPORT is not set');
+  const configured = (process.env.EMAIL_TRANSPORT ?? 'ses') as TransportName;
+  if (!TRANSPORTS.includes(configured)) throw new Error(`EMAIL_TRANSPORT must be one of ${TRANSPORTS.join(', ')}`);
+  return configured;
 }
 
-// EMAIL_FROM is the sender's display name, such as "HauteCorner Lifestyle".
-// Gmail always sends from the signed-in account, and SES from a verified address.
-function sender(address: string) {
-  const name = (process.env.EMAIL_FROM ?? 'HauteCorner').replace(/"/g, '');
-  return `"${name}" <${address}>`;
+// Automated mail comes from the no-reply address, and replies go to the
+// public contact. Both are on the domain verified in SES, which signs with DKIM.
+export function sender() {
+  const name = (process.env.EMAIL_FROM ?? site.name).replace(/"/g, '');
+  return `"${name}" <${site.noReplyEmail}>`;
 }
 
-let cached: { name: TransportName; transporter: Transporter; from: string } | undefined;
+let ses: SESv2Client | undefined;
 
-function transport() {
-  const name = transportName();
-  if (cached?.name === name) return cached;
-
-  if (name === 'gmail') {
-    const user = requiredEnv('GMAIL_USER');
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      // App passwords are shown with spaces, which Gmail does not need.
-      auth: { user, pass: requiredEnv('GMAIL_APP_PASSWORD').replace(/\s+/g, '') },
-    });
-    cached = { name, transporter, from: sender(user) };
-  } else if (name === 'ses') {
-    const sesClient = new SESv2Client({
-      region: requiredEnv('SES_REGION'),
-      credentials: {
-        accessKeyId: requiredEnv('SES_ACCESS_KEY_ID'),
-        secretAccessKey: requiredEnv('SES_SECRET_ACCESS_KEY'),
-      },
-    });
-    const transporter = nodemailer.createTransport({ SES: { sesClient, SendEmailCommand } });
-    cached = { name, transporter, from: sender(requiredEnv('SES_FROM_ADDRESS')) };
-  } else {
-    cached = { name, transporter: nodemailer.createTransport({ jsonTransport: true }), from: sender('noreply@example.com') };
-  }
-  return cached;
+function sesClient() {
+  ses ??= new SESv2Client({
+    region: requiredEnv('SES_REGION'),
+    credentials: {
+      accessKeyId: requiredEnv('AWS_SES_ACCESS_KEY_ID'),
+      secretAccessKey: requiredEnv('AWS_SES_SECRET_ACCESS_KEY'),
+    },
+  });
+  return ses;
 }
 
 export async function sendEmail(email: Email) {
-  const { name, transporter, from } = transport();
+  const name = transportName();
   if (name === 'memory') {
     sentEmails.push(email);
     return;
@@ -77,7 +55,22 @@ export async function sendEmail(email: Email) {
     console.log(`[email] to ${email.to}: ${email.subject}\n${email.text}`);
     return;
   }
-  await transporter.sendMail({ from, ...email });
+  await sesClient().send(
+    new SendEmailCommand({
+      FromEmailAddress: sender(),
+      ReplyToAddresses: [site.email],
+      Destination: { ToAddresses: [email.to] },
+      Content: {
+        Simple: {
+          Subject: { Data: email.subject, Charset: 'UTF-8' },
+          Body: {
+            Html: { Data: email.html, Charset: 'UTF-8' },
+            Text: { Data: email.text, Charset: 'UTF-8' },
+          },
+        },
+      },
+    }),
+  );
 }
 
 // Sends after the response has gone, for mail the person is not waiting for.

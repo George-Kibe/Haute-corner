@@ -38,7 +38,14 @@ describe('GET /config', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toContain('s-maxage');
     expect(await response.json()).toEqual({
-      data: { minimumAppVersion: MINIMUM_APP_VERSION, cloudinaryCloudName: 'test-cloud' },
+      data: {
+        minimumAppVersion: MINIMUM_APP_VERSION,
+        cloudinaryCloudName: 'test-cloud',
+        maxVideoSeconds: 30,
+        maxVideoBytes: 100_000_000,
+        maxImagesPerProduct: 10,
+        maxImageBytes: 20_000_000,
+      },
     });
   });
 

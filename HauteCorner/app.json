@@ -20,7 +20,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F6F9FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -61,8 +61,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/android-icon-monochrome.png",
-          "color": "#ffa500"
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#0E4BB4"
         }
       ],
       [
@@ -72,9 +72,9 @@
         }
       ],
       "./plugins/with-gradle-memory",
-      "@react-native-vector-icons/ionicons",
       "expo-secure-store",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

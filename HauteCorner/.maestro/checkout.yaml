@@ -1,0 +1,117 @@
+# Phase 5: buy from two sellers in one checkout, pay by M-Pesa, and see the
+# orders. Run the API with PAYMENTS_SIMULATED=true on the dev database, so the
+# payment completes a few seconds after the prompt. Use an existing account.
+#   maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/checkout.yaml
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+- runFlow: email-sign-in.yaml
+
+# One item from each of two sellers.
+- tapOn: Home
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 15000
+- tapOn: Graphic tee and joggers set.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- scrollUntilVisible:
+    element: Add to cart
+    direction: DOWN
+- tapOn: Add to cart
+- extendedWaitUntil:
+    visible: Added to cart
+    timeout: 5000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: Back
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- scrollUntilVisible:
+    element: Blue canvas sneakers.*
+    direction: DOWN
+    timeout: 30000
+- tapOn: Blue canvas sneakers.*
+- extendedWaitUntil:
+    visible: Sold by Nairobi Soles.*
+    timeout: 15000
+- scrollUntilVisible:
+    element: Add to cart
+    direction: DOWN
+- tapOn: Add to cart
+- runFlow:
+    when:
+      notVisible: My cart
+    commands:
+      - tapOn: More
+- tapOn: My cart
+
+# The cart is priced by the server, one section per seller.
+- extendedWaitUntil:
+    visible: From Westlands Denim Co.*
+    timeout: 10000
+- assertVisible: From Nairobi Soles.*
+- extendedWaitUntil:
+    visible: Check out
+    timeout: 10000
+- takeScreenshot: 01-cart
+- tapOn: Check out
+
+- extendedWaitUntil:
+    visible: Your order
+    timeout: 15000
+# The name comes from the account. A new account has no phone or address yet.
+# Each field is centred first, so the keyboard never covers the one tapped.
+- scrollUntilVisible:
+    element: Phone, such as 0712 345 678
+    direction: DOWN
+    centerElement: true
+- tapOn: Phone, such as 0712 345 678
+- inputText: "0712345678"
+- scrollUntilVisible:
+    element: Street, building and house number
+    direction: DOWN
+    centerElement: true
+- tapOn: Street, building and house number
+- inputText: Ngong Road, Prestige Plaza
+- scrollUntilVisible:
+    element: Town or city
+    direction: DOWN
+    centerElement: true
+- tapOn: Town or city
+- inputText: Nairobi
+- scrollUntilVisible:
+    element: M-Pesa number to pay from
+    direction: DOWN
+    centerElement: true
+- tapOn: M-Pesa number to pay from
+- inputText: "0712345678"
+- takeScreenshot: 02-checkout
+- scrollUntilVisible:
+    element: Pay Kshs.*
+    direction: DOWN
+- tapOn: Pay Kshs.*
+
+# Simulated M-Pesa pays a few seconds after the prompt.
+- extendedWaitUntil:
+    visible: Check your phone
+    timeout: 15000
+- takeScreenshot: 03-check-your-phone
+- extendedWaitUntil:
+    visible: Payment received
+    timeout: 30000
+- assertVisible: 2 orders, one per seller
+- takeScreenshot: 04-paid
+
+# Both orders are in My Orders, and the cart is empty again.
+- tapOn: Westlands Denim Co.*
+- extendedWaitUntil:
+    visible: Paid, waiting for the seller
+    timeout: 10000
+- takeScreenshot: 05-order

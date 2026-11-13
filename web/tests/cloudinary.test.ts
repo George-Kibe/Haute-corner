@@ -11,7 +11,7 @@ describe('cloudinaryAccount', () => {
   });
 
   it('rejects a missing or malformed URL', () => {
-    expect(() => cloudinaryAccount(undefined)).toThrow('CLOUDINARY_URL');
+    expect(() => cloudinaryAccount('')).toThrow('CLOUDINARY_URL');
     expect(() => cloudinaryAccount('https://example.com')).toThrow('CLOUDINARY_URL');
   });
 });
@@ -31,5 +31,21 @@ describe('signParams', () => {
     expect(signParams({ public_id: 'sample_image', tags: '' }, 'abcd')).toBe(
       signParams({ public_id: 'sample_image' }, 'abcd'),
     );
+  });
+});
+
+describe('privateDownloadUrl', () => {
+  it('signs a link that expires', async () => {
+    const { privateDownloadUrl } = await import('@/lib/cloudinary');
+    const account = { cloudName: 'c', apiKey: 'k', apiSecret: 's' };
+
+    const url = new URL(privateDownloadUrl('hautecorner/applications/u/id', 'pdf', 10, account));
+    const query = Object.fromEntries(url.searchParams);
+
+    expect(url.origin + url.pathname).toBe('https://api.cloudinary.com/v1_1/c/image/download');
+    expect(Number(query.expires_at) - Number(query.timestamp)).toBe(600);
+    const { signature, api_key: apiKey, ...signed } = query;
+    expect(apiKey).toBe('k');
+    expect(signature).toBe(signParams(signed, 's'));
   });
 });

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { site } from '@/lib/site';
+import { site, trader } from '@/lib/site';
 import { LegalPage } from '../legal-page';
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
     >
       <h2>What we collect</h2>
       <ul>
-        <li><strong>Account details:</strong> your name, email address and profile picture from Google or Apple when you sign in. Apple lets you hide your email address.</li>
+        <li><strong>Account details:</strong> your name, email address and profile picture from Google or Apple when you sign in, or the name and email address you give when you sign up with email. Apple lets you hide your email address. Passwords are stored only in a form that cannot be read back.</li>
         <li><strong>Contact and delivery details:</strong> your phone number and delivery address.</li>
         <li><strong>Orders:</strong> what you buy, from whom, amounts, delivery status, and any disputes.</li>
         <li><strong>Payment information:</strong> the payment method, status and reference, and your M-Pesa number if you pay by M-Pesa. Card numbers are entered directly with our card provider. We never receive or store them.</li>
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
       <h2>Who we share it with</h2>
       <ul>
         <li><strong>Sellers:</strong> a seller sees your name, phone number and delivery address only for orders you place with them, so they can deliver.</li>
-        <li><strong>Service providers</strong> who run parts of HauteCorner for us: Google and Apple (sign-in), Safaricom (M-Pesa), Paystack (cards), Vercel (hosting), MongoDB (database), Cloudinary (images and videos), and Expo (notifications and app updates).</li>
+        <li><strong>Service providers</strong> who run parts of HauteCorner for us: Google and Apple (sign-in), Safaricom (M-Pesa), Paystack (cards), Vercel (hosting), MongoDB (database), Cloudinary (images and videos), Amazon Web Services (sending emails), and Expo (notifications and app updates).</li>
         <li><strong>Authorities,</strong> when the law requires it.</li>
       </ul>
       <p>We do not sell your personal information.</p>
@@ -61,7 +61,8 @@ export default function PrivacyPage() {
 
       <h2>Contact</h2>
       <p>
-        {site.name}, <a href={`mailto:${site.email}`}>{site.email}</a>
+        {site.name} is run by {trader.legalName}, which is responsible for your personal information. Email{' '}
+        <a href={`mailto:${site.email}`}>{site.email}</a>, or see the <Link href="/terms#who-we-are">full contact details</Link>.
       </p>
     </LegalPage>
   );

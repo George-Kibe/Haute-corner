@@ -1,25 +1,24 @@
 import Cart from '@expo/material-symbols/shopping_cart.xml';
-import TrackOrder from '@expo/material-symbols/package_2.xml';
+import Orders from '@expo/material-symbols/package_2.xml';
 import { router, Stack } from 'expo-router';
 import type { ReactNode } from 'react';
-import { useSelector } from 'react-redux';
 
-import { selectedNumberOfItems } from '@/store/cartSlice';
+import { useCartCount } from '@/features/cart/store';
 
 const isIOS = process.env.EXPO_OS === 'ios';
 
 // Native header buttons, which take on Liquid Glass on iOS 26+.
-export function HeaderActions({ children, showTrackOrder = true }: { children?: ReactNode; showTrackOrder?: boolean }) {
-  const itemsInCart = useSelector(selectedNumberOfItems);
+export function HeaderActions({ children, showOrders = true }: { children?: ReactNode; showOrders?: boolean }) {
+  const itemsInCart = useCartCount();
 
   return (
     <Stack.Toolbar placement="right">
       {children}
-      {showTrackOrder ? (
+      {showOrders ? (
         <Stack.Toolbar.Button
-          accessibilityLabel="Track order"
-          icon={isIOS ? 'shippingbox' : TrackOrder}
-          onPress={() => router.push('/track-order')}
+          accessibilityLabel="My orders"
+          icon={isIOS ? 'shippingbox' : Orders}
+          onPress={() => router.push('/orders')}
         />
       ) : null}
       <Stack.Toolbar.Button

@@ -14,15 +14,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import Toast from 'react-native-toast-message';
-import { Provider as ReduxProvider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
 
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { restoreSession } from '@/features/auth/session';
 import { startWishlistSync } from '@/features/wishlist/sync';
 import { queryClient } from '@/lib/query-client';
-import { persistor, store } from '@/store';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -72,26 +69,27 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={theme}>
       <QueryClientProvider client={queryClient}>
-        <ReduxProvider store={store}>
-          <PersistGate persistor={persistor}>
-            <Stack
-              screenOptions={{
-                headerBackButtonDisplayMode: 'minimal',
-                headerTitleStyle: { fontFamily: Fonts.extrabold },
-              }}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="products/[id]" options={{ title: 'Product Details' }} />
-              <Stack.Screen name="shopping-cart" options={{ title: 'My Cart', headerTransparent: false }} />
-              <Stack.Screen name="track-order" options={{ title: 'Track Order', headerTransparent: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
-              <Stack.Screen
-                name="edit-profile"
-                options={{ title: 'Edit Profile', presentation: 'modal', headerTransparent: false }}
-              />
-            </Stack>
-            <Toast bottomOffset={110} position="bottom" />
-          </PersistGate>
-        </ReduxProvider>
+        <Stack
+          screenOptions={{
+            headerBackButtonDisplayMode: 'minimal',
+            headerTitleStyle: { fontFamily: Fonts.extrabold },
+          }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="products/[id]" options={{ title: 'Product Details' }} />
+          <Stack.Screen name="shopping-cart" options={{ title: 'My Cart', headerTransparent: false }} />
+          <Stack.Screen name="checkout" options={{ title: 'Checkout', headerTransparent: false }} />
+          <Stack.Screen name="purchase/[ref]" options={{ title: 'Payment', headerTransparent: false }} />
+          <Stack.Screen name="orders/index" options={{ title: 'My Orders', headerTransparent: false }} />
+          <Stack.Screen name="orders/[ref]" options={{ title: 'Order', headerTransparent: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="seller" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="report/[id]" options={{ title: 'Report Listing', presentation: 'modal', headerTransparent: false }} />
+          <Stack.Screen
+            name="edit-profile"
+            options={{ title: 'Edit Profile', presentation: 'modal', headerTransparent: false }}
+          />
+        </Stack>
+        <Toast bottomOffset={110} position="bottom" />
       </QueryClientProvider>
       <StatusBar style="auto" />
     </ThemeProvider>

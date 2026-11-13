@@ -95,3 +95,58 @@ export function passwordChangedEmail(name?: string): Message {
     }),
   };
 }
+
+// A short notice: a heading, then plain paragraphs. Paragraphs are escaped.
+function notice({ subject, name, heading, paragraphs }: { subject: string; name?: string; heading: string; paragraphs: string[] }): Message {
+  return {
+    subject,
+    text: `${greeting(name)}\n\n${heading}\n\n${paragraphs.join('\n\n')}\n\nQuestions? Reply to this email or write to ${site.email}.\n\n${site.url}`,
+    html: layout({
+      preheader: paragraphs[0] ?? heading,
+      body: `<p style="margin:0 0 12px;">${escape(greeting(name))}</p><p style="margin:0 0 16px;font-size:20px;font-weight:800;">${escape(heading)}</p>${paragraphs
+        .map((paragraph) => `<p style="margin:0 0 12px;">${escape(paragraph)}</p>`)
+        .join('')}<p style="margin:16px 0 0;">Questions? Reply to this email or write to <a href="mailto:${site.email}" style="color:${BRAND};">${site.email}</a>.</p>`,
+      footerNote: 'You are receiving this because you applied to sell on HauteCorner.',
+    }),
+  };
+}
+
+export const sellerApprovedEmail = (name: string | undefined, businessName: string) =>
+  notice({
+    subject: 'Your HauteCorner shop is approved',
+    name,
+    heading: `${businessName} is approved to sell.`,
+    paragraphs: ['Open the Sell tab in the HauteCorner app to add your first listing with photos and a short video.'],
+  });
+
+export const sellerRejectedEmail = (name: string | undefined, businessName: string, reason: string) =>
+  notice({
+    subject: 'About your HauteCorner seller application',
+    name,
+    heading: `We could not approve ${businessName} yet.`,
+    paragraphs: [`Reason: ${reason}`, 'You can fix this and apply again from the Sell tab in the app.'],
+  });
+
+export const sellerSuspendedEmail = (name: string | undefined, businessName: string, reason: string) =>
+  notice({
+    subject: 'Your HauteCorner shop is paused',
+    name,
+    heading: `${businessName} is suspended, and your listings are hidden.`,
+    paragraphs: [`Reason: ${reason}`, 'Reply to this email if you think this is a mistake.'],
+  });
+
+export const sellerReinstatedEmail = (name: string | undefined, businessName: string) =>
+  notice({
+    subject: 'Your HauteCorner shop is back',
+    name,
+    heading: `${businessName} can sell again.`,
+    paragraphs: ['Your listings are back on sale.'],
+  });
+
+export const listingRemovedEmail = (name: string | undefined, title: string, reason: string) =>
+  notice({
+    subject: 'A listing was removed from HauteCorner',
+    name,
+    heading: `We removed "${title}".`,
+    paragraphs: [`Reason: ${reason}`, 'Reply to this email if you think this is a mistake.'],
+  });

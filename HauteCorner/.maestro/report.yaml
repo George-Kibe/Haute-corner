@@ -1,0 +1,28 @@
+# Phase 4: a signed-in shopper reports a listing.
+#   maestro --device <id> test -e EMAIL=... -e PASSWORD=... .maestro/report.yaml
+appId: com.hautecorner.app
+---
+- runFlow: open-app.yaml
+- runFlow: email-sign-in.yaml
+- tapOn: Home
+- extendedWaitUntil:
+    visible: Graphic tee and joggers set.*
+    timeout: 15000
+- tapOn: Graphic tee and joggers set.*
+- extendedWaitUntil:
+    visible: Sold by Westlands Denim Co.*
+    timeout: 15000
+- scrollUntilVisible:
+    element: Report this listing
+    direction: DOWN
+    centerElement: true
+- tapOn: Report this listing
+- extendedWaitUntil:
+    visible: What is wrong\?
+    timeout: 10000
+- tapOn: Anything that helps us check.*
+- inputText: The logo looks printed on.
+- tapOn: Send report
+- extendedWaitUntil:
+    visible: Thanks for telling us
+    timeout: 10000

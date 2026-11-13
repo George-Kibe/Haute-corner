@@ -1,5 +1,6 @@
 import { PagerView } from '@expo/ui/community/pager-view';
 import { Host, Picker } from '@expo/ui';
+import { FormButton } from '@/components/form-button';
 import Star from '@expo/material-symbols/star.xml';
 // The package ships outlined icons only, so the filled star is kept in the app.
 import StarFilled from '@/assets/icons/star_fill.xml';
@@ -8,55 +9,44 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
-import { useDispatch } from 'react-redux';
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { HeaderActions } from '@/components/header-actions';
 import { StateMessage } from '@/components/state-message';
-import { useAppConfig } from '@/features/config/use-app-config';
 import { ProductImage } from '@/features/products/product-image';
+import { ProductVideo } from '@/features/products/product-video';
 import { useProduct } from '@/features/products/queries';
 import { ProductDetailsSkeleton } from '@/features/products/skeletons';
-import { firstImage, type Product } from '@/features/products/types';
+import type { Product } from '@/features/products/types';
+import { addToCart as addLineToCart } from '@/features/cart/store';
 import { useIsLiked } from '@/features/wishlist/store';
 import { toggleLike } from '@/features/wishlist/sync';
 import { useColors } from '@/hooks/use-colors';
 import { ApiError } from '@/lib/api-client';
 import { formatPrice } from '@/lib/format';
-import { imageUrl } from '@/lib/media';
-import { cartSlice } from '@/store/cartSlice';
 
 function ProductDetails({ product }: { product: Product }) {
   const colors = useColors();
-  const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const { data: config } = useAppConfig();
   const [selectedOption, setSelectedOption] = useState(product.options[0]);
   const liked = useIsLiked(product.id);
 
   const images = product.media.filter((item) => item.kind === 'image');
+  const video = product.media.find((item) => item.kind === 'video');
   const soldOut = product.stock === 0;
   // In landscape-shaped windows the image sits beside the details, so it never fills the screen.
   const wide = width > height;
   const imageSize = wide ? Math.min((width - insets.left - insets.right) / 2, height * 0.75) : width;
 
   const addToCart = () => {
-    const image = firstImage(product);
-    const cloudName = config?.cloudinaryCloudName;
-    // The cart keeps its old shape until it is rebuilt in Phase 5.
-    dispatch(
-      cartSlice.actions.addCartItem({
-        product: {
-          _id: product.id,
-          title: product.title,
-          price: product.price,
-          images: image && cloudName ? [imageUrl(cloudName, image.publicId, 400)] : [],
-        },
-      }),
-    );
-    Toast.show({ type: 'success', text1: 'Added to cart', text2: product.title });
+    const option = product.options.length > 0 ? selectedOption : undefined;
+    if (!addLineToCart(product, option)) {
+      Toast.show({ type: 'info', text1: 'That is all we have', text2: `Only ${product.stock} in stock` });
+      return;
+    }
+    Toast.show({ type: 'success', text1: 'Added to cart', text2: option ? `${product.title}, size ${option}` : product.title });
   };
 
   const toggleLiked = async () => {
@@ -77,7 +67,7 @@ function ProductDetails({ product }: { product: Product }) {
       contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       contentInsetAdjustmentBehavior="automatic"
       style={{ backgroundColor: colors.background }}>
-      <HeaderActions showTrackOrder={false}>
+      <HeaderActions showOrders={false}>
         <Stack.Toolbar.Button
           accessibilityLabel={liked ? 'Remove from wish list' : 'Save to wish list'}
           icon={process.env.EXPO_OS === 'ios' ? (liked ? 'star.fill' : 'star') : liked ? StarFilled : Star}
@@ -128,8 +118,23 @@ function ProductDetails({ product }: { product: Product }) {
 
           <Button disabled={soldOut} label={soldOut ? 'Sold out' : 'Add to cart'} onPress={addToCart} />
 
+          {video ? (
+            <>
+              <AppText style={styles.heading}>Video</AppText>
+              <ProductVideo layoutWidth={wide ? width - imageSize - insets.left - insets.right - 56 : width - 32} video={video} />
+            </>
+          ) : null}
+
           <AppText style={styles.heading}>About this product</AppText>
           <AppText style={[styles.description, { color: colors.muted }]}>{product.description}</AppText>
+
+          <Host matchContents style={styles.report}>
+            <FormButton
+              label="Report this listing"
+              variant="link"
+              onPress={() => router.push({ pathname: '/report/[id]', params: { id: product.id } })}
+            />
+          </Host>
         </View>
       </View>
     </ScrollView>
@@ -228,5 +233,9 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 15,
     lineHeight: 23,
+  },
+  report: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
   },
 });

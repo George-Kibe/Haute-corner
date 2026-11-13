@@ -21,6 +21,7 @@ type RequestOptions = {
   body?: unknown;
   accessToken?: string;
   signal?: AbortSignal;
+  headers?: Record<string, string>;
 };
 
 function buildUrl(path: string, query: RequestOptions['query'] = {}) {
@@ -38,10 +39,10 @@ function buildUrl(path: string, query: RequestOptions['query'] = {}) {
 // Sends a request and returns the response body, or null for 204 No Content.
 export async function apiRequest<T>(
   path: string,
-  { method = 'GET', query, body, accessToken, signal }: RequestOptions = {},
+  { method = 'GET', query, body, accessToken, signal, headers: extraHeaders }: RequestOptions = {},
 ): Promise<ApiResponse<T>> {
   const url = buildUrl(path, query);
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { Accept: 'application/json', ...extraHeaders };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 

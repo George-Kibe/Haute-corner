@@ -3,6 +3,7 @@ import { jwtVerify, SignJWT } from 'jose';
 import type { Types } from 'mongoose';
 import { ApiError } from '@/lib/http';
 import { isObjectId } from '@/lib/validation';
+import { Seller } from '@/models/Seller';
 import { Session } from '@/models/Session';
 import { User, USER_ROLES, type UserAttributes } from '@/models/User';
 
@@ -111,4 +112,14 @@ export async function requireUser(request: Request) {
   const user = await User.findOne({ _id: userId, deletedAt: { $exists: false } }).lean();
   if (!user) throw unauthenticated();
   return user;
+}
+
+// An approved seller acting on their own shop. Anyone else gets 403.
+export async function requireSeller(request: Request) {
+  const user = await requireUser(request);
+  const seller = await Seller.findOne({ userId: user._id }).lean();
+  if (!seller || seller.status !== 'approved') {
+    throw new ApiError(403, 'forbidden', seller ? 'Your shop is not approved to sell right now' : 'Apply to sell first');
+  }
+  return { user, seller };
 }

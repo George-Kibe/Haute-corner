@@ -1,160 +1,142 @@
-import {FlatList, StyleSheet, View, Pressable, ActivityIndicator, Alert} from 'react-native';
+import { FieldGroup, Host, ListItem, Picker, Text } from '@expo/ui';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { FormButton } from '@/components/form-button';
+import { StateMessage } from '@/components/state-message';
 import { useSession } from '@/features/auth/session';
 import { openSignIn } from '@/features/auth/sign-in-required';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText as Text } from '@/components/app-text';
+import { useQuote } from '@/features/cart/queries';
+import { groupBySeller, MAX_QUANTITY, setQuantity, toCartItems, useCart, type CartLine } from '@/features/cart/store';
+import { useAppConfig } from '@/features/config/use-app-config';
+import { useColors } from '@/hooks/use-colors';
+import { ApiError } from '@/lib/api-client';
 import { formatPrice } from '@/lib/format';
-import React from 'react';
-import CartListItem from '@/components/CartListItem';
-import {useSelector, useDispatch} from 'react-redux';
-import {
-  selectDeliveryPrice,
-  selectSubtotal,
-  selectTotal,
-  cartSlice,
-} from '@/store/cartSlice';
-import { useCreateOrderMutation } from '@/store/apiSlice';
-import { router } from 'expo-router';
+import { imageUrl } from '@/lib/media';
 
-const ShoppingCartTotals = () => {
-  const subtotal = useSelector(selectSubtotal);
-  const deliveryFee = useSelector(selectDeliveryPrice);
-  const total = useSelector(selectTotal);
+// Quantity choices: up to what is in stock, plus Remove.
+function quantityChoices(line: CartLine) {
+  const most = Math.max(line.quantity, Math.min(line.stock, MAX_QUANTITY));
+  return [0, ...Array.from({ length: most }, (_, index) => index + 1)];
+}
 
-  return (
-    <View style={styles.totalsContainer}>
-      <View style={styles.row}>
-        <Text style={styles.text}>Subtotal:</Text>
-        <Text style={styles.text}>{formatPrice(subtotal)}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.text}>Delivery:</Text>
-        <Text style={styles.text}>{formatPrice(deliveryFee)}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.textBold}>Total:</Text>
-        <Text style={styles.textBold}>{formatPrice(total)}</Text>
-      </View>
-    </View>
-  );
-};
+export default function CartScreen() {
+  const colors = useColors();
+  const lines = useCart((state) => state.lines);
+  const signedIn = useSession((state) => state.status === 'signedIn');
+  const { data: config } = useAppConfig();
+  const items = useMemo(() => toCartItems(lines), [lines]);
+  const quote = useQuote(items);
+  const groups = groupBySeller(lines);
+  const muted = (text: string) => <Text textStyle={{ color: colors.muted }}>{text}</Text>;
+  const danger = (text: string) => <Text textStyle={{ color: colors.danger }}>{text}</Text>;
 
-const ShoppingCartScreen = () => {
-  const dispatch = useDispatch();
-  const cartItems = useSelector((state: { cart: { items: any[] } }) => state.cart.items);
-  // console.log(cartItems)
-  const subtotal = useSelector(selectSubtotal);
-  const deliveryFee = useSelector(selectDeliveryPrice);
-  const total = useSelector(selectTotal);
-
-  const [createOrder, {data, isLoading, error}] = useCreateOrderMutation();
-  // console.log(data, isLoading, error)
-  const onCheckoutClick = async() => {
-    if (useSession.getState().status !== 'signedIn') {
-      openSignIn();
-      return;
-    }
-    const result = await createOrder({
-      items: cartItems,
-      subtotal,
-      deliveryFee,
-      total,
-      customer:{
-        name: "George Test",
-        address: "Roysambu",
-        email: "georgetest@gmail.com",
-        phone: "0704817466"
-      }
-    })
-    console.log("Ref",result.data.data.ref)
-
-    if (result.data?.status === "Created!"){
-      Alert.alert(
-        'Order has been Submitted!',
-        `Your oder reference is: ${result.data.data.ref}`
-      );
-      dispatch(cartSlice.actions.clearCart());
-    }
-  }
-  if(!cartItems.length) {
-    const goToProducts = () => {
-      router.push("/categories")
-    }
+  if (lines.length === 0) {
     return (
-      <SafeAreaView edges={['bottom']} style={styles.noCartcontainer}>
-        <Text style={{color: "#000"}}>Your Cart is Empty</Text>
-        <Text style={{color: "#000"}}>Add some Items to Cart</Text>
-        <Pressable style={styles.button} onPress={goToProducts} >
-          <Text style={styles.buttonText}>Continue Shopping</Text>
-        </Pressable>
-      </SafeAreaView>
-    )
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <StateMessage
+          title="Your cart is empty"
+          message="Add shoes and clothing from any seller. You can buy from several sellers at once."
+          actionLabel="Start shopping"
+          onAction={() => router.replace('/categories')}
+        />
+      </View>
+    );
   }
-  return (
-    <SafeAreaView edges={['bottom']} style={styles.container}>
-      <FlatList
-        data={cartItems}
-        renderItem={({item}) => <CartListItem cartItem={item} />}
-        ListFooterComponent={ShoppingCartTotals}
-      />
 
-      <Pressable style={styles.button} onPress={onCheckoutClick}>
-        <Text style={styles.buttonText}>
-          Checkout
-          {isLoading && <ActivityIndicator />}
-        </Text>
-      </Pressable>
-    </SafeAreaView>
+  // The server reports problems per cart line.
+  const lineErrors = quote.error instanceof ApiError ? (quote.error.details ?? {}) : {};
+  const errorFor = (line: CartLine) => lineErrors[`items.${lines.indexOf(line)}`];
+  const blocked = Object.keys(lineErrors).length > 0;
+  const totals = quote.data;
+  // Signed out, totals come from the prices shown when items were added.
+  const estimate = groups.reduce(
+    (sum, group) => sum + group.deliveryFee + group.lines.reduce((lineSum, line) => lineSum + line.price * line.quantity, 0),
+    0,
   );
-};
 
-export default ShoppingCartScreen;
+  return (
+    <Host style={styles.fill}>
+      <FieldGroup>
+        {groups.map((group) => {
+          const priced = totals?.orders.find((order) => order.seller.id === group.sellerId);
+          return (
+            <FieldGroup.Section key={group.sellerId} title={`From ${group.sellerName}`}>
+              {group.lines.map((line) => {
+                const error = errorFor(line);
+                const price = priced?.items.find((item) => item.productId === line.productId && (item.option ?? undefined) === line.option)?.unitPrice ?? line.price;
+                return [
+                  <ListItem
+                    key={line.key}
+                    leading={
+                      line.image && config ? (
+                        <Image contentFit="cover" source={imageUrl(config.cloudinaryCloudName, line.image, 200)} style={styles.thumbnail} />
+                      ) : undefined
+                    }
+                    supportingText={error ? danger(error) : muted(`${line.option ? `Size ${line.option} · ` : ''}${formatPrice(price)}`)}
+                    onPress={() => router.push({ pathname: '/products/[id]', params: { id: line.productId } })}>
+                    {line.title}
+                  </ListItem>,
+                  <Picker<number>
+                    key={`${line.key}-quantity`}
+                    selectedValue={line.quantity}
+                    testID={`quantity-${line.key}`}
+                    onValueChange={(quantity) => setQuantity(line.key, quantity)}>
+                    {quantityChoices(line).map((quantity) => (
+                      <Picker.Item key={quantity} label={quantity === 0 ? 'Remove' : `Quantity: ${quantity}`} value={quantity} />
+                    ))}
+                  </Picker>,
+                ];
+              })}
+              <FieldGroup.SectionFooter>
+                {muted(`Delivery from ${group.sellerName}: ${formatPrice(priced?.deliveryFee ?? group.deliveryFee)}`)}
+              </FieldGroup.SectionFooter>
+            </FieldGroup.Section>
+          );
+        })}
+
+        <FieldGroup.Section title="Total">
+          {totals ? (
+            <>
+              <ListItem supportingText={muted(formatPrice(totals.subtotal))}>Items</ListItem>
+              <ListItem supportingText={muted(formatPrice(totals.deliveryTotal))}>Delivery</ListItem>
+              <ListItem supportingText={<Text textStyle={{ fontWeight: '800' }}>{formatPrice(totals.total)}</Text>}>To pay</ListItem>
+            </>
+          ) : (
+            <ListItem supportingText={muted(signedIn && quote.isFetching ? 'Checking prices…' : `About ${formatPrice(estimate)}`)}>To pay</ListItem>
+          )}
+          {signedIn ? (
+            <FormButton disabled={!totals || blocked} label="Check out" onPress={() => router.push('/checkout')} />
+          ) : (
+            <FormButton label="Sign in to check out" onPress={openSignIn} />
+          )}
+          <FieldGroup.SectionFooter>
+            {blocked
+              ? danger('Change or remove the items marked above to continue.')
+              : quote.error && !blocked
+                ? danger(quote.error.message)
+                : muted('Each seller delivers their own items. You pay once, and your money reaches each seller only after delivery.')}
+          </FieldGroup.SectionFooter>
+        </FieldGroup.Section>
+      </FieldGroup>
+    </Host>
+  );
+}
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    height: '100%'
+  fill: {
+    flex: 1,
   },
-  noCartcontainer: {
-    backgroundColor: '#fff',
-    height: '100%',
-    alignItems:"center",
-    justifyContent:'center',
-  },
-  totalsContainer: {
-    margin: 20,
-    paddingTop: 10,
-    borderColor: 'gainsboro',
-    borderTopWidth: 1,
-    marginBottom:70,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 2,
-  },
-  text: {
-    fontSize: 16,
-    color: 'gray',
-  },
-  textBold: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000',
-  },
-  button: {
-    position: 'absolute',
-    bottom: 20,
-    backgroundColor: '#0E4BB4',
-    alignSelf: 'center',
-    width: '90%',
-    padding: 10,
-    borderRadius: 50,
+  centered: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: {
-    fontWeight: '500',
-    fontSize: 20,
-    color: '#fff',
+  thumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
   },
 });

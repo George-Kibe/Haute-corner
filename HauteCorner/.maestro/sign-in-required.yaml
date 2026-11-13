@@ -33,7 +33,7 @@ appId: com.hautecorner.app
 - extendedWaitUntil:
     visible: Nothing saved yet
     timeout: 10000
-- tapOn: Add Product
+- tapOn: Sell
 - extendedWaitUntil:
     visible: Sell on HauteCorner
     timeout: 10000
@@ -59,9 +59,9 @@ appId: com.hautecorner.app
       - tapOn: More
 - tapOn: My cart
 - extendedWaitUntil:
-    visible: Checkout
+    visible: Sign in to check out
     timeout: 10000
-- tapOn: Checkout
+- tapOn: Sign in to check out
 - extendedWaitUntil:
     visible: Sign in to HauteCorner
     timeout: 10000

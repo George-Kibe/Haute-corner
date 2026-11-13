@@ -158,8 +158,12 @@ type Seller = {
   deliveryFee: number;
   deliveryAreas: string;
   returnsNote?: string;
-  documents: { kind: string; publicId: string }[]; // Private Cloudinary assets
-  review?: { by: ObjectId; at: Date; reason?: string };
+  documents: {
+    kind: 'national_id' | 'passport' | 'business_registration' | 'kra_pin' | 'other';
+    publicId: string;      // Private Cloudinary asset in hautecorner/applications/<user ID>/
+    format: string;        // From Cloudinary, needed for signed download links
+  }[];
+  review?: { by: ObjectId; at: Date; reason?: string }; // The last admin decision; reason shown to the seller
 };
 ```
 
@@ -167,6 +171,8 @@ type Seller = {
 | --- | --- |
 | `{ userId: 1 }`, unique | One seller profile per user |
 | `{ status: 1, _id: -1 }` | Admin review queue |
+
+`payoutNumberChangedAt` is set when a seller changes their payout number, and cleared when an admin confirms it. Its presence means payouts are paused. Deleting the owner's account sets the status to `suspended` with the reason "Account deleted".
 
 ## Product
 
@@ -208,6 +214,28 @@ type Media = {
 
 Stock is tracked per product, not per size, for now. Per-size stock would need `options` to become objects. Fashion sells out by size, so reconsider before the catalogue grows.
 
+## Report
+
+A shopper's report that a listing looks wrong ([R-26](DECISIONS.md#recommended)).
+
+```ts
+type Report = {
+  productId: ObjectId;
+  sellerId: ObjectId;
+  reporterId: ObjectId;
+  reason: 'counterfeit' | 'prohibited' | 'misleading' | 'offensive' | 'scam' | 'other';
+  details?: string;
+  status: 'open' | 'dismissed' | 'actioned'; // actioned: the listing was removed
+  review?: { by: ObjectId; at: Date; note?: string };
+};
+```
+
+| Index | Purpose |
+| --- | --- |
+| `{ status: 1, _id: -1 }` | Admin queue |
+| `{ productId: 1, status: 1 }` | Reports about one listing |
+| `{ productId: 1, reporterId: 1 }`, unique where `status` is `open` | One open report per person and listing |
+
 ## Purchase
 
 One customer payment, covering one or more seller orders.
@@ -215,7 +243,7 @@ One customer payment, covering one or more seller orders.
 ```ts
 type Purchase = {
   ref: string;             // 8 characters from a random, unambiguous alphabet
-  buyerId: ObjectId;
+  buyerId?: ObjectId;      // Cleared when the account is deleted
   idempotencyKey: string;
   orderIds: ObjectId[];
   total: number;
@@ -224,20 +252,27 @@ type Purchase = {
   payment: {
     method: 'mpesa' | 'card';
     status: 'pending' | 'paid' | 'failed' | 'expired';
-    provider: 'daraja' | 'paystack';
-    providerRef?: string;  // CheckoutRequestID or Paystack reference
+    provider: 'daraja' | 'paystack' | 'simulated'; // simulated: development only (R-31)
+    phone?: string;        // The M-Pesa number asked to pay
+    providerRef?: string;  // CheckoutRequestID, or the Paystack reference <ref>-<attempt>
+    authorizationUrl?: string; // Paystack's page, while pending
+    attempts: number;      // Payment starts, including retries
+    receipt?: string;      // M-Pesa receipt number
+    failureReason?: string;
+    lastCheckedAt?: Date;  // Last time the provider was asked
     paidAt?: Date;
   };
-  reservedUntil: Date;
+  reservedUntil: Date;     // 15 minutes after checkout
 };
 ```
 
 | Index | Purpose |
 | --- | --- |
 | `{ ref: 1 }`, unique | Look up |
-| `{ buyerId: 1, idempotencyKey: 1 }`, unique | Prevent duplicate checkouts |
+| `{ buyerId: 1, idempotencyKey: 1 }`, unique where `buyerId` exists | Prevent duplicate checkouts |
 | `{ 'payment.providerRef': 1 }`, sparse | Match callbacks and webhooks |
 | `{ 'payment.status': 1, reservedUntil: 1 }` | Expire unpaid purchases |
+| `{ buyerId: 1, _id: -1 }` | A buyer's purchases |
 
 ## Order
 
@@ -249,6 +284,7 @@ type Order = {
   purchaseId: ObjectId;
   buyerId?: ObjectId;      // Cleared when the account is deleted
   sellerId: ObjectId;
+  sellerName: string;      // Copied at purchase
   items: {
     productId: ObjectId;
     title: string;
@@ -285,7 +321,7 @@ type Order = {
 | `{ status: 1, autoCompleteAt: 1 }` | The release job |
 | `{ purchaseId: 1 }` | Orders within a purchase |
 
-**Whether commission applies to the delivery fee is not yet decided.** The fields above can store either answer. Settle it along with the commission rate.
+**Whether commission applies to the delivery fee is not yet decided.** The fields above can store either answer. Until the rate is decided, orders store a rate of 0, worked out on the products only ([R-30](DECISIONS.md#recommended)), so `sellerAmount` equals `total`.
 
 **Generate references with `crypto.randomInt`, not `Math.random`.** The old approach is predictable. Retry if the unique index reports a collision.
 
@@ -332,9 +368,9 @@ type LedgerEntry = {
   purchaseId?: ObjectId;
   orderId?: ObjectId;
   payoutId?: ObjectId;
-  provider?: 'daraja' | 'paystack';
+  provider?: 'daraja' | 'paystack' | 'simulated';
   providerRef?: string;
-  idempotencyKey: string;  // Stops the same event being recorded twice
+  idempotencyKey: string;  // Stops the same event being recorded twice, such as payment:<order ID>
   note?: string;
   createdBy?: ObjectId;    // Admin, for manual adjustments
 };
@@ -345,9 +381,12 @@ type LedgerEntry = {
 | `{ idempotencyKey: 1 }`, unique | Ignore repeats |
 | `{ sellerId: 1, _id: -1 }` | Seller statements and balance |
 | `{ orderId: 1 }` | Trace an order |
+| `{ purchaseId: 1 }` | Trace a purchase |
 | `{ providerRef: 1 }`, sparse | Reconcile with provider records |
 
-Write ledger entries and the matching status change in one transaction. Confirm that transactions behave as expected on Atlas Free in Phase 1, as the design depends on them.
+Entries have `createdAt` only. Write ledger entries and the matching status change in one transaction; transactions were confirmed on Atlas Free in Phase 1, and the tests run on a one-node replica set for the same reason. The schema refuses every Mongoose update and delete.
+
+So far, a confirmed payment records one `payment_received` credit to `held_funds` per order, for the order's total. The sum of `held_funds` therefore equals the total of paid purchases until Phase 6 adds releases, payouts and refunds.
 
 ## Payout
 
@@ -410,13 +449,16 @@ type Settings = {
 
 These values are [open items](DECISIONS.md#open-items). Changes apply to new orders, since each order stores its own commission rate.
 
+**Not built yet.** Until the admin settings screen arrives with the Phase 6 decisions, the decided values live in `web/lib/settings.ts`: 30-second, 100 MB videos, one per listing ([ADR-042](DECISIONS.md#adr-042-product-videos-one-per-listing-up-to-30-seconds-and-100-mb)), up to 10 images of 20 MB, a commission rate of 0, and 15-minute reservations.
+
 ## AuditLog
 
 ```ts
 type AuditLog = {
   actorId: ObjectId;
-  action: string;          // For example 'seller.approve' or 'dispute.resolve'
-  targetType: string;
+  action: string;          // seller.approve, seller.reject, seller.suspend, seller.reinstate,
+                           // seller.confirm_payout_number, product.remove, product.restore, report.dismiss
+  targetType: 'seller' | 'product' | 'report';
   targetId: ObjectId;
   reason?: string;
 };
@@ -439,6 +481,8 @@ const updated = await Product.updateOne(
 ```
 
 Stock returns when a reservation expires, or an order is cancelled or refunded.
+
+Checkout reserves every item in one transaction, so a shortfall on any item reserves nothing. A payment that arrives after its reservation expired takes the stock again if it is still there; otherwise that order stays cancelled with the note "Refund due", and refunds arrive in Phase 6.
 
 ## Seed data
 

@@ -14,6 +14,9 @@ export const LIMITS = {
   codeEmailsPerIp: { limit: 30, windowSeconds: 60 * 60 },
   codeChecksPerEmail: { limit: 10, windowSeconds: 15 * 60 },
   codeChecksPerIp: { limit: 100, windowSeconds: 15 * 60 },
+  uploadSignsPerUser: { limit: 300, windowSeconds: 60 * 60 },
+  reportsPerUser: { limit: 20, windowSeconds: 24 * 60 * 60 },
+  checkoutsPerUser: { limit: 30, windowSeconds: 10 * 60 },
 } satisfies Record<string, Limit>;
 
 type EmailAction = 'codeEmails' | 'codeChecks' | 'passwordSignIn';

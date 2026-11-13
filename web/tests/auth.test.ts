@@ -1,14 +1,17 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { SignJWT } from 'jose';
+import { Types } from 'mongoose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as appleSignIn } from '@/app/api/v1/auth/apple/route';
 import { POST as googleSignIn } from '@/app/api/v1/auth/google/route';
 import { POST as logout } from '@/app/api/v1/auth/logout/route';
 import { POST as refresh } from '@/app/api/v1/auth/refresh/route';
 import { DELETE as deleteMe, GET as getMe, PATCH as patchMe } from '@/app/api/v1/me/route';
+import { Product } from '@/models/Product';
+import { Seller } from '@/models/Seller';
 import { Session } from '@/models/Session';
 import { User } from '@/models/User';
-import { createSeller, noParams, request, resetDatabase } from './helpers';
+import { createProduct, createSeller, noParams, request, resetDatabase } from './helpers';
 
 // Provider tokens are checked in identity.test.ts. Here, the token text decides who signs in.
 vi.mock('@/lib/identity', async () => {
@@ -332,5 +335,16 @@ describe('DELETE /me', () => {
 
     expect(after.user.id).not.toBe(before.user.id);
     expect(await User.countDocuments()).toBe(2);
+  });
+
+  it('stops a seller’s shop and hides its listings', async () => {
+    const account = await signedIn();
+    const seller = await createSeller({ userId: new Types.ObjectId(account.user.id) });
+    const product = await createProduct(seller._id);
+
+    await removeMe(account.accessToken);
+
+    expect(await Seller.findById(seller._id).lean()).toMatchObject({ status: 'suspended', review: { reason: 'Account deleted' } });
+    expect((await Product.findById(product._id).lean())!.status).toBe('hidden');
   });
 });

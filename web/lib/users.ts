@@ -1,8 +1,12 @@
 import type { Types } from 'mongoose';
 import { createSession } from '@/lib/auth';
 import type { VerifiedIdentity } from '@/lib/identity';
+import { syncListingsWithSellerStatus } from '@/lib/sellers';
 import { serializeUser } from '@/lib/serializers';
+import { ApiError } from '@/lib/http';
 import { EmailCode } from '@/models/EmailCode';
+import { Order } from '@/models/Order';
+import { Purchase } from '@/models/Purchase';
 import { Seller } from '@/models/Seller';
 import { Session } from '@/models/Session';
 import { User, type UserAttributes } from '@/models/User';
@@ -76,8 +80,35 @@ export async function signInWithIdentity(identity: VerifiedIdentity, firstSignIn
 // stays with only its ID and role, so records such as orders can still point
 // to it. With its identities and email gone, signing in again with the same
 // Google, Apple or email account creates a new, empty account.
+// Orders in these states still need the buyer or seller, so the account stays.
+const OPEN_ORDER_STATUSES = ['paid', 'confirmed', 'dispatched', 'delivered', 'disputed'] as const;
+
 export async function deleteAccount(user: StoredUser) {
+  const seller = await Seller.findOne({ userId: user._id }).lean();
+  const openOrders = await Order.exists({
+    $or: [{ buyerId: user._id }, ...(seller ? [{ sellerId: seller._id }] : [])],
+    status: { $in: OPEN_ORDER_STATUSES },
+  });
+  if (openOrders) {
+    throw new ApiError(409, 'conflict', 'You have orders in progress. You can delete your account once they are complete');
+  }
+
   await Session.deleteMany({ userId: user._id });
+  // A deleted account's shop stops selling. Its record stays for past orders.
+  if (seller && seller.status !== 'rejected') {
+    await Seller.updateOne(
+      { _id: seller._id },
+      { $set: { status: 'suspended', review: { by: user._id, at: new Date(), reason: 'Account deleted' } } },
+    );
+    await syncListingsWithSellerStatus(seller._id, 'suspended');
+  }
+  // Past orders are kept for records, without the buyer's personal details.
+  const removed = {
+    $unset: { buyerId: 1 },
+    $set: { contact: { name: 'Deleted account', phone: 'Removed' }, deliveryAddress: { line1: 'Removed', city: 'Removed' } },
+  };
+  await Order.updateMany({ buyerId: user._id }, removed);
+  await Purchase.updateMany({ buyerId: user._id }, { ...removed, $unset: { buyerId: 1, 'payment.phone': 1 } });
   if (user.email) await EmailCode.deleteMany({ email: user.email });
   await User.updateOne(
     { _id: user._id },

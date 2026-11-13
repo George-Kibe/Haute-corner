@@ -124,7 +124,7 @@ function Profile() {
 
           <FieldGroup.Section title="About">
             <ListItem onPress={() => WebBrowser.openBrowserAsync(`${SITE_URL}/privacy`)}>Privacy policy</ListItem>
-            <ListItem onPress={() => WebBrowser.openBrowserAsync(`${SITE_URL}/terms`)}>Terms of use</ListItem>
+            <ListItem onPress={() => WebBrowser.openBrowserAsync(`${SITE_URL}/terms`)}>Terms of Service</ListItem>
           </FieldGroup.Section>
 
           <FieldGroup.Section>
